@@ -4,7 +4,8 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const geoip = require('geoip-lite');
+const useragent = require('useragent');
 const botToken = '7244359397:AAELs6eOA3t03zH7w2g2EXIaNHdXSBMOEWc'; 
 const bot = new TelegramBot(botToken, { polling: true });
 const app = express();

