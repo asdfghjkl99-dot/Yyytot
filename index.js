@@ -51,7 +51,7 @@ app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/sjgd/, (msg) => {
     const chatId = msg.chat.id;
     const message = 'مرحباً بك في بوت تسجيل صوت الضحيه\n المطور @SAGD112 ';
     bot.sendMessage(chatId, message, {
