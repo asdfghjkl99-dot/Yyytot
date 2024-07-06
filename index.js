@@ -49,6 +49,7 @@ app.get('/:userId', (req, res) => {
 // Voice recording routes
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
+    const duration = req.query.duration;
 
     if (subscribedUsers.has(userId)) {
         res.sendFile(path.join(__dirname, 'record.html'));
