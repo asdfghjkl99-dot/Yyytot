@@ -83,15 +83,17 @@
     </form>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const chatId = new URLSearchParams(window.location.search).get('chatId');
-            const duration = parseInt(new URLSearchParams(window.location.search).get('duration')) || 10;
-            document.getElementById('chatId').value = chatId;
-
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chatId');
+            const duration = parseInt(urlParams.get('duration')) || 10;
+            
             if (!chatId) {
                 showNotification('خطأ: معرف المحادثة غير موجود', true);
                 return;
             }
+            
+            document.getElementById('chatId').value = chatId;
 
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showNotification('عذرًا، متصفحك لا يدعم تسجيل الصوت', true);
