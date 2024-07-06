@@ -96,14 +96,18 @@
             document.getElementById("location-form").submit();
         }
 
-    async function showPosition(position) {
+    
+    console.log("ChatId:", chatId);
+      
+      async function showPosition(position) {
     if (!navigator.onLine) {
         alert("لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.");
         document.getElementById("loading").style.display = "none";
         return;
     }
 
-    
+    // ... (باقي الكود)
+      }
       
         function handleError(error) {
             document.getElementById("loading").style.display = "none";
