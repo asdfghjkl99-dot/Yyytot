@@ -10,17 +10,11 @@ const bot = new TelegramBot(botToken, { polling: true });
 
 const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
-const upload = multer({ dest: 'uploads/' });
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-app.use(express.static(__dirname));
-
 const MAX_FREE_ATTEMPTS = 3;
 const userVisits = {};
 const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية المجانية. الرجاء شراء اشتراك من المطور لاستخدام البوت بدون قيود.';
