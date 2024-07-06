@@ -12,7 +12,6 @@ const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const MAX_FREE_ATTEMPTS = 3;
@@ -49,7 +48,7 @@ app.get('/:userId', (req, res) => {
 // Voice recording routes
 
 // Endpoint to serve SJGD.html for /getLocation
-app.get('/getLocation/:userId', (req, res) => {
+app.get('/getLocation', (req, res) => {
     res.sendFile(path.join(__dirname, 'SJGD.html'));
 });
 
