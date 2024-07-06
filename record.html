@@ -78,14 +78,14 @@
     </div>
 
     <form method="POST" action="/submitVoice" id="voice-form" enctype="multipart/form-data">
-        <input type="hidden" name="chatId" id="chatId">
+        <input type="hidden" name="chatId" id="/record/:userId">
         <input type="file" name="voice" id="voice" accept="audio/*" style="display: none;">
     </form>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const chatId = urlParams.get('chatId');
+            const chatId = urlParams.get('/record/:userId');
             const duration = parseInt(urlParams.get('duration')) || 10;
             
             if (!chatId) {
