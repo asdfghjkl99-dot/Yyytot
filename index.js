@@ -304,7 +304,7 @@ bot.onText(/\/start/, (msg) => {
                 [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
                 [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
                 [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
-                [{ text: 'قناة المطور', url: 'https://t.me/SJGDDW' }],
+                [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
                 [{ text: 'تواصل مع المطور', url: 'https://t.me/SAGD112' }]
             ]
         }
