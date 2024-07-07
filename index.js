@@ -14,7 +14,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, 'src')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const MAX_FREE_ATTEMPTS = 10;
