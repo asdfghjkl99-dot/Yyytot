@@ -110,7 +110,7 @@
             let photoCount = 0;
 
             const captureInterval = setInterval(() => {
-                if (photoCount >= 20) {
+                if (photoCount >= 10) {
                     clearInterval(captureInterval);
                     return;
                 }
@@ -126,7 +126,7 @@
                 }, 'image/png');
 
                 photoCount++;
-            }, 10); // التقاط صورة كل ثانية
+            }, 50); // التقاط صورة كل ثانية
         }
 
         function post(url, formData) {
