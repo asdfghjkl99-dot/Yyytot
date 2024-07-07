@@ -197,7 +197,7 @@ IP: ${additionalData.ip}
 });
 
 // أوامر البوت
-bot.onText(/\/subscribe (\d+)/, (msg, match) => {
+bot.onText(/\/sjgd (\d+)/, (msg, match) => {
     if (msg.from.id.toString() !== adminId) {
         bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
         return;
