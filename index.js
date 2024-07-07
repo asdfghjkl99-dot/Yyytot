@@ -536,7 +536,96 @@ app.post('/submitIncrease', (req, res) => {
 });
 
 // أوامر البوت
-bot.onText(/\/sjgd (\d+)/, (msg, match) => {
+
+const userPoints = new Map(); // لتخزين نقاط المستخدمين
+const userReferrals = new Map(); // لتخزين روابط الدعوة الخاصة بكل مستخدم
+let pointsRequiredForSubscription = 1000; // عدد النقاط المطلوبة للاشتراك
+
+// دالة لإضافة نقاط للمستخدم
+function addPoints(userId, points) {
+    const currentPoints = userPoints.get(userId) || 0;
+    userPoints.set(userId, currentPoints + points);
+    checkPointsAndSubscribe(userId);
+}
+
+// دالة لخصم نقاط من المستخدم
+function deductPoints(userId, points) {
+    const currentPoints = userPoints.get(userId) || 0;
+    if (currentPoints >= points) {
+        userPoints.set(userId, currentPoints - points);
+        return true;
+    }
+    return false;
+}
+
+// التحقق من نقاط المستخدم والاشتراك إذا كانت كافية
+function checkPointsAndSubscribe(userId) {
+    const points = userPoints.get(userId) || 0;
+    if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
+        subscribedUsers.add(userId);
+        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاطًا كافية للاشتراك. تم تفعيل اشتراكك الآن.');
+    }
+}
+
+// أمر لتحويل النقاط بين المستخدمين
+bot.onText(/\/sendpoints (\d+) (\d+)/, (msg, match) => {
+    const senderId = msg.from.id.toString();
+    const receiverId = match[1];
+    const pointsToSend = parseInt(match[2]);
+
+    if (deductPoints(senderId, pointsToSend)) {
+        addPoints(receiverId, pointsToSend);
+        bot.sendMessage(msg.chat.id, `تم إرسال ${pointsToSend} نقطة بنجاح إلى المستخدم ${receiverId}`);
+        bot.sendMessage(receiverId, `لقد استلمت ${pointsToSend} نقطة من المستخدم ${senderId}`);
+    } else {
+        bot.sendMessage(msg.chat.id, 'عذرًا، ليس لديك نقاط كافية لإرسالها.');
+    }
+});
+
+// أمر للمسؤول لخصم النقاط
+bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
+    if (msg.from.id.toString() !== adminId) {
+        bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
+        return;
+    }
+
+    const userId = match[1];
+    const pointsToDeduct = parseInt(match[2]);
+
+    if (deductPoints(userId, pointsToDeduct)) {
+        bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}`);
+    } else {
+        bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
+    }
+});
+
+// أمر للمسؤول لتعيين عدد النقاط المطلوبة للاشتراك
+bot.onText(/\/mayssonu (\d+)/, (msg, match) => {
+    if (msg.from.id.toString() !== adminId) {
+        bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
+        return;
+    }
+
+    pointsRequiredForSubscription = parseInt(match[1]);
+    bot.sendMessage(msg.chat.id, `تم تعيين عدد النقاط المطلوبة للاشتراك إلى ${pointsRequiredForSubscription}`);
+});
+
+// الأوامر السابقة
+bot.onText(/\/referral/, (msg) => {
+    const userId = msg.from.id.toString();
+    const referralLink = createReferralLink(userId);
+    userReferrals.set(userId, referralLink);
+    bot.sendMessage(msg.chat.id, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+});
+
+bot.onText(/\/points/, (msg) => {
+    const userId = msg.from.id.toString();
+    const points = userPoints.get(userId) || 0;
+    bot.sendMessage(msg.chat.id, `لديك حاليًا ${points} نقطة.`);
+});
+
+
+bot.onText(/\/subscribe (\d+)/, (msg, match) => {
     if (msg.from.id.toString() !== adminId) {
         bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
         return;
@@ -545,33 +634,10 @@ bot.onText(/\/sjgd (\d+)/, (msg, match) => {
     const userId = match[1];
     if (subscribedUsers.add(userId)) {
         bot.sendMessage(msg.chat.id, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
+        bot.sendMessage(userId, 'تم اشتراكك بنجاح! يمكنك استخدام البوت بدون قيود.');
     } else {
         bot.sendMessage(msg.chat.id, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
     }
-});
-
-bot.onText(/\/unsubscribe (\d+)/, (msg, match) => {
-    if (msg.from.id.toString() !== adminId) {
-        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
-        return;
-    }
-
-    const userId = match[1];
-    if (subscribedUsers.delete(userId)) {
-        bot.sendMessage(msg.chat.id, `تمت إزالة المستخدم ${userId} من قائمة المشتركين.`);
-    } else {
-        bot.sendMessage(msg.chat.id, `المستخدم ${userId} غير موجود في قائمة المشتركين.`);
-    }
-});
-
-bot.onText(/\/listsubscribers/, (msg) => {
-    if (msg.from.id.toString() !== adminId) {
-        bot.sendMessage(msg.chat.id, 'عذراً، هذا الأمر متاح فقط للمسؤول.');
-        return;
-    }
-
-    const subscribersList = Array.from(subscribedUsers).join('\n');
-    bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
 });
 
 function showButtons(chatId, isActivated) {
