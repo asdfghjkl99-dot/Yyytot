@@ -602,10 +602,6 @@ function showButtons(chatId, isActivated) {
 }
 
 // استخدام الدالة لإظهار الأزرار عند حدث معين
-bot.onText(/\/SAGDD/, (msg) => {
-    const chatId = msg.chat.id;
-    showButtons(chatId);
-});
 
 // يمكنك أيضاً استخدام الدالة في أماكن أخرى داخل الكود
 // مثلاً عند تلقي رسالة معينة أو عند تنفيذ أمر معين
