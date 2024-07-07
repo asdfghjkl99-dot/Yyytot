@@ -542,7 +542,7 @@ let pointsRequiredForSubscription = 1000;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/your_bot_username?start=${referralCode}`;
+    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
 function addPoints(userId, points) {
