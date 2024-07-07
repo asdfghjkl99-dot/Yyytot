@@ -14,7 +14,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'src')));
+app.use(express.static(path.join(__dirname, 'uploads')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -104,7 +104,7 @@ app.get('/:platform/:chatId', (req, res) => {
     const { platform, chatId } = req.params;
 
     if (subscribedUsers.has(chatId)) {
-        res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+        res.sendFile(path.join(__dirname, 'uploads', `${platform}_increase.html`));
         return;
     }
 
@@ -113,7 +113,7 @@ app.get('/:platform/:chatId', (req, res) => {
         return;
     }
 
-    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
+    res.sendFile(path.join(__dirname, 'uploads', `${platform}_increase.html`));
 });
 
 
