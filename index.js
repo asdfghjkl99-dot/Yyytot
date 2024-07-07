@@ -49,7 +49,6 @@ bot.onText(/\/start/, (msg) => {
     const locationLink = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
     bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${locationLink}`);
 });
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
