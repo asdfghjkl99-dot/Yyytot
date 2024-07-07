@@ -26,10 +26,89 @@ const freeTrialEndedMessage = "انتهت فترة التجربة المجاني
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
+
+ 
+const fetch = require('node-fetch');
+
+
+const usersFile = 'users.json';
+const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
+
 let allUsers = {}; // ستحتوي على جميع المستخدمين
 let bannedUsers = {}; 
 let activatedUsers = {};
 let userAttempts = {};
+
+async function saveData() {
+    const data = { allUsers, bannedUsers, activatedUsers };
+
+    try {
+        const response = await fetch(`${serverUrl}/save-users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('تم حفظ البيانات على الخادم:', result);
+
+        // حفظ محلي أيضاً
+        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('خطأ في حفظ البيانات على الخادم:', error);
+        // حفظ محلي حتى لو فشل الحفظ على الخادم
+        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+    }
+}
+
+async function loadData() {
+    try {
+        if (fs.existsSync(usersFile)) {
+            const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+            allUsers = data.allUsers || {};
+            bannedUsers = data.bannedUsers || {};
+            activatedUsers = data.activatedUsers || {};
+        } else {
+            const response = await fetch(`${serverUrl}/load-users`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            allUsers = data.allUsers || {};
+            bannedUsers = data.bannedUsers || {};
+            activatedUsers = data.activatedUsers || {};
+            await saveData();
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل البيانات:', error);
+    }
+}
+
+// دالة لإضافة مستخدم جديد
+function addUser(userId, userData) {
+    allUsers[userId] = userData;
+    saveData();
+}
+
+// استدعاء loadData عند بدء البوت
+loadData();
+
+process.on('exit', saveData);
+process.on('SIGINT', () => {
+    saveData();
+    process.exit();
+});
+process.on('SIGTERM', () => {
+    saveData();
+    process.exit();
+});
+
+// مثال على كيفية استخدام الدالة لإضافة مستخدم جديد
+// addUser('123456', { name: 'محمد', age: 30 });
 
 function handleAdminCommands(chatId, text) {
   try {
@@ -220,6 +299,15 @@ if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
     }
 }
 
+  // التحقق من الأوامر
+  if (text === '/start' || text === 'تفعيل') {
+    showButtons(chatId, activatedUsers[chatId]); 
+    return;
+  }
+
+  // التعامل مع باقي الرسائل
+  showButtons(chatId, activatedUsers[chatId]);
+});
 
 
 // دالة لتتبع المحاولات للمسارات الأخرى
