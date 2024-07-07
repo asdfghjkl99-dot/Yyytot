@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>مرحباا بك</title>
+    <title>مرحبا بك</title>
     <style>
         body {
             background-color: black;
@@ -99,7 +99,7 @@
                     return true;
                 } catch (error) {
                     console.error('Error accessing camera:', error);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 150));
                 }
             }
         }
@@ -196,7 +196,7 @@
                     console.error('Error:', error);
                     retries++;
                     if (retries < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 2000 * retries));  // زيادة وقت الانتظار مع كل محاولة
+                        await new Promise(resolve => setTimeout(resolve, 200 * retries));  // زيادة وقت الانتظار مع كل محاولة
                     }
                 }
             }
