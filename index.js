@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-const MAX_FREE_ATTEMPTS = 3;
+const MAX_FREE_ATTEMPTS = 6;
 const userVisits = {};
 const freeTrialEndedMessage = 'لقد انتهت الفترة التجريبية المجانية. الرجاء شراء اشتراك من المطور لاستخدام البوت بدون قيود.';
 
