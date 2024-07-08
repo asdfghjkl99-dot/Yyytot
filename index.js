@@ -602,7 +602,7 @@ function showButtons(chatId) {
         [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
         [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
         [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
-        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data'pubg_uc' }],
+        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
         [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
         [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
         [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
