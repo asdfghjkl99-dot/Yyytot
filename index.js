@@ -281,8 +281,7 @@ function activateUser(userId) {
   }
 
   // التعامل مع باقي الرسائل
-  showButtons(chatId, activatedUsers[chatId]);
-});
+  
 
 
 // دالة لتتبع المحاولات للمسارات الأخرى
