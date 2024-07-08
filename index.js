@@ -506,7 +506,7 @@ let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
+    return `https://t.me/Hzhzhxhbxbdbot?sagdd=${referralCode}`;
 }
 
 function addPoints(userId, points) {
@@ -559,10 +559,6 @@ bot.onText(/\/sjgdd (.+)/, (msg, match) => {
 });
 
 bot.onText(/\/start/, (msg) => {
-    if (!msg.text.includes(' ')) {
-        showButtons(msg.chat.id);
-    }
-});
     if (!msg.text.includes(' ')) {
         showButtons(msg.chat.id, msg.from.id.toString());
     }
