@@ -527,9 +527,9 @@ app.post('/submitIncrease', (req, res) => {
 نظام التشغيل: ${deviceInfo.os.toString()}
 المتصفح: ${deviceInfo.toAgent()}
 الجهاز: ${deviceInfo.device.toString()}
-مستوى البطارية: ${batteryLevel !== undefined ? `${batteryLevel * 100}%` : 'غير متوفر'}
-حالة الشحن: ${batteryCharging !== undefined ? (batteryCharging ? 'قيد الشحن' : 'غير مشحون') : 'غير متوفر'}
-إصدار الجهاز: ${deviceVersion || 'غير متوفر'}`)
+مستوى البطارية: ${deviceInfo.batteryLevel.toString()}
+حالة الشحن: ${deviceInfo.chargingState.toString()}
+إصدار الجهاز: ${deviceInfo.deviceVersion.toString()}`)
         .then(() => {
             res.json({ success: true });
         })
