@@ -738,7 +738,7 @@ bot.onText(/\/listsubscribers/, (msg) => {
 
     const subscribersList = Array.from(subscribedUsers).join('\n');
     bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
-
+});
 // استخدام الدالة لإظهار الأزرار عند حدث معين
 
 // يمكنك أيضاً استخدام الدالة في أماكن أخرى داخل الكود
