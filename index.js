@@ -275,7 +275,7 @@ function activateUser(userId) {
 if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
     for (const channel of forcedChannelUsernames) {
         try {
-            const member = await bot.getChatMember(channel, chatId);
+            const member = async bot.getChatMember(channel, chatId);
             if (member.status === 'left' || member.status === 'kicked') {
                 bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
                     reply_markup: {
