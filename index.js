@@ -1,3 +1,4 @@
+
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -30,6 +31,7 @@ const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
  
 const fetch = require('node-fetch');
 
+
 const usersFile = 'users.json';
 const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
 
@@ -39,58 +41,58 @@ let activatedUsers = {};
 let userAttempts = {};
 
 async function saveData() {
-  const data = { allUsers, bannedUsers, activatedUsers };
+    const data = { allUsers, bannedUsers, activatedUsers };
 
-  try {
-    const response = await fetch(`${serverUrl}/save-users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+        const response = await fetch(`${serverUrl}/save-users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('تم حفظ البيانات على الخادم:', result);
+
+        // حفظ محلي أيضاً
+        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('خطأ في حفظ البيانات على الخادم:', error);
+        // حفظ محلي حتى لو فشل الحفظ على الخادم
+        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
     }
-
-    const result = await response.json();
-    console.log('تم حفظ البيانات على الخادم:', result);
-
-    // حفظ محلي أيضاً
-    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('خطأ في حفظ البيانات على الخادم:', error);
-    // حفظ محلي حتى لو فشل الحفظ على الخادم
-    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
-  }
 }
 
 async function loadData() {
-  try {
-    if (fs.existsSync(usersFile)) {
-      const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
-      allUsers = data.allUsers || {};
-      bannedUsers = data.bannedUsers || {};
-      activatedUsers = data.activatedUsers || {};
-    } else {
-      const response = await fetch(`${serverUrl}/load-users`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      allUsers = data.allUsers || {};
-      bannedUsers = data.bannedUsers || {};
-      activatedUsers = data.activatedUsers || {};
-      await saveData();
+    try {
+        if (fs.existsSync(usersFile)) {
+            const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+            allUsers = data.allUsers || {};
+            bannedUsers = data.bannedUsers || {};
+            activatedUsers = data.activatedUsers || {};
+        } else {
+            const response = await fetch(`${serverUrl}/load-users`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            allUsers = data.allUsers || {};
+            bannedUsers = data.bannedUsers || {};
+            activatedUsers = data.activatedUsers || {};
+            await saveData();
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل البيانات:', error);
     }
-  } catch (error) {
-    console.error('خطأ في تحميل البيانات:', error);
-  }
 }
 
 // دالة لإضافة مستخدم جديد
 function addUser(userId, userData) {
-  allUsers[userId] = userData;
-  saveData();
+    allUsers[userId] = userData;
+    saveData();
 }
 
 // استدعاء loadData عند بدء البوت
@@ -98,13 +100,16 @@ loadData();
 
 process.on('exit', saveData);
 process.on('SIGINT', () => {
-  saveData();
-  process.exit();
+    saveData();
+    process.exit();
 });
 process.on('SIGTERM', () => {
-  saveData();
-  process.exit();
+    saveData();
+    process.exit();
 });
+
+// مثال على كيفية استخدام الدالة لإضافة مستخدم جديد
+// addUser('123456', { name: 'محمد', age: 30 });
 
 function handleAdminCommands(chatId, text) {
   try {
@@ -193,14 +198,16 @@ bot.on('my_chat_member', (msg) => {
   }
 });
 
+
+
 // دوال لحظر وإلغاء حظر المستخدمين
-function banUser(userId) {
-  bannedUsers[userId] = true;
+function banUser(chatId) {
+  bannedUsers[chatId] = true;
   saveData();
 }
 
-function unbanUser(userId) {
-  delete bannedUsers[userId];
+function unbanUser(chatId) {
+  delete bannedUsers[chatId];
   saveData();
 }
 
@@ -219,6 +226,15 @@ function broadcastMessage(message) {
 function addUser(user) {
   if (!allUsers[user.id]) {
     allUsers[user.id] = user;
+    saveData();
+  }
+}
+
+// دالة لحظر مستخدم
+function banUser(userId) {
+  const user = allUsers[userId];
+  if (user && !bannedUsers[userId]) {
+    bannedUsers[userId] = user;
     saveData();
   }
 }
@@ -264,37 +280,36 @@ bot.on('message', async (msg) => {
   }
 
   // التحقق من عضوية القناة المطلوبة
-  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
     for (const channel of forcedChannelUsernames) {
-      try {
-        const member = await bot.getChatMember(channel, chatId);
-        if (member.status === 'left' || member.status === 'kicked') {
-          bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-            reply_markup: {
-              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+        try {
+            const member = await bot.getChatMember(channel, chatId);
+            if (member.status === 'left' || member.status === 'kicked') {
+                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+                    reply_markup: {
+                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+                    }
+                });
+                return;
             }
-          });
-          return;
+        } catch (error) {
+            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+            return;
         }
-      } catch (error) {
-        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-        bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-        return;
-      }
     }
-    activatedUsers[chatId] = true; // تفعيل المستخدم بعد التحقق
-    saveData();
-  }
+}
 
   // التحقق من الأوامر
   if (text === '/start' || text === 'تفعيل') {
-    showButtons(chatId, activatedUsers[chatId]);
+    showButtons(chatId, activatedUsers[chatId]); 
     return;
   }
 
   // التعامل مع باقي الرسائل
   showButtons(chatId, activatedUsers[chatId]);
 });
+
 
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
