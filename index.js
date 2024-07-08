@@ -248,6 +248,13 @@ function activateUser(userId) {
 }
 
 // معالجة الرسائل الواردة
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
   // تسجيل المستخدمين الجدد
   if (!allUsers[chatId]) {
