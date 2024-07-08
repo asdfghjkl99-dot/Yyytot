@@ -34,7 +34,7 @@ const fetch = require('node-fetch');
 const usersFile = 'users.json';
 const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
 
-llet allUsers = {}; // ستحتوي على جميع المستخدمين
+let allUsers = {}; // ستحتوي على جميع المستخدمين
 let bannedUsers = {}; 
 let activatedUsers = {};
 let userAttempts = {};
