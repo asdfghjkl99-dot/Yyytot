@@ -248,7 +248,8 @@ function activateUser(userId) {
 }
 
 // معالجة الرسائل الواردة
-bot.off('message'); async (msg) => {
+
+bot.off('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
   const senderId = msg.from.id;
