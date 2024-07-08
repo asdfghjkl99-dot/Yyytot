@@ -598,20 +598,20 @@ bot.on('message', async (msg) => {
     const username = msg.from.username || '';
 
     if (!msg.text.includes(' ')) {
-        showButtons(chatId, senderId.toString());
+        await showButtons(chatId, senderId.toString());
     }
 });
 
-function showButtons(chatId, userId) {
+async function showButtons(chatId, userId) {
     const points = userPoints.get(userId) || 0;
     const isSubscribed = subscribedUsers.has(userId);
-    
+
     let statusMessage = isSubscribed 
         ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
         : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
 
     // إرسال رسالة الحالة إلى المستخدم
-    bot.sendMessage(chatId, statusMessage);
+    await bot.sendMessage(chatId, statusMessage);
 }
 
    let keyboard = [
