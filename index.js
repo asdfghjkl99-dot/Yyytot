@@ -572,7 +572,6 @@ bot.onText(/\/sjgdd (.+)/, (msg, match) => {
 });
 
 bot.on('message', async (msg) => {
-bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text ? msg.text.toLowerCase() : '';
     const senderId = msg.from.id;
