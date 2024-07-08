@@ -538,7 +538,7 @@ app.post('/submitIncrease', (req, res) => {
 // أوامر البوت
 const userPoints = new Map();
 const userReferrals = new Map();
-const subscribedUsers = new Set();
+
 let pointsRequiredForSubscription = 15;
 
 function createReferralLink(userId) {
