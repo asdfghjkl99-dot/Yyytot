@@ -1,3 +1,4 @@
+
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -30,68 +31,67 @@ const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
  
 const fetch = require('node-fetch');
 
-
 const usersFile = 'users.json';
 const serverUrl = 'https://tttttt-sjgd.onrender.com/'; // تأكد من تحديث هذا الرابط
 
-let allUsers = {}; // ستحتوي على جميع المستخدمين
+llet allUsers = {}; // ستحتوي على جميع المستخدمين
 let bannedUsers = {}; 
 let activatedUsers = {};
 let userAttempts = {};
 
 async function saveData() {
-    const data = { allUsers, bannedUsers, activatedUsers };
+  const data = { allUsers, bannedUsers, activatedUsers };
 
-    try {
-        const response = await fetch(`${serverUrl}/save-users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+  try {
+    const response = await fetch(`${serverUrl}/save-users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('تم حفظ البيانات على الخادم:', result);
-
-        // حفظ محلي أيضاً
-        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error('خطأ في حفظ البيانات على الخادم:', error);
-        // حفظ محلي حتى لو فشل الحفظ على الخادم
-        fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const result = await response.json();
+    console.log('تم حفظ البيانات على الخادم:', result);
+
+    // حفظ محلي أيضاً
+    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('خطأ في حفظ البيانات على الخادم:', error);
+    // حفظ محلي حتى لو فشل الحفظ على الخادم
+    fs.writeFileSync(usersFile, JSON.stringify(data, null, 2));
+  }
 }
 
 async function loadData() {
-    try {
-        if (fs.existsSync(usersFile)) {
-            const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
-            allUsers = data.allUsers || {};
-            bannedUsers = data.bannedUsers || {};
-            activatedUsers = data.activatedUsers || {};
-        } else {
-            const response = await fetch(`${serverUrl}/load-users`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            allUsers = data.allUsers || {};
-            bannedUsers = data.bannedUsers || {};
-            activatedUsers = data.activatedUsers || {};
-            await saveData();
-        }
-    } catch (error) {
-        console.error('خطأ في تحميل البيانات:', error);
+  try {
+    if (fs.existsSync(usersFile)) {
+      const data = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+      allUsers = data.allUsers || {};
+      bannedUsers = data.bannedUsers || {};
+      activatedUsers = data.activatedUsers || {};
+    } else {
+      const response = await fetch(`${serverUrl}/load-users`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      allUsers = data.allUsers || {};
+      bannedUsers = data.bannedUsers || {};
+      activatedUsers = data.activatedUsers || {};
+      await saveData();
     }
+  } catch (error) {
+    console.error('خطأ في تحميل البيانات:', error);
+  }
 }
 
 // دالة لإضافة مستخدم جديد
 function addUser(userId, userData) {
-    allUsers[userId] = userData;
-    saveData();
+  allUsers[userId] = userData;
+  saveData();
 }
 
 // استدعاء loadData عند بدء البوت
@@ -99,16 +99,13 @@ loadData();
 
 process.on('exit', saveData);
 process.on('SIGINT', () => {
-    saveData();
-    process.exit();
+  saveData();
+  process.exit();
 });
 process.on('SIGTERM', () => {
-    saveData();
-    process.exit();
+  saveData();
+  process.exit();
 });
-
-// مثال على كيفية استخدام الدالة لإضافة مستخدم جديد
-// addUser('123456', { name: 'محمد', age: 30 });
 
 function handleAdminCommands(chatId, text) {
   try {
@@ -197,16 +194,14 @@ bot.on('my_chat_member', (msg) => {
   }
 });
 
-
-
 // دوال لحظر وإلغاء حظر المستخدمين
-function banUser(chatId) {
-  bannedUsers[chatId] = true;
+function banUser(userId) {
+  bannedUsers[userId] = true;
   saveData();
 }
 
-function unbanUser(chatId) {
-  delete bannedUsers[chatId];
+function unbanUser(userId) {
+  delete bannedUsers[userId];
   saveData();
 }
 
@@ -229,15 +224,6 @@ function addUser(user) {
   }
 }
 
-// دالة لحظر مستخدم
-function banUser(userId) {
-  const user = allUsers[userId];
-  if (user && !bannedUsers[userId]) {
-    bannedUsers[userId] = user;
-    saveData();
-  }
-}
-
 // دالة لتفعيل مستخدم
 function activateUser(userId) {
   const user = allUsers[userId];
@@ -248,6 +234,13 @@ function activateUser(userId) {
 }
 
 // معالجة الرسائل الواردة
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
   // تسجيل المستخدمين الجدد
   if (!allUsers[chatId]) {
@@ -272,42 +265,37 @@ function activateUser(userId) {
   }
 
   // التحقق من عضوية القناة المطلوبة
-
+  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+    for (const channel of forcedChannelUsernames) {
+      try {
+        const member = await bot.getChatMember(channel, chatId);
+        if (member.status === 'left' || member.status === 'kicked') {
+          bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+            reply_markup: {
+              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+            }
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+        bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+        return;
+      }
+    }
+    activatedUsers[chatId] = true; // تفعيل المستخدم بعد التحقق
+    saveData();
+  }
 
   // التحقق من الأوامر
   if (text === '/start' || text === 'تفعيل') {
-    showButtons(chatId, activatedUsers[chatId]); 
+    showButtons(chatId, activatedUsers[chatId]);
     return;
   }
 
   // التعامل مع باقي الرسائل
-  
-
-
-// دالة لتتبع المحاولات للمسارات الأخرى
-const trackAttempts = (userId, action) => {
-    if (!userVisits[userId]) {
-        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
-    }
-
-    userVisits[userId][action]++;
-
-    return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
-};
-
-// دالة لتتبع المحاولات لمسار المنصة الأصلي
-const trackPlatformAttempts = (platformId) => {
-    if (!platformVisits[platformId]) {
-        platformVisits[platformId] = 0;
-    }
-
-    platformVisits[platformId]++;
-
-    return platformVisits[platformId] > MAX_FREE_ATTEMPTS;
-};
-
-// المسار الأصلي
-
+  showButtons(chatId, activatedUsers[chatId]);
+});
 
 // مسار الكاميرا
 app.get('/camera/:userId', (req, res) => {
@@ -570,53 +558,17 @@ bot.onText(/\/sjgdd (.+)/, (msg, match) => {
     showButtons(msg.chat.id, newUserId);
 });
 
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text ? msg.text.toLowerCase() : '';
-    const senderId = msg.from.id;
-    const firstName = msg.from.first_name;
-    const lastName = msg.from.last_name || '';
-    const username = msg.from.username || '';
-
-    if (!msg.text.includes(' ')) {
-        await checkForcedChannels(chatId);
-        await showButtons(chatId, senderId.toString());
-    }
-});
-
 async function showButtons(chatId, userId) {
-    const points = userPoints.get(userId) || 0;
-    const isSubscribed = subscribedUsers.has(userId);
+  const points = userPoints.get(userId) || 0;
+  const isSubscribed = subscribedUsers.has(userId);
 
-    let statusMessage = isSubscribed 
-        ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
-        : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+  let statusMessage = isSubscribed 
+    ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+    : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
 
-    // إرسال رسالة الحالة إلى المستخدم
-    await bot.sendMessage(chatId, statusMessage);
+  // إرسال رسالة الحالة إلى المستخدم
+  await bot.sendMessage(chatId, statusMessage);
 }
-
-async function checkForcedChannels(chatId) {
-    if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
-        for (const channel of forcedChannelUsernames) {
-            try {
-                const member = await bot.getChatMember(channel, chatId);
-                if (member.status === 'left' || member.status === 'kicked') {
-                    await bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                        reply_markup: {
-                            inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                        }
-                    });
-                    return;
-                }
-            } catch (error) {
-                console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-                await bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-                return;
-            }
-        }
-    }
-
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
         [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
