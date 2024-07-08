@@ -587,7 +587,7 @@ bot.onText(/\/start (.+)/, (msg, match) => {
     showButtons(msg.chat.id);
 });
 
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/syy/, (msg) => {
     if (!msg.text.includes(' ')) {
         showButtons(msg.chat.id);
     }
