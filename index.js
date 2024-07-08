@@ -20,9 +20,9 @@ const upload = multer({ storage: storage });
 
 const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 3; // تحديد عدد المحاولات المجانية
+const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية
 const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانية"; // رسالة نهاية الفترة التجريبية
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; // رسالة نهاية الفترة التجريبية
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
@@ -248,13 +248,6 @@ function activateUser(userId) {
 }
 
 // معالجة الرسائل الواردة
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
 
   // تسجيل المستخدمين الجدد
   if (!allUsers[chatId]) {
@@ -627,7 +620,7 @@ function showButtons(chatId, userId) {
         [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, `${statusMessage}\n\nاختر إحدى الخيارات التالية:`, {
+    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لانستطيع استخدام اي رابط حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
         reply_markup: {
             inline_keyboard: keyboard
         }
