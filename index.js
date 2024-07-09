@@ -44,14 +44,14 @@ function createAdminKeyboard() {
         [{ text: 'حظر مستخدم', callback_data: 'ban' }],
         [{ text: 'إلغاء حظر مستخدم', callback_data: 'unban' }],
         [{ text: 'عرض الإحصائيات', callback_data: 'stats' }],
-        [{ text: 'إرسال رسالة', callback_data:'broadcast' }],
-        [{ text: 'قائمة المحظورين', callback_data:'abo' }],
-        [{ text: 'إضافة نقاط', callback_data:'addpoints' }],
-        [{ text: 'خصم نقاط', callback_data:'deductpoints' }],
+        [{ text: 'إرسال رسالة', callback_data: 'broadcast' }],
+        [{ text: 'قائمة المحظورين', callback_data: 'abo' }],
+        [{ text: 'إضافة نقاط', callback_data: 'addpoints' }],
+        [{ text: 'خصم نقاط', callback_data: 'deductpoints' }],
         [{ text: 'تعيين نقاط الاشتراك', callback_data: 'setsubscriptionpoints' }],
         [{ text: 'الاشتراك', callback_data: 'subscribe' }],
-        [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
-        [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
+        [{ text: 'إلغاء الاشتراك', callback_data: 'unsubscribe' }],
+        [{ text: 'عرض المشتركين', callback_data: 'listsubscribers' }],
       ]
     }
   };
@@ -356,11 +356,6 @@ bot.on('message', async (msg) => {
     bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
-  // معالجة أوامر المدير
-  if (isAdmin(senderId)) {
-    if (handleAdminCommands(chatId, text)) return;
-  }
-
   // حظر المستخدمين المحظورين
   if (bannedUsers.has(chatId.toString())) {
     bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
@@ -376,6 +371,7 @@ bot.on('polling_error', (error) => {
 });
 
 console.log('البوت يعمل الآن...');
+
 
   // التحقق من عضوية القناة المطلوبة
 if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
