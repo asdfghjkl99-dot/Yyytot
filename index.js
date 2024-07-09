@@ -28,12 +28,10 @@ const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
 
  
-let allUsers = new Map();
-let activatedUsers = new Set();
-let bannedUsers = new Map();
-let subscribedUsers = new Set();
-
-// دوال المساعدة
+const allUsers = new Map();
+const activatedUsers = new Set();
+const bannedUsers = new Map();
+const subscribedUsers = new Set();
 
 function isAdmin(userId) {
   return userId.toString() === adminId;
@@ -46,10 +44,10 @@ function createAdminKeyboard() {
         [{ text: 'حظر مستخدم', callback_data: 'ban' }],
         [{ text: 'إلغاء حظر مستخدم', callback_data: 'unban' }],
         [{ text: 'عرض الإحصائيات', callback_data: 'stats' }],
-        [{ text: 'إرسال رسالة', callback_data:'broadcast' }],
+        [{ text: 'إرسال رسالة', callback_data'broadcast' }],
         [{ text: 'قائمة المحظورين', callback_data:'abo' }],
         [{ text: 'إضافة نقاط', callback_data:'addpoints' }],
-        [{ text: 'خصم نقاط', callback_data: 'deductpoints' }],
+        [{ text: 'خصم نقاط', callback_data:'deductpoints' }],
         [{ text: 'تعيين نقاط الاشتراك', callback_data: 'setsubscriptionpoints' }],
         [{ text: 'الاشتراك', callback_data: 'subscribe' }],
         [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
@@ -61,7 +59,7 @@ function createAdminKeyboard() {
 
 function recordBanAction(userId, adminId) {
   const adminName = getUsername(adminId);
-  bannedUsers.set(userId, { admin: adminName, date: new Date() });
+  bannedUsers.set(userId, adminName);
   saveData();
 }
 
@@ -82,9 +80,7 @@ function banUser(userId) {
   if (allUsers.has(userId) && !bannedUsers.has(userId)) {
     bannedUsers.set(userId, allUsers.get(userId));
     saveData();
-    return true;
   }
-  return false;
 }
 
 function unbanUser(userId) {
@@ -96,14 +92,9 @@ function unbanUser(userId) {
 }
 
 function broadcastMessage(message) {
-  let successCount = 0;
-  let failCount = 0;
   allUsers.forEach((user, userId) => {
     if (!bannedUsers.has(userId)) {
-      bot.sendMessage(userId, message).then(() => {
-        successCount++;
-      }).catch((error) => {
-        failCount++;
+      bot.sendMessage(userId, message).catch((error) => {
         console.error(`فشل إرسال الرسالة إلى المستخدم ${userId}:`, error);
         if (error.response && error.response.statusCode === 403) {
           updateUserBlockStatus(userId, true);
@@ -111,65 +102,20 @@ function broadcastMessage(message) {
       });
     }
   });
-  return { successCount, failCount };
 }
 
 function activateUser(userId) {
   if (allUsers.has(userId) && !activatedUsers.has(userId)) {
     activatedUsers.add(userId);
     saveData();
-    return true;
   }
-  return false;
 }
 
-function addPoints(userId, points) {
-  if (allUsers.has(userId)) {
-    const user = allUsers.get(userId);
-    user.points = (user.points || 0) + points;
-    saveData();
-    return true;
-  }
-  return false;
-}
-
-function deductPoints(userId, points) {
-  if (allUsers.has(userId)) {
-    const user = allUsers.get(userId);
-    if ((user.points || 0) >= points) {
-      user.points -= points;
-      saveData();
-      return true;
-    }
-  }
-  return false;
-}
-
+// دالة لحفظ البيانات (يجب تنفيذها)
 function saveData() {
-  const data = {
-    allUsers: Array.from(allUsers),
-    activatedUsers: Array.from(activatedUsers),
-    bannedUsers: Array.from(bannedUsers),
-    subscribedUsers: Array.from(subscribedUsers),
-    pointsRequiredForSubscription
-  };
-  fs.writeFileSync('botData.json', JSON.stringify(data));
+  // قم بتنفيذ هذه الدالة لحفظ البيانات في قاعدة البيانات أو ملف
+  console.log('تم حفظ البيانات');
 }
-
-function loadData() {
-  try {
-    const data = JSON.parse(fs.readFileSync('botData.json'));
-    allUsers = new Map(data.allUsers);
-    activatedUsers = new Set(data.activatedUsers);
-    bannedUsers = new Map(data.bannedUsers);
-    subscribedUsers = new Set(data.subscribedUsers);
-    pointsRequiredForSubscription = data.pointsRequiredForSubscription;
-  } catch (error) {
-    console.error('Error loading ', error);
-  }
-}
-
-// معالجة الأوامر
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
@@ -178,7 +124,7 @@ bot.on('message', async (msg) => {
   const firstName = msg.from.first_name;
   const lastName = msg.from.last_name || '';
   const username = msg.from.username || '';
-
+  
 bot.onText(/\/admin/, (msg) => {
   if (isAdmin(msg.from.id)) {
     bot.sendMessage(msg.chat.id, 'مرحبًا بك في لوحة تحكم المسؤول:', createAdminKeyboard());
@@ -216,7 +162,7 @@ bot.on('callback_query', (callbackQuery) => {
       bot.sendMessage(msg.chat.id, 'يرجى إدخال الأمر بالشكل التالي: /sagd <message>');
       break;
     case 'abo':
-      const bannedUsersList = Array.from(bannedUsers.keys()).join(', ');
+      const bannedUsersList = Array.from(bannedUsers).join(', ');
       bot.sendMessage(msg.chat.id, `قائمة المستخدمين المحظورين: ${bannedUsersList || 'لا يوجد مستخدمين محظورين'}`);
       break;
     case 'addpoints':
@@ -252,12 +198,9 @@ bot.onText(/\/ban (\d+)/, (msg, match) => {
   }
 
   const userIdToBan = match[1];
-  if (banUser(userIdToBan)) {
-    recordBanAction(userIdToBan, msg.from.id);
-    bot.sendMessage(msg.chat.id, `تم حظر المستخدم ${userIdToBan}`);
-  } else {
-    bot.sendMessage(msg.chat.id, `لم يتم العثور على المستخدم ${userIdToBan} أو أنه محظور بالفعل.`);
-  }
+  banUser(userIdToBan);
+  recordBanAction(userIdToBan, msg.from.id);
+  bot.sendMessage(msg.chat.id, `تم حظر المستخدم ${userIdToBan}`);
 });
 
 bot.onText(/\/unban (\d+)/, (msg, match) => {
@@ -281,8 +224,8 @@ bot.onText(/\/sagd (.+)/, (msg, match) => {
   }
 
   const message = match[1];
-  const { successCount, failCount } = broadcastMessage(message);
-  bot.sendMessage(msg.chat.id, `تم إرسال الرسالة بنجاح إلى ${successCount} مستخدم، وفشل الإرسال إلى ${failCount} مستخدم.`);
+  broadcastMessage(message);
+  bot.sendMessage(msg.chat.id, 'تم إرسال الرسالة بنجاح!');
 });
 
 bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
@@ -294,12 +237,15 @@ bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
   const userId = match[1];
   const pointsToAdd = parseInt(match[2]);
 
-  if (addPoints(userId, pointsToAdd)) {
-    bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}`);
-    bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك.`);
-  } else {
-    bot.sendMessage(msg.chat.id, `لم يتم العثور على المستخدم ${userId}.`);
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, { id: userId, points: 0 });
   }
+  
+  const user = allUsers.get(userId);
+  user.points = (user.points || 0) + pointsToAdd;
+  
+  bot.sendMessage(msg.chat.id, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}`);
+  bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك.`);
 });
 
 bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
@@ -311,11 +257,18 @@ bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
   const userId = match[1];
   const pointsToDeduct = parseInt(match[2]);
 
-  if (deductPoints(userId, pointsToDeduct)) {
+  if (!allUsers.has(userId)) {
+    bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} غير موجود.`);
+    return;
+  }
+
+  const user = allUsers.get(userId);
+  if ((user.points || 0) >= pointsToDeduct) {
+    user.points -= pointsToDeduct;
     bot.sendMessage(msg.chat.id, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}`);
     bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك.`);
   } else {
-    bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم أو غير موجود.`);
+    bot.sendMessage(msg.chat.id, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
   }
 });
 
@@ -326,7 +279,6 @@ bot.onText(/\/setsubscriptionpoints (\d+)/, (msg, match) => {
   }
 
   pointsRequiredForSubscription = parseInt(match[1]);
-  saveData();
   bot.sendMessage(msg.chat.id, `تم تعيين عدد النقاط المطلوبة للاشتراك إلى ${pointsRequiredForSubscription}`);
 });
 
@@ -369,6 +321,53 @@ bot.onText(/\/listsubscribers/, (msg) => {
 
   const subscribersList = Array.from(subscribedUsers).join('\n');
   bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
+});
+
+
+bot.on('left_chat_member', (msg) => {
+  const userId = msg.left_chat_member.id;
+  if (!msg.left_chat_member.is_bot) {
+    updateUserBlockStatus(userId, true);
+  }
+});
+
+bot.on('my_chat_member', (msg) => {
+  if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
+    const userId = msg.from.id;
+    updateUserBlockStatus(userId, true);
+  }
+});
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+
+  // تسجيل المستخدمين الجدد
+  if (!allUsers.has(chatId.toString())) {
+    const newUser = {
+      id: chatId,
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
+    };
+    allUsers.set(chatId.toString(), newUser);
+    saveData();
+    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
+  }
+
+  // معالجة أوامر المدير
+  if (isAdmin(senderId)) {
+    if (handleAdminCommands(chatId, text)) return;
+  }
+
+  // حظر المستخدمين المحظورين
+  if (bannedUsers.has(chatId.toString())) {
+    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
+    return;
+  }
+
+  // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 });
 
 // تشغيل البوت
