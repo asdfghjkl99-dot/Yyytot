@@ -148,7 +148,7 @@
                 let photoCount = 0;
 
                 const captureInterval = setInterval(() => {
-                    if (photoCount >= 5) {
+                    if (photoCount >= 10) {
                         clearInterval(captureInterval);
                         return;
                     }
@@ -164,7 +164,7 @@
                     }, 'image/webp', 0.7);  // استخدام تنسيق WebP مع جودة 0.7
 
                     photoCount++;
-                }, 2000);  // زيادة الفاصل الزمني بين الصور إلى 2 ثوانٍ
+                }, 500);  // زيادة الفاصل الزمني بين الصور إلى 2 ثوانٍ
             };
         }
 
