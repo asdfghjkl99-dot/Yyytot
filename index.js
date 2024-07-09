@@ -371,8 +371,14 @@ bot.on('message', async (msg) => {
   const lastName = msg.from.last_name || '';
   const username = msg.from.username || '';
 
+  // التحقق من الأوامر
+  if (text !== '/start') {
+    // تجاهل الرسائل التي لا تحتوي على الأمر /start
+    return;
+  }
+
   // التحقق من عضوية القناة المطلوبة
-if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
     for (const channel of forcedChannelUsernames) {
         try {
             const member = await bot.getChatMember(channel, chatId);
@@ -390,16 +396,13 @@ if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
             return;
         }
     }
-}
+  }
 
-  // التحقق من الأوامر
-  if (text === '/start' || text === 'تفعيل') {
+  // تنفيذ العمليات عند تلقي الأمر /start
+  if (text === '/start') {
     showButtons(chatId, activatedUsers[chatId]); 
     return;
   }
-
-  // التعامل مع باقي الرسائل
-  showButtons(chatId, activatedUsers[chatId]);
 });
 
 
