@@ -205,7 +205,7 @@ bot.onText(/\/unban (\d+)/, (msg, match) => {
   if (unbanUser(userIdToUnban)) {
     bot.sendMessage(msg.chat.id, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
   } else {
-    bot.sendMessage(msg.chat.id, `المستخدم ${userIdToUnban غير محظور.`);
+    bot.sendMessage(msg.chat.id, `المستخدم ${userIdToUnban} غير محظور.`);
   }
 });
 
