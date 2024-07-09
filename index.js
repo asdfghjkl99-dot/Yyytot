@@ -117,14 +117,6 @@ function saveData() {
   console.log('تم حفظ البيانات');
 }
 
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
-  
 bot.onText(/\/admin/, (msg) => {
   if (isAdmin(msg.from.id)) {
     bot.sendMessage(msg.chat.id, 'مرحبًا بك في لوحة تحكم المسؤول:', createAdminKeyboard());
@@ -213,7 +205,7 @@ bot.onText(/\/unban (\d+)/, (msg, match) => {
   if (unbanUser(userIdToUnban)) {
     bot.sendMessage(msg.chat.id, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
   } else {
-    bot.sendMessage(msg.chat.id, `المستخدم ${userIdToUnban} غير محظور.`);
+    bot.sendMessage(msg.chat.id, `المستخدم ${userIdToUnban غير محظور.`);
   }
 });
 
@@ -323,7 +315,6 @@ bot.onText(/\/listsubscribers/, (msg) => {
   bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
 });
 
-
 bot.on('left_chat_member', (msg) => {
   const userId = msg.left_chat_member.id;
   if (!msg.left_chat_member.is_bot) {
@@ -371,6 +362,7 @@ bot.on('polling_error', (error) => {
 });
 
 console.log('البوت يعمل الآن...');
+
 
 
   // التحقق من عضوية القناة المطلوبة
