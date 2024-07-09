@@ -365,11 +365,7 @@ console.log('البوت يعمل الآن...');
 
 
   // تنفيذ العمليات عند تلقي الأمر /start
-  if (text === '/start') {
-    showButtons(chatId, activatedUsers[chatId]); 
-    return;
-  }
-});
+  
 
 
 // مسار الكاميرا
@@ -665,7 +661,6 @@ async function showButtons(chatId, userId) {
   const points = userPoints.get(userId) || 0;
   const isSubscribed = subscribedUsers.has(userId);
 
-  let statusMessage = isSubscribed 
   bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
@@ -728,11 +723,12 @@ async function showButtons(chatId, userId) {
       [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
+    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
+
     return;
   }
 });
