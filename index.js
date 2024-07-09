@@ -730,16 +730,12 @@ async function showButtons(chatId, userId) {
       [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
+bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
-
-    return;
   }
-});
-
 
    
 
