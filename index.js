@@ -5,7 +5,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
-const TinyURL = require('tinyurl');
+
 
 const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
