@@ -21,8 +21,7 @@ const upload = multer({ storage: storage });
 
 const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية
-const subscribedUsers = new Set(); // مجموعة المستخدمين المشتركين
+const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية // مجموعة المستخدمين المشتركين
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; // رسالة نهاية الفترة التجريبية
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
