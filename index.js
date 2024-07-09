@@ -363,7 +363,13 @@ bot.on('polling_error', (error) => {
 
 console.log('البوت يعمل الآن...');
 
-
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
   // التحقق من عضوية القناة المطلوبة
 if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
