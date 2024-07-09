@@ -44,7 +44,7 @@ function createAdminKeyboard() {
         [{ text: 'حظر مستخدم', callback_data: 'ban' }],
         [{ text: 'إلغاء حظر مستخدم', callback_data: 'unban' }],
         [{ text: 'عرض الإحصائيات', callback_data: 'stats' }],
-        [{ text: 'إرسال رسالة', callback_data'broadcast' }],
+        [{ text: 'إرسال رسالة', callback_data:'broadcast' }],
         [{ text: 'قائمة المحظورين', callback_data:'abo' }],
         [{ text: 'إضافة نقاط', callback_data:'addpoints' }],
         [{ text: 'خصم نقاط', callback_data:'deductpoints' }],
