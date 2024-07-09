@@ -171,18 +171,13 @@ function loadData() {
 
 // معالجة الأوامر
 
-bot.onText(/\/start/, (msg) => {
+bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'مرحبًا بك في البوت!');
-  allUsers.set(chatId.toString(), { 
-    id: chatId, 
-    username: msg.from.username,
-    firstName: msg.from.first_name,
-    lastName: msg.from.last_name || '',
-    points: 0
-  });
-  saveData();
-});
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
 
 bot.onText(/\/admin/, (msg) => {
   if (isAdmin(msg.from.id)) {
