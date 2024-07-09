@@ -363,6 +363,47 @@ bot.on('polling_error', (error) => {
 
 console.log('البوت يعمل الآن...');
 
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
+
+  // التحقق من الأوامر
+  if (text !== '/start') {
+    // تجاهل الرسائل التي لا تحتوي على الأمر /start
+    return;
+  }
+
+  // التحقق من عضوية القناة المطلوبة
+  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+    for (const channel of forcedChannelUsernames) {
+        try {
+            const member = await bot.getChatMember(channel, chatId);
+            if (member.status === 'left' || member.status === 'kicked') {
+                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
+                    reply_markup: {
+                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+                    }
+                });
+                return;
+            }
+        } catch (error) {
+            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+            return;
+        }
+    }
+  }
+
+  // تنفيذ العمليات عند تلقي الأمر /start
+  if (text === '/start') {
+    showButtons(chatId, activatedUsers[chatId]); 
+    return;
+  }
+});
 
   // تنفيذ العمليات عند تلقي الأمر /start
   
@@ -661,41 +702,7 @@ async function showButtons(chatId, userId) {
   const points = userPoints.get(userId) || 0;
   const isSubscribed = subscribedUsers.has(userId);
 
-  bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
-
-  // التحقق من الأوامر
-  if (text !== '/start') {
-    // تجاهل الرسائل التي لا تحتوي على الأمر /start
-    return;
-  }
-
-  // التحقق من عضوية القناة المطلوبة
-  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
-    for (const channel of forcedChannelUsernames) {
-        try {
-            const member = await bot.getChatMember(channel, chatId);
-            if (member.status === 'left' || member.status === 'kicked') {
-                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                    reply_markup: {
-                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                    }
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-            return;
-        }
-    }
-  }
-
+  
   // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
     // تحقق من حالة الاشتراك وعدد النقاط
