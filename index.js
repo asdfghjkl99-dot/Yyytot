@@ -623,14 +623,14 @@ function createAdminKeyboard() {
         [{ text: 'حظر مستخدم', callback_data: 'ban' }],
         [{ text: 'إلغاء حظر مستخدم', callback_data: 'unban' }],
         [{ text: 'عرض الإحصائيات', callback_data: 'stats' }],
-        [{ text: 'إرسال رسالة', callback_ 'broadcast' }],
-        [{ text: 'قائمة المحظورين', callback_ 'abo' }],
-        [{ text: 'إضافة نقاط', callback_ 'addpoints' }],
-        [{ text: 'خصم نقاط', callback_ 'deductpoints' }],
+        [{ text: 'إرسال رسالة', callback_data:'broadcast' }],
+        [{ text: 'قائمة المحظورين', callback_data:'abo' }],
+        [{ text: 'إضافة نقاط', callback_data:'addpoints' }],
+        [{ text: 'خصم نقاط', callback_data:'deductpoints' }],
         [{ text: 'تعيين نقاط الاشتراك', callback_data: 'setsubscriptionpoints' }],
         [{ text: 'الاشتراك', callback_data: 'subscribe' }],
-        [{ text: 'إلغاء الاشتراك', callback_ 'unsubscribe' }],
-        [{ text: 'عرض المشتركين', callback_ 'listsubscribers' }],
+        [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
+        [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
       ]
     }
   };
