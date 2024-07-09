@@ -800,7 +800,6 @@ bot.on('callback_query', async (query) => {
     const shortBaseUrl = await shortenUrl(baseUrl);
     
     // Use shortBaseUrl here if needed
-});
 
     let url;
     switch (query.data) {
