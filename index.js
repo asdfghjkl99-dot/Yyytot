@@ -696,7 +696,7 @@ bot.on('message', async (msg) => {
   // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
     // تحقق من حالة الاشتراك وعدد النقاط
-    async function showButtons(chatId, userId) {
+    
   const points = userPoints.get(userId) || 0;
   const isSubscribed = subscribedUsers.has(userId);// تأكد من أن لديك دالة للتحقق من الاشتراك
 
