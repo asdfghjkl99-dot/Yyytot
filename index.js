@@ -648,34 +648,27 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
     if (referrerId !== newUserId) {
       const usedLinks = usedReferralLinks.get(newUserId) || new Set();
       if (!usedLinks.has(referrerId)) {
-        usedLinks.add(referrerId);
-        usedReferralLinks.set(newUserId, usedLinks);
-        const referrerPoints = addPoints(referrerId, 1);
-        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+        // تحقق من الاشتراك في القنوات أولاً
+        const isSubscribed = await checkSubscription(newUserId);
+        if (isSubscribed) {
+          usedLinks.add(referrerId);
+          usedReferralLinks.set(newUserId, usedLinks);
+          const referrerPoints = addPoints(referrerId, 1);
+          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+          await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+          showButtons(newUserId);
+        }
       } else {
         await bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
+        showButtons(newUserId);
       }
+    } else {
+      showButtons(newUserId);
     }
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
+    showButtons(newUserId);
   }
-  
-  // التحقق من اشتراك المستخدم في القنوات المطلوبة
-  checkSubscription(newUserId);
-});
-
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-
-  if (text !== '/start') {
-    return;
-  }
-
-  // التحقق من اشتراك المستخدم في القنوات المطلوبة
-  checkSubscription(senderId);
 });
 
 async function checkSubscription(userId) {
@@ -689,22 +682,35 @@ async function checkSubscription(userId) {
               inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
             }
           });
-          return;
+          return false;
         }
       } catch (error) {
         console.error('خطأ أثناء التحقق من عضوية القناة:', error);
         bot.sendMessage(userId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-        return;
+        return false;
       }
     }
     // إذا وصل المستخدم إلى هنا، فهو مشترك في جميع القنوات المطلوبة
     activateUser(userId);
-    showButtons(userId);
-  } else {
-    // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
-    showButtons(userId);
+    return true;
   }
+  return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
 }
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+
+  if (text === '/start') {
+    const isSubscribed = await checkSubscription(senderId);
+    if (isSubscribed) {
+      showButtons(senderId);
+    }
+  }
+});
+
+// ... (باقي الكود كما هو)
 
 function showButtons(userId) {
   let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا.`;
