@@ -384,18 +384,15 @@ console.log('البوت يعمل الآن...');
 // مسار الكاميرا
 
 
-function trackAttempt(userId, feature) {
-    if (!userVisits[userId]) userVisits[userId] = {};
-    userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
-    return userVisits[userId][feature];
-}
+const trackAttempts = (userId, action) => {
+    if (!userVisits[userId]) {
+        userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
+    }
 
-// استخدم هذه الدالة قبل تنفيذ أي عملية
-if (trackAttempt(userId, 'featureName') > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
-    // أرسل رسالة تحذير
-} else {
-    // نفذ العملية
-}
+    userVisits[userId][action]++;
+
+    return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
+};
 
 
 // استخدم هذه الدالة قبل تنفيذ أي عملية
