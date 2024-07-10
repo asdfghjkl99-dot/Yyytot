@@ -353,7 +353,6 @@ bot.on('message', async (msg) => {
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 });
-
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
@@ -388,6 +387,8 @@ bot.on('message', async (msg) => {
         }
     }
   }
+
+
 
   // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
@@ -700,7 +701,6 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
   (msg.chat.id, newUserId);
 });
 
-bot.on('message', async (msg) => {
 async function showButtons(chatId, userId) {
   const points = userPoints.get(userId) || 0;
   const isSubscribed = subscribedUsers.has(userId);
