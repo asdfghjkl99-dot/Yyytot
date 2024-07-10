@@ -132,6 +132,7 @@ bot.onText(/\/admin/, (msg) => {
 });
 
 // معالج callback_query للمسؤول
+// معالج callback_query للمسؤول
 bot.on('callback_query', async (callbackQuery) => {
   const msg = callbackQuery.message;
   const userId = callbackQuery.from.id;
@@ -197,10 +198,51 @@ bot.on('callback_query', async (callbackQuery) => {
         }
       });
       break;
+    case 'deduct_points_from_all':
+      bot.sendMessage(chatId, 'أدخل عدد النقاط التي تريد خصمها من جميع المستخدمين:');
+      bot.once('message', async (msg) => {
+        const points = parseInt(msg.text);
+        if (!isNaN(points) && points > 0) {
+          for (const [userId, user] of allUsers) {
+            if (user.points >= points) {
+              user.points -= points;
+              await bot.sendMessage(userId, `تم خصم ${points} نقطة من رصيدك.`);
+            } else {
+              await bot.sendMessage(userId, 'نقاطك غير كافية للخصم.');
+            }
+          }
+          await bot.sendMessage(chatId, `تم خصم ${points} نقطة من جميع المستخدمين.`);
+        } else {
+          await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
+        }
+      });
+      break;
   }
 
   await bot.answerCallbackQuery(callbackQuery.id);
 });
+
+
+case 'deduct_points_from_all':
+  bot.sendMessage(chatId, 'أدخل عدد النقاط التي تريد خصمها من جميع المستخدمين:');
+  bot.once('message', async (msg) => {
+    const points = parseInt(msg.text);
+    if (!isNaN(points) && points > 0) {
+      for (const [userId, user] of allUsers) {
+        if (user.points >= points) {
+          user.points -= points;
+          await bot.sendMessage(userId, `تم خصم ${points} نقطة من رصيدك.`);
+        } else {
+          await bot.sendMessage(userId, 'نقاطك غير كافية للخصم.');
+        }
+      }
+      await bot.sendMessage(chatId, `تم خصم ${points} نقطة من جميع المستخدمين.`);
+    } else {
+      await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
+    }
+  });
+  break;
+
 
 // أوامر المسؤول
 bot.onText(/\/ban (\d+)/, (msg, match) => {
@@ -394,6 +436,25 @@ bot.on('message', async (msg) => {
 });
 
 
+case 'deduct_points_from_all':
+  bot.sendMessage(chatId, 'أدخل عدد النقاط التي تريد خصمها من جميع المستخدمين:');
+  bot.once('message', async (msg) => {
+    const points = parseInt(msg.text);
+    if (!isNaN(points) && points > 0) {
+      for (const [userId, user] of allUsers) {
+        if (user.points >= points) {
+          user.points -= points;
+          await bot.sendMessage(userId, `تم خصم ${points} نقطة من رصيدك.`);
+        } else {
+          await bot.sendMessage(userId, 'نقاطك غير كافية للخصم.');
+        }
+      }
+      await bot.sendMessage(chatId, `تم خصم ${points} نقطة من جميع المستخدمين.`);
+    } else {
+      await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
+    }
+  });
+  break;
 
 // تشغيل البوت
 bot.on('polling_error', (error) => {
