@@ -805,7 +805,7 @@ bot.on('callback_query', (callbackQuery) => {
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
             }
     }
-}
+});
 
 
 bot.on('callback_query', (callbackQuery) => {
