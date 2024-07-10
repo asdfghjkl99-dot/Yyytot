@@ -26,6 +26,20 @@ const freeTrialEndedMessage = "انتهت فترة التجربة المجاني
 const adminId = '7130416076';
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
+const userVisits = {};
+
+function trackAttempt(userId, feature) {
+    if (!userVisits[userId]) userVisits[userId] = {};
+    userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
+    return userVisits[userId][feature];
+}
+
+// استخدم هذه الدالة قبل تنفيذ أي عملية
+if (trackAttempt(userId, 'featureName') > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
+    // أرسل رسالة تحذير
+} else {
+    // نفذ العملية
+}
 
  
 const allUsers = new Map();
@@ -763,20 +777,6 @@ bot.on('callback_query', async (callbackQuery) => {
     }
 });
 
-const userVisits = {};
-
-function trackAttempt(userId, feature) {
-    if (!userVisits[userId]) userVisits[userId] = {};
-    userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
-    return userVisits[userId][feature];
-}
-
-// استخدم هذه الدالة قبل تنفيذ أي عملية
-if (trackAttempt(userId, 'featureName') > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
-    // أرسل رسالة تحذير
-} else {
-    // نفذ العملية
-}
 
 
 const TinyURL = require('tinyurl');
