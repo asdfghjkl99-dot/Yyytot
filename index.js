@@ -715,6 +715,7 @@ bot.on('message', async (msg) => {
     return;
   }
 });
+  const points = userPoints.get(userId) || 0;
 
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
