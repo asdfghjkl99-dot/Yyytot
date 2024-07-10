@@ -176,8 +176,6 @@ bot.on('callback_query', (callbackQuery) => {
       const subscribersList = Array.from(subscribedUsers).join('\n');
       bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
       break;
-    default:
-      bot.sendMessage(msg.chat.id, 'أمر غير معروف.');
   }
 
   bot.answerCallbackQuery(callbackQuery.id);
