@@ -58,6 +58,7 @@ function createAdminKeyboard() {
         [{ text: 'الاشتراك', callback_data: 'subscribe' }],
         [{ text: 'إلغاء الاشتراك', callback_data: 'unsubscribe' }],
        [{ text: 'إرسال نقاط للجميع', callback_data:'send_points_to_all' }],
+     { text: 'خصم نقاط من الجميع', callback_data: 'deduct_points_from_all' },   
         [{ text: 'عرض المشتركين', callback_data: 'listsubscribers' }],
       ]
     }
