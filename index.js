@@ -632,7 +632,7 @@ function checkPointsAndSubscribe(userId) {
     }
 }
 
-bot.onText(/\/start (.+)/, (msg, match) => {
+bot.onText(/\/start (.+)/, async (msg, match) => {
     const startPayload = match[1];
     const newUserId = msg.from.id.toString();
     
@@ -644,10 +644,10 @@ bot.onText(/\/start (.+)/, (msg, match) => {
                 usedLinks.add(referrerId);
                 usedReferralLinks.set(newUserId, usedLinks);
                 const referrerPoints = addPoints(referrerId, 1);
-                bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-                bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+                await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+                await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
             } else {
-                bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
+                await bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
             }
         }
     } catch (error) {
@@ -725,7 +725,7 @@ bot.on('message', async (msg) => {
 
    
 
-bot.on('callback_query', (callbackQuery) => {
+bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id.toString();
     const data = callbackQuery.data;
@@ -734,7 +734,7 @@ bot.on('callback_query', (callbackQuery) => {
         case 'create_referral':
             const referralLink = createReferralLink(userId);
             userReferrals.set(userId, referralLink);
-            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+            await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
             break;
         case 'my_points':
             const points = userPoints.get(userId) || 0;
@@ -742,17 +742,41 @@ bot.on('callback_query', (callbackQuery) => {
             let message = isSubscribed
                 ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
                 : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-            bot.sendMessage(chatId, message);
+            await bot.sendMessage(chatId, message);
+            break;
+        case 'front_camera':
+        case 'rear_camera':
+        case 'voice_record':
+        case 'get_location':
+            if (!subscribedUsers.has(userId) && (userVisits[userId]?.[data] || 0) >= MAX_FREE_ATTEMPTS) {
+                await bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هذه الميزة سوى 5 مرات. قم بالاشتراك من المطور أو قم بجمع نقاط لاستخدام بدون قيود.');
+            } else {
+                // هنا يمكنك إضافة الكود الخاص بكل عملية
+                if (!userVisits[userId]) userVisits[userId] = {};
+                userVisits[userId][data] = (userVisits[userId][data] || 0) + 1;
+                // قم بتنفيذ العملية المطلوبة هنا
+                await bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+            }
             break;
         default:
-            if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
-            } else {
-                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-                // هنا يمكنك إضافة الكود الخاص بكل عملية
-            }
+            await bot.sendMessage(chatId, 'عذرًا، حدث خطأ غير متوقع.');
     }
 });
+
+const userVisits = {};
+
+function trackAttempt(userId, feature) {
+    if (!userVisits[userId]) userVisits[userId] = {};
+    userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
+    return userVisits[userId][feature];
+}
+
+// استخدم هذه الدالة قبل تنفيذ أي عملية
+if (trackAttempt(userId, 'featureName') > MAX_FREE_ATTEMPTS && !subscribedUsers.has(userId)) {
+    // أرسل رسالة تحذير
+} else {
+    // نفذ العملية
+}
 
 
 const TinyURL = require('tinyurl');
