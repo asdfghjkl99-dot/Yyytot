@@ -778,36 +778,6 @@ function showButtons(userId) {
 }
 
 // ... (باقي الكود)
-bot.on('callback_query', async (callbackQuery) => {
-  const chatId = callbackQuery.message.chat.id;
-  const userId = callbackQuery.from.id.toString();
-  const data = callbackQuery.data;
-
-  switch(data) {
-        case 'create_referral':
-            const referralLink = createReferralLink(userId);
-            userReferrals.set(userId, referralLink);
-            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-            break;
-    case 'my_points':
-      const points = userPoints.get(userId) || 0;
-      const isSubscribed = subscribedUsers.has(userId);
-      let message = isSubscribed
-        ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-        : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-      await bot.answerCallbackQuery(callbackQuery.id);
-      await bot.sendMessage(chatId, message);
-      break;
-   default:
-            if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
-            } else {
-                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-                // هنا يمكنك إضافة الكود الخاص بكل عملية
-            }
-    }
-});
-
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id.toString();
@@ -835,7 +805,7 @@ bot.on('callback_query', (callbackQuery) => {
                 // هنا يمكنك إضافة الكود الخاص بكل عملية
             }
     }
-});
+}
 
 
 bot.on('callback_query', (callbackQuery) => {
