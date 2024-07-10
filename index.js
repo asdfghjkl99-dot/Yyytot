@@ -654,7 +654,7 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
   }
-  showButtons(msg.chat.id, newUserId);
+  (msg.chat.id, newUserId);
 });
 
 bot.on('message', async (msg) => {
