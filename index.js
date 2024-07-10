@@ -696,8 +696,9 @@ bot.on('message', async (msg) => {
   // تنفيذ العمليات عند تلقي الأمر /start
   if (text === '/start') {
     // تحقق من حالة الاشتراك وعدد النقاط
-    const points = getUserPoints(chatId); // تأكد من أن لديك دالة للحصول على النقاط
-    const isSubscribed = checkSubscription(chatId); // تأكد من أن لديك دالة للتحقق من الاشتراك
+    async function showButtons(chatId, userId) {
+  const points = userPoints.get(userId) || 0;
+  const isSubscribed = subscribedUsers.has(userId);// تأكد من أن لديك دالة للتحقق من الاشتراك
 
     let statusMessage = isSubscribed 
       ? 'أنت مشترك في البوت ويمكنك استخدامه بدون قيود.'
