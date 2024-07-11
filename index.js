@@ -261,7 +261,7 @@ case 'unban':
       await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
     }
   });
-  break;;
+  break;
   }
 
   await bot.answerCallbackQuery(callbackQuery.id);
