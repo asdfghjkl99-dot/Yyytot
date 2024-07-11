@@ -331,7 +331,7 @@ bot.on('message', async (msg) => {
       username: msg.from.username || ''
     };
     allUsers.set(chatId.toString(), newUser);
-    saveData();
+    
     bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
