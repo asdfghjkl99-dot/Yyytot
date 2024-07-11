@@ -637,31 +637,25 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
   const newUserId = msg.from.id.toString();
   
   try {
-    const referrerId = Buffer.from(startPayload, 'base64').toString();
+  const referrerId = Buffer.from(startPayload, 'base64').toString();
     if (referrerId !== newUserId) {
       const usedLinks = usedReferralLinks.get(newUserId) || new Set();
       if (!usedLinks.has(referrerId)) {
         // تحقق من الاشتراك في القنوات أولاً
         const isSubscribed = await checkSubscription(newUserId);
-        if (isSubscribed) {
-          usedLinks.add(referrerId);
-          usedReferralLinks.set(newUserId, usedLinks);
-          const referrerPoints = addPoints(referrerId, 1);
-          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-          await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
-          showButtons(newUserId);
-        }
-      } else {
-        await bot.sendMessage(newUserId, 'مرحبًا بك مرة أخرى! لقد استخدمت هذا الرابط من قبل.');
-        showButtons(newUserId);
+        if (!usedLinks.has(referrerId)) {
+        usedLinks.add(referrerId);
+        usedReferralLinks.set(newUserId, usedLinks);
+        const referrerPoints = addPointsToUser(referrerId, 1);
+        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
       }
-    } else {
-      showButtons(newUserId);
     }
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
-    showButtons(newUserId);
   }
+  
+  showButtons(newUserId);
 });
 
 async function checkSubscription(userId) {
