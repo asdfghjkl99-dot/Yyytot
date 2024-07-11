@@ -605,6 +605,7 @@ function deductPointsFromUser(userId, points) {
   }
   return false;
 }
+
 function checkAndSubscribe(userId) {
   const points = userPoints.get(userId) || 0;
   if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
@@ -630,31 +631,32 @@ function shortenUrl(url) {
   });
 }
 
-// ... (الكود السابق)
-
 bot.onText(/\/start (.+)/, async (msg, match) => {
   const startPayload = match[1];
   const newUserId = msg.from.id.toString();
   
   try {
-  const referrerId = Buffer.from(startPayload, 'base64').toString();
+    const referrerId = Buffer.from(startPayload, 'base64').toString();
     if (referrerId !== newUserId) {
       const usedLinks = usedReferralLinks.get(newUserId) || new Set();
       if (!usedLinks.has(referrerId)) {
         // تحقق من الاشتراك في القنوات أولاً
         const isSubscribed = await checkSubscription(newUserId);
-        if (!usedLinks.has(referrerId)) {
-        usedLinks.add(referrerId);
-        usedReferralLinks.set(newUserId, usedLinks);
-        const referrerPoints = addPointsToUser(referrerId, 1);
-        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+        if (isSubscribed) {
+          usedLinks.add(referrerId);
+          usedReferralLinks.set(newUserId, usedLinks);
+          const referrerPoints = addPointsToUser(referrerId, 1);
+          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+          await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+        }
+      } else {
+        await bot.sendMessage(newUserId, 'لقد استخدمت هذا الرابط من قبل.');
       }
     }
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
-    showButtons(newUserId);
   }
+  showButtons(newUserId);
 });
 
 async function checkSubscription(userId) {
@@ -677,11 +679,11 @@ async function checkSubscription(userId) {
       }
     }
     // إذا وصل المستخدم إلى هنا، فهو مشترك في جميع القنوات المطلوبة
-    
+    activatedUsers.add(userId);
     return true;
   }
   return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
-}
+  }
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
