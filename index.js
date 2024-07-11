@@ -43,7 +43,7 @@ function isAdmin(userId) {
 }
 
 // دالة لإضافة نقاط لمستخدم معين
-ffunction addPointsToUser(userId, points) {
+function addPointsToUser(userId, points) {
   const currentPoints = userPoints.get(userId) || 0;
   const newPoints = currentPoints + points;
   userPoints.set(userId, newPoints);
