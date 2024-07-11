@@ -594,11 +594,14 @@ function createReferralLink(userId) {
 }
 
 function addPointsToUser(userId, points) {
-  const currentPoints = userPoints.get(userId) || 0;
-  const newPoints = currentPoints + points;
-  userPoints.set(userId, newPoints);
-  checkAndSubscribe(userId);
-  return newPoints;
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, { id: userId, points: 0 });
+  }
+  const user = allUsers.get(userId);
+  user.points = (user.points || 0) + points;
+  userPoints.set(userId, user.points);
+  checkSubscriptionStatus(userId);
+  return user.points;
 }
 
 function deductPointsFromUser(userId, points) {
@@ -611,11 +614,22 @@ function deductPointsFromUser(userId, points) {
   return false;
 }
 
-function checkAndSubscribe(userId) {
-  const points = userPoints.get(userId) || 0;
-  if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
-    subscribedUsers.add(userId);
-    bot.sendMessage(userId, 'مبروك! لقد جمعت نقاط كافية. تم اشتراكك في البوت وتستطيع الآن استخدام البوت بدون قيود.');
+nction checkSubscriptionStatus(userId) {
+  const user = allUsers.get(userId);
+  if (!user) return false;
+  
+  if (user.points >= pointsRequiredForSubscription) {
+    if (!subscribedUsers.has(userId)) {
+      subscribedUsers.add(userId);
+      bot.sendMessage(userId, 'تهانينا! لقد تم اشتراكك تلقائيًا بسبب وصول نقاطك للحد المطلوب.');
+    }
+    return true;
+  } else {
+    if (subscribedUsers.has(userId)) {
+      subscribedUsers.delete(userId);
+      bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
+    }
+    return false;
   }
 }
 
