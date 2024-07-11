@@ -38,10 +38,9 @@ const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
 
 // دالة للتحقق من المسؤول
+const adminId = '7130416076';
 function isAdmin(userId) {
-  // قم بتعديل هذه القائمة لتشمل معرفات المسؤولين
-  const adminIds = ['7130416076', '6716608590'];
-  return adminIds.includes(userId.toString());
+  return userId.toString() === adminId;
 }
 
 // دالة لإضافة نقاط لمستخدم معين
