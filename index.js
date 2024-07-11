@@ -336,15 +336,14 @@ bot.on('message', async (msg) => {
     bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
-  // حظر المستخدمين المحظورين
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id.toString();
-
-  if (bannedUsers.has(userId)) {
-    bot.sendMessage(chatId, 'عذرًا، أنت محظور من استخدام هذا البوت. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.');
+  if (bannedUsers.has(chatId.toString())) {
+    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
     return;
   }
+
+  // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
+});
+
 
   // باقي الكود لمعالجة الرسائل
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
