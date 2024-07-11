@@ -44,18 +44,23 @@ function isAdmin(userId) {
 
 // دالة لإضافة نقاط لمستخدم معين
 function addPointsToUser(userId, points) {
-  const currentPoints = userPoints.get(userId) || 0;
-  const newPoints = currentPoints + points;
-  userPoints.set(userId, newPoints);
-  checkAndSubscribe(userId);
-  return newPoints;
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, { id: userId, points: 0 });
+  }
+  const user = allUsers.get(userId);
+  user.points = (user.points || 0) + points;
+  userPoints.set(userId, user.points);
+  return user.points;
 }
 // دالة لخصم نقاط من مستخدم معين
 function deductPointsFromUser(userId, points) {
-  const currentPoints = userPoints.get(userId) || 0;
-  if (currentPoints >= points) {
-    const newPoints = currentPoints - points;
-    userPoints.set(userId, newPoints);
+  if (!allUsers.has(userId)) {
+    return false;
+  }
+  const user = allUsers.get(userId);
+  if ((user.points || 0) >= points) {
+    user.points -= points;
+    userPoints.set(userId, user.points);
     return true;
   }
   return false;
@@ -585,23 +590,23 @@ function createReferralLink(userId) {
   return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
-function addPoints(userId, points) {
+function addPointsToUser(userId, points) {
   const currentPoints = userPoints.get(userId) || 0;
   const newPoints = currentPoints + points;
   userPoints.set(userId, newPoints);
-  checkPointsAndSubscribe(userId);
+  checkAndSubscribe(userId);
   return newPoints;
 }
 
-function deductPoints(userId, points) {
+function deductPointsFromUser(userId, points) {
   const currentPoints = userPoints.get(userId) || 0;
   if (currentPoints >= points) {
-    userPoints.set(userId, currentPoints - points);
+    const newPoints = currentPoints - points;
+    userPoints.set(userId, newPoints);
     return true;
   }
   return false;
 }
-
 function checkAndSubscribe(userId) {
   const points = userPoints.get(userId) || 0;
   if (points >= pointsRequiredForSubscription && !subscribedUsers.has(userId)) {
