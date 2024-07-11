@@ -24,17 +24,15 @@ const MAX_FREE_ATTEMPTS = 5;
 const platformVisits = {};
 const allUsers = new Map();
 const activatedUsers = new Set();
-const bannedUsers = new Map();
+const bannedUsers = new Map(); // تغيير من Set إلى Map
 const subscribedUsers = new Set();
 const userPoints = new Map();
 const userReferrals = new Map();
 const usedReferralLinks = new Map();
 let pointsRequiredForSubscription = 15;
-const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; //
-
+const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
 
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
-
 
 // دالة للتحقق من المسؤول
 const adminId = '7130416076';
@@ -109,6 +107,7 @@ function createAdminKeyboard() {
 }
 
 // أمر المسؤول
+// أمر المسؤول
 bot.onText(/\/admin/, (msg) => {
   if (isAdmin(msg.from.id)) {
     bot.sendMessage(msg.chat.id, 'مرحبًا بك في لوحة تحكم المسؤول:', createAdminKeyboard());
@@ -131,27 +130,27 @@ bot.on('callback_query', async (callbackQuery) => {
 
   switch (data) {
     case 'ban':
-  bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد حظره:');
-  bot.once('message', async (response) => {
-    const userIdToBan = response.text;
-    banUser(userIdToBan);
-    bot.sendMessage(chatId, `تم حظر المستخدم ${userIdToBan}`);
-    bot.sendMessage(userIdToBan, 'تم حظرك من استخدام هذا البوت. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.');
-  });
-  break;
+      bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد حظره:');
+      bot.once('message', async (response) => {
+        const userIdToBan = response.text;
+        banUser(userIdToBan);
+        bot.sendMessage(chatId, `تم حظر المستخدم ${userIdToBan}`);
+        bot.sendMessage(userIdToBan, 'تم حظرك من استخدام هذا البوت. تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.');
+      });
+      break;
 
-case 'unban':
-  bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد إلغاء حظره:');
-  bot.once('message', async (response) => {
-    const userIdToUnban = response.text;
-    if (unbanUser(userIdToUnban)) {
-      bot.sendMessage(chatId, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
-      bot.sendMessage(userIdToUnban, 'تم إلغاء حظرك. يمكنك الآن استخدام البوت مرة أخرى.');
-    } else {
-      bot.sendMessage(chatId, `المستخدم ${userIdToUnban} غير محظور.`);
-    }
-  });
-  break;
+    case 'unban':
+      bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد إلغاء حظره:');
+      bot.once('message', async (response) => {
+        const userIdToUnban = response.text;
+        if (unbanUser(userIdToUnban)) {
+          bot.sendMessage(chatId, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
+          bot.sendMessage(userIdToUnban, 'تم إلغاء حظرك. يمكنك الآن استخدام البوت مرة أخرى.');
+        } else {
+          bot.sendMessage(chatId, `المستخدم ${userIdToUnban} غير محظور.`);
+        }
+      });
+      break;
     case 'stats':
       const totalUsers = allUsers.size;
       const activeUsers = activatedUsers.size;
@@ -341,9 +340,15 @@ bot.on('message', async (msg) => {
     return;
   }
 
+  if (text === '/start') {
+    const isSubscribed = await checkSubscription(senderId);
+    if (isSubscribed) {
+      showButtons(senderId);
+    }
+  }
+
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 });
-
 
   // باقي الكود لمعالجة الرسائل
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
@@ -614,6 +619,27 @@ function checkAndSubscribe(userId) {
   }
 }
 
+function deductPointsFromUser(userId, points) {
+  if (!allUsers.has(userId)) {
+    return false;
+  }
+  const user = allUsers.get(userId);
+  if ((user.points || 0) >= points) {
+    user.points -= points;
+    userPoints.set(userId, user.points);
+    
+    // التحقق من النقاط المتبقية وإلغاء الاشتراك إذا لزم الأمر
+    if (user.points < pointsRequiredForSubscription) {
+      subscribedUsers.delete(userId);
+      bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
+    }
+    
+    return true;
+  }
+  return false;
+}
+
+
 function trackAttempt(userId, feature) {
   if (!userVisits[userId]) userVisits[userId] = {};
   userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
@@ -683,7 +709,8 @@ async function checkSubscription(userId) {
     return true;
   }
   return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
-  }
+}
+
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
