@@ -340,7 +340,7 @@ bot.on('message', async (msg) => {
     return;
   }
 
-  if (text === '/start') {
+  if (text === '/st') {
     const isSubscribed = await checkSubscription(senderId);
     if (isSubscribed) {
       showButtons(senderId);
