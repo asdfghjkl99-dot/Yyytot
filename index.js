@@ -33,11 +33,59 @@ let pointsRequiredForSubscription = 15;
 
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت"; //
 
-const adminId = '7130416076';
+
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
 
+
+// دالة للتحقق من المسؤول
 function isAdmin(userId) {
-  return userId.toString() === adminId;
+  // قم بتعديل هذه القائمة لتشمل معرفات المسؤولين
+  const adminIds = ['7130416076', '6716608590'];
+  return adminIds.includes(userId.toString());
+}
+
+// دالة لإضافة نقاط لمستخدم معين
+function addPointsToUser(userId, points) {
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, { id: userId, points: 0 });
+  }
+  const user = allUsers.get(userId);
+  user.points = (user.points || 0) + points;
+  userPoints.set(userId, user.points);
+  return user.points;
+}
+
+// دالة لخصم نقاط من مستخدم معين
+function deductPointsFromUser(userId, points) {
+  if (!allUsers.has(userId)) {
+    return false;
+  }
+  const user = allUsers.get(userId);
+  if ((user.points || 0) >= points) {
+    user.points -= points;
+    userPoints.set(userId, user.points);
+    return true;
+  }
+  return false;
+}
+
+// دالة لحظر مستخدم
+function banUser(userId) {
+  bannedUsers.add(userId);
+}
+
+// دالة لإلغاء حظر مستخدم
+function unbanUser(userId) {
+  return bannedUsers.delete(userId);
+}
+
+// دالة لإرسال رسالة لجميع المستخدمين
+function broadcastMessage(message) {
+  allUsers.forEach((user, userId) => {
+    bot.sendMessage(userId, message).catch(error => {
+      console.error(`Error sending message to ${userId}:`, error.message);
+    });
+  });
 }
 
 // دالة إنشاء لوحة المفاتيح للمسؤول
@@ -46,82 +94,24 @@ function createAdminKeyboard() {
     reply_markup: {
       inline_keyboard: [
         [{ text: 'حظر مستخدم', callback_data: 'ban' }],
-        [{ text: 'إلغاء حظر مستخدم', callback_data: 'unban' }],
-        [{ text: 'عرض الإحصائيات', callback_data: 'stats' }],
-        [{ text: 'إرسال رسالة', callback_data: 'broadcast' }],
-        [{ text: 'قائمة المحظورين', callback_data: 'abo' }],
+        [{ text: 'إلغاء حظر مستخدم', callback_data:'unban' }],
+        [{ text: 'عرض الإحصائيات', callback_data:'stats' }],
+        [{ text: 'إرسال رسالة', callback_data:'broadcast' }],
+        [{ text: 'قائمة المحظورين', callback_data:'abo' }],
         [{ text: 'إضافة نقاط', callback_data: 'addpoints' }],
-        [{ text: 'خصم نقاط', callback_data: 'deductpoints' }],
+        [{ text: 'خصم نقاط', callback_data:'deductpoints' }],
         [{ text: 'تعيين نقاط الاشتراك', callback_data: 'setsubscriptionpoints' }],
-        [{ text: 'الاشتراك', callback_data: 'subscribe' }],
-        [{ text: 'إلغاء الاشتراك', callback_data: 'unsubscribe' }],
-        [{ text: 'إرسال نقاط للجميع', callback_data: 'send_points_to_all' }],
-        [{ text: 'خصم نقاط من الجميع', callback_data: 'deduct_points_from_all' }],
-        [{ text: 'عرض المشتركين', callback_data: 'listsubscribers' }],
+        [{ text: 'الاشتراك', callback_data:'subscribe' }],
+        [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
+        [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
+        [{ text: 'إرسال نقاط للجميع', callback_data:'send_points_to_all' }],
+        [{ text: 'خصم نقاط من الجميع', callback_data:'deduct_points_from_all' }],
       ]
     }
   };
 }
 
-function recordBanAction(userId, adminId) {
-  const adminName = getUsername(adminId);
-  bannedUsers.set(userId, adminName);
-  saveData();
-}
-
-function getUsername(userId) {
-  return allUsers.get(userId)?.username || 'Unknown';
-}
-
-function updateUserBlockStatus(userId, hasBlocked) {
-  if (allUsers.has(userId)) {
-    allUsers.get(userId).hasBlockedBot = hasBlocked;
-  } else {
-    allUsers.set(userId, { hasBlockedBot: hasBlocked });
-  }
-  saveData();
-}
-
-function banUser(userId) {
-  if (allUsers.has(userId) && !bannedUsers.has(userId)) {
-    bannedUsers.set(userId, allUsers.get(userId));
-    saveData();
-  }
-}
-
-function unbanUser(userId) {
-  if (bannedUsers.delete(userId)) {
-    saveData();
-    return true;
-  }
-  return false;
-}
-
-function broadcastMessage(message) {
-  allUsers.forEach((user, userId) => {
-    if (!bannedUsers.has(userId)) {
-      bot.sendMessage(userId, message).catch((error) => {
-        console.error(`فشل إرسال الرسالة إلى المستخدم ${userId}:`, error);
-        if (error.response && error.response.statusCode === 403) {
-          updateUserBlockStatus(userId, true);
-        }
-      });
-    }
-  });
-}
-
-function activateUser(userId) {
-  if (allUsers.has(userId) && !activatedUsers.has(userId)) {
-    activatedUsers.add(userId);
-    saveData();
-  }
-}
-
-function saveData() {
-  // Implement this function to save data to a database or file
-  console.log('تم حفظ البيانات');
-}
-
+// أمر المسؤول
 bot.onText(/\/admin/, (msg) => {
   if (isAdmin(msg.from.id)) {
     bot.sendMessage(msg.chat.id, 'مرحبًا بك في لوحة تحكم المسؤول:', createAdminKeyboard());
@@ -144,10 +134,23 @@ bot.on('callback_query', async (callbackQuery) => {
 
   switch (data) {
     case 'ban':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /ban <user_id>');
+      bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد حظره:');
+      bot.once('message', async (response) => {
+        const userIdToBan = response.text;
+        banUser(userIdToBan);
+        bot.sendMessage(chatId, `تم حظر المستخدم ${userIdToBan}`);
+      });
       break;
     case 'unban':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /unban <user_id>');
+      bot.sendMessage(chatId, 'يرجى إدخال معرف المستخدم المراد إلغاء حظره:');
+      bot.once('message', async (response) => {
+        const userIdToUnban = response.text;
+        if (unbanUser(userIdToUnban)) {
+          bot.sendMessage(chatId, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
+        } else {
+          bot.sendMessage(chatId, `المستخدم ${userIdToUnban} غير محظور.`);
+        }
+      });
       break;
     case 'stats':
       const totalUsers = allUsers.size;
@@ -157,26 +160,80 @@ bot.on('callback_query', async (callbackQuery) => {
       bot.sendMessage(chatId, `إحصائيات البوت:\nعدد المستخدمين الكلي: ${totalUsers}\nعدد المستخدمين النشطين: ${activeUsers}\nعدد المستخدمين المحظورين: ${bannedUsersCount}\nعدد المستخدمين الذين حظروا البوت: ${usersWhoBlockedBot}`);
       break;
     case 'broadcast':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /sagd <message>');
+      bot.sendMessage(chatId, 'يرجى إدخال الرسالة التي تريد إرسالها لجميع المستخدمين:');
+      bot.once('message', async (response) => {
+        const message = response.text;
+        broadcastMessage(message);
+        bot.sendMessage(chatId, 'تم إرسال الرسالة بنجاح!');
+      });
       break;
     case 'abo':
       const bannedUsersList = Array.from(bannedUsers).join(', ');
       bot.sendMessage(chatId, `قائمة المستخدمين المحظورين: ${bannedUsersList || 'لا يوجد مستخدمين محظورين'}`);
       break;
     case 'addpoints':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /addpoints <user_id> <points>');
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم وعدد النقاط التي تريد إضافتها (مثال: 123456789 10)');
+      bot.once('message', async (response) => {
+        const [userId, points] = response.text.split(' ');
+        const pointsToAdd = parseInt(points);
+        if (!userId || isNaN(pointsToAdd)) {
+          bot.sendMessage(chatId, 'عذرًا، الرجاء إدخال المعلومات بالشكل الصحيح.');
+          return;
+        }
+        const newPoints = addPointsToUser(userId, pointsToAdd);
+        bot.sendMessage(chatId, `تمت إضافة ${pointsToAdd} نقطة للمستخدم ${userId}. رصيده الحالي: ${newPoints} نقطة.`);
+        bot.sendMessage(userId, `تمت إضافة ${pointsToAdd} نقطة إلى رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
+      });
       break;
     case 'deductpoints':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /deductpoints <user_id> <points>');
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم وعدد النقاط التي تريد خصمها (مثال: 123456789 10)');
+      bot.once('message', async (response) => {
+        const [userId, points] = response.text.split(' ');
+        const pointsToDeduct = parseInt(points);
+        if (!userId || isNaN(pointsToDeduct)) {
+          bot.sendMessage(chatId, 'عذرًا، الرجاء إدخال المعلومات بالشكل الصحيح.');
+          return;
+        }
+        if (deductPointsFromUser(userId, pointsToDeduct)) {
+          const newPoints = userPoints.get(userId) || 0;
+          bot.sendMessage(chatId, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}. رصيده الحالي: ${newPoints} نقطة.`);
+          bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
+        } else {
+          bot.sendMessage(chatId, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
+        }
+      });
       break;
     case 'setsubscriptionpoints':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /setsubscriptionpoints <points>');
+      bot.sendMessage(chatId, 'أدخل عدد النقاط المطلوبة للاشتراك:');
+      bot.once('message', async (response) => {
+        pointsRequiredForSubscription = parseInt(response.text);
+        bot.sendMessage(chatId, `تم تعيين عدد النقاط المطلوبة للاشتراك إلى ${pointsRequiredForSubscription}`);
+      });
       break;
     case 'subscribe':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /subscribe <user_id>');
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إضافته للمشتركين:');
+      bot.once('message', async (response) => {
+        const userId = response.text;
+        if (subscribedUsers.has(userId)) {
+          bot.sendMessage(chatId, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
+        } else {
+          subscribedUsers.add(userId);
+          bot.sendMessage(chatId, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
+          bot.sendMessage(userId, 'تم اشتراكك بنجاح! يمكنك استخدام البوت بدون قيود.');
+        }
+      });
       break;
     case 'unsubscribe':
-      bot.sendMessage(chatId, 'يرجى إدخال الأمر بالشكل التالي: /unsubscribe <user_id>');
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إزالته من المشتركين:');
+      bot.once('message', async (response) => {
+        const userId = response.text;
+        if (subscribedUsers.delete(userId)) {
+          bot.sendMessage(chatId, `تمت إزالة المستخدم ${userId} من قائمة المشتركين.`);
+          bot.sendMessage(userId, 'تم إلغاء اشتراكك. قد تواجه بعض القيود على استخدام البوت.');
+        } else {
+          bot.sendMessage(chatId, `المستخدم ${userId} غير موجود في قائمة المشتركين.`);
+        }
+      });
       break;
     case 'listsubscribers':
       const subscribersList = Array.from(subscribedUsers).join('\n');
@@ -188,7 +245,7 @@ bot.on('callback_query', async (callbackQuery) => {
         const points = parseInt(msg.text);
         if (!isNaN(points) && points > 0) {
           for (const [userId, user] of allUsers) {
-            addPoints(userId, points);
+            addPointsToUser(userId, points);
           }
           await bot.sendMessage(chatId, `تم إرسال ${points} نقطة لجميع المستخدمين.`);
         } else {
@@ -202,12 +259,7 @@ bot.on('callback_query', async (callbackQuery) => {
         const points = parseInt(msg.text);
         if (!isNaN(points) && points > 0) {
           for (const [userId, user] of allUsers) {
-            if (user.points >= points) {
-              user.points -= points;
-              await bot.sendMessage(userId, `تم خصم ${points} نقطة من رصيدك.`);
-            } else {
-              await bot.sendMessage(userId, 'نقاطك غير كافية للخصم.');
-            }
+            deductPointsFromUser(userId, points);
           }
           await bot.sendMessage(chatId, `تم خصم ${points} نقطة من جميع المستخدمين.`);
         } else {
@@ -220,195 +272,36 @@ bot.on('callback_query', async (callbackQuery) => {
   await bot.answerCallbackQuery(callbackQuery.id);
 });
 
-// أوامر المسؤول
-bot.onText(/\/ban (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
+// معالج زر "نقاطي"
+bot.on('callback_query', (callbackQuery) => {
+    const chatId = callbackQuery.message.chat.id;
+    const userId = callbackQuery.from.id.toString();
+    const data = callbackQuery.data;
 
-  const userIdToBan = match[1];
-  banUser(userIdToBan);
-  recordBanAction(userIdToBan, msg.from.id);
-  bot.sendMessage(msg.chat.id, `تم حظر المستخدم ${userIdToBan}`);
-});
-
-bot.onText(/\/unban (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const userIdToUnban = match[1];
-  if (unbanUser(userIdToUnban)) {
-    bot.sendMessage(msg.chat.id, `تم إلغاء حظر المستخدم ${userIdToUnban}`);
-  } else {
-    bot.sendMessage(msg.chat.id, `المستخدم ${userIdToUnban} غير موجود في قائمة المحظورين.`);
-  }
-});
-
-bot.onText(/\/sagd (.+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const message = match[1];
-  broadcastMessage(message);
-  bot.sendMessage(msg.chat.id, 'تم إرسال الرسالة.');
-});
-
-bot.onText(/\/addpoints (\d+) (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const userId = parseInt(match[1]);
-  const points = parseInt(match[2]);
-  if (!isNaN(userId) && !isNaN(points) && points > 0) {
-    addPoints(userId, points);
-    bot.sendMessage(msg.chat.id, `تم إضافة ${points} نقطة للمستخدم ${userId}`);
-  } else {
-    bot.sendMessage(msg.chat.id, 'يرجى إدخال معرف مستخدم وعدد صحيح موجب من النقاط.');
-  }
-});
-
-bot.onText(/\/deductpoints (\d+) (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const userId = parseInt(match[1]);
-  const points = parseInt(match[2]);
-  if (!isNaN(userId) && !isNaN(points) && points > 0) {
-    if (allUsers.has(userId) && allUsers.get(userId).points >= points) {
-      allUsers.get(userId).points -= points;
-      bot.sendMessage(msg.chat.id, `تم خصم ${points} نقطة من المستخدم ${userId}`);
-    } else {
-      bot.sendMessage(msg.chat.id, `رصيد المستخدم ${userId} غير كافٍ للخصم.`);
+    switch(data) {
+        case 'create_referral':
+            const referralLink = createReferralLink(userId);
+            userReferrals.set(userId, referralLink);
+            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+            break;
+        case 'my_points':
+            const points = userPoints.get(userId) || 0;
+            const isSubscribed = subscribedUsers.has(userId);
+            let message = isSubscribed
+                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+            bot.sendMessage(chatId, message);
+            break;
+        default:
+            if (!subscribedUsers.has(userId)) {
+                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
+            } else {
+                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+                // هنا يمكنك إضافة الكود الخاص بكل عملية
+            }
     }
-  } else {
-    bot.sendMessage(msg.chat.id, 'يرجى إدخال معرف مستخدم وعدد صحيح موجب من النقاط.');
-  }
 });
 
-bot.onText(/\/setsubscriptionpoints (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const points = parseInt(match[1]);
-  if (!isNaN(points) && points > 0) {
-    pointsRequiredForSubscription = points;
-    bot.sendMessage(msg.chat.id, `تم تعيين عدد النقاط المطلوبة للاشتراك إلى ${points}`);
-  } else {
-    bot.sendMessage(msg.chat.id, 'يرجى إدخال عدد صحيح موجب من النقاط.');
-  }
-});
-
-bot.onText(/\/subscribe (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const userId = parseInt(match[1]);
-  if (!isNaN(userId)) {
-    subscribedUsers.add(userId);
-    bot.sendMessage(msg.chat.id, `تم اشتراك المستخدم ${userId}`);
-  } else {
-    bot.sendMessage(msg.chat.id, 'يرجى إدخال معرف مستخدم صحيح.');
-  }
-});
-
-bot.onText(/\/unsubscribe (\d+)/, (msg, match) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const userId = parseInt(match[1]);
-  if (!isNaN(userId)) {
-    subscribedUsers.delete(userId);
-    bot.sendMessage(msg.chat.id, `تم إلغاء اشتراك المستخدم ${userId}`);
-  } else {
-    bot.sendMessage(msg.chat.id, 'يرجى إدخال معرف مستخدم صحيح.');
-  }
-});
-
-bot.onText(/\/listsubscribers/, (msg) => {
-  if (!isAdmin(msg.from.id)) {
-    bot.sendMessage(msg.chat.id, 'عذرًا، هذا الأمر متاح فقط للمسؤول.');
-    return;
-  }
-
-  const subscribersList = Array.from(subscribedUsers).join('\n');
-  bot.sendMessage(msg.chat.id, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
-});
-
-// دالة إضافة النقاط للمستخدم
-function addPoints(userId, points) {
-  if (allUsers.has(userId)) {
-    allUsers.get(userId).points = (allUsers.get(userId).points || 0) + points;
-  } else {
-    allUsers.set(userId, { points: points });
-  }
-  saveData();
-}
-
-bot.on('message', (msg) => {
-  const userId = msg.from.id;
-  if (!allUsers.has(userId)) {
-    allUsers.set(userId, { username: msg.from.username });
-    saveData();
-  }
-});
-
-bot.on('polling_error', (error) => {
-  console.error(error);
-});
-
-
-bot.on('left_chat_member', (msg) => {
-  const userId = msg.left_chat_member.id;
-  if (!msg.left_chat_member.is_bot) {
-    updateUserBlockStatus(userId, true);
-  }
-});
-
-bot.on('my_chat_member', (msg) => {
-  if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
-    const userId = msg.from.id;
-    updateUserBlockStatus(userId, true);
-  }
-});
-
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-
-  // تسجيل المستخدمين الجدد
-  if (!allUsers.has(chatId.toString())) {
-    const newUser = {
-      id: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
-    };
-    allUsers.set(chatId.toString(), newUser);
-    saveData();
-    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
-  }
-
-  // حظر المستخدمين المحظورين
-  if (bannedUsers.has(chatId.toString())) {
-    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
-    return;
-  }
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 });
@@ -799,34 +692,6 @@ function showButtons(userId) {
 }
 
 // ... (باقي الكود)
-bot.on('callback_query', (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const userId = callbackQuery.from.id.toString();
-    const data = callbackQuery.data;
-
-    switch(data) {
-        case 'create_referral':
-            const referralLink = createReferralLink(userId);
-            userReferrals.set(userId, referralLink);
-            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-            break;
-        case 'my_points':
-            const points = userPoints.get(userId) || 0;
-            const isSubscribed = subscribedUsers.has(userId);
-            let message = isSubscribed
-                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-            bot.sendMessage(chatId, message);
-            break;
-        default:
-            if (!subscribedUsers.has(userId)) {
-                bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
-            } else {
-                bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-                // هنا يمكنك إضافة الكود الخاص بكل عملية
-            }
-    }
-});
 
 
 bot.on('callback_query', (callbackQuery) => {
