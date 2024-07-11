@@ -619,25 +619,7 @@ function checkAndSubscribe(userId) {
   }
 }
 
-function deductPointsFromUser(userId, points) {
-  if (!allUsers.has(userId)) {
-    return false;
-  }
-  const user = allUsers.get(userId);
-  if ((user.points || 0) >= points) {
-    user.points -= points;
-    userPoints.set(userId, user.points);
-    
-    // التحقق من النقاط المتبقية وإلغاء الاشتراك إذا لزم الأمر
-    if (user.points < pointsRequiredForSubscription) {
-      subscribedUsers.delete(userId);
-      bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
-    }
-    
-    return true;
-  }
-  return false;
-}
+
 
 
 function trackAttempt(userId, feature) {
