@@ -354,7 +354,29 @@ bot.on('message', async (msg) => {
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 
 
-
+function deductPointsFromUser(userId, points) {
+  if (!allUsers.has(userId)) {
+    console.log(`المستخدم ${userId} غير موجود`);
+    return false;
+  }
+  const user = allUsers.get(userId);
+  if ((user.points || 0) >= points) {
+    user.points -= points;
+    userPoints.set(userId, user.points);
+    console.log(`تم خصم ${points} نقاط من المستخدم ${userId}. الرصيد الجديد: ${user.points}`);
+    
+    // إلغاء الاشتراك إذا أصبحت النقاط أقل من الحد المطلوب
+    if (user.points < pointsRequiredForSubscription) {
+      subscribedUsers.delete(userId);
+      console.log(`تم إلغاء اشتراك المستخدم ${userId} بسبب نقص النقاط`);
+      bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
+    }
+    
+    return true;
+  }
+  console.log(`فشل خصم النقاط للمستخدم ${userId}. الرصيد الحالي: ${user.points}, المطلوب: ${points}`);
+  return false;
+}
 
 // تشغيل البوت
 bot.on('polling_error', (error) => {
