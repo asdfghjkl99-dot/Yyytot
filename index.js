@@ -641,7 +641,7 @@ async function checkSubscription(userId) {
       }
     }
     // إذا وصل المستخدم إلى هنا، فهو مشترك في جميع القنوات المطلوبة
-    showButtons(senderId);
+    
     return true;
   }
   return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
