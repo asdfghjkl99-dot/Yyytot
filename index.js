@@ -185,23 +185,23 @@ bot.on('callback_query', async (callbackQuery) => {
   });
   break;
     case 'deductpoints':
-  bot.sendMessage(chatId, 'أدخل معرف المستخدم وعدد النقاط التي تريد خصمها (مثال: 123456789 10)');
-  bot.once('message', async (response) => {
-    const [userId, points] = response.text.split(' ');
-    const pointsToDeduct = parseInt(points);
-    if (!userId || isNaN(pointsToDeduct)) {
-      bot.sendMessage(chatId, 'عذرًا، الرجاء إدخال المعلومات بالشكل الصحيح.');
-      return;
-    }
-    if (deductPointsFromUser(userId, pointsToDeduct)) {
-      const newPoints = userPoints.get(userId) || 0;
-      bot.sendMessage(chatId, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}. رصيده الحالي: ${newPoints} نقطة.`);
-      bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
-    } else {
-      bot.sendMessage(chatId, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
-    }
-  });
-  break;
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم وعدد النقاط التي تريد خصمها (مثال: 123456789 10)');
+      bot.once('message', async (response) => {
+        const [userId, points] = response.text.split(' ');
+        const pointsToDeduct = parseInt(points);
+        if (!userId || isNaN(pointsToDeduct)) {
+          bot.sendMessage(chatId, 'عذرًا، الرجاء إدخال المعلومات بالشكل الصحيح.');
+          return;
+        }
+        if (deductPointsFromUser(userId, pointsToDeduct)) {
+          const newPoints = userPoints.get(userId) || 0;
+          bot.sendMessage(chatId, `تم خصم ${pointsToDeduct} نقطة من المستخدم ${userId}. رصيده الحالي: ${newPoints} نقطة.`);
+          bot.sendMessage(userId, `تم خصم ${pointsToDeduct} نقطة من رصيدك. رصيدك الحالي: ${newPoints} نقطة.`);
+        } else {
+          bot.sendMessage(chatId, `عذرًا، المستخدم ${userId} لا يملك نقاطًا كافية للخصم.`);
+        }
+      });
+      break;
     case 'setsubscriptionpoints':
       bot.sendMessage(chatId, 'أدخل عدد النقاط المطلوبة للاشتراك:');
       bot.once('message', async (response) => {
