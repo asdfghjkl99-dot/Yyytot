@@ -304,7 +304,46 @@ bot.on('callback_query', (callbackQuery) => {
 
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
+bot.on('left_chat_member', (msg) => {
+  const userId = msg.left_chat_member.id;
+  if (!msg.left_chat_member.is_bot) {
+    updateUserBlockStatus(userId, true);
+  }
+});
 
+bot.on('my_chat_member', (msg) => {
+  if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
+    const userId = msg.from.id;
+    updateUserBlockStatus(userId, true);
+  }
+});
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+
+  // تسجيل المستخدمين الجدد
+  if (!allUsers.has(chatId.toString())) {
+    const newUser = {
+      id: chatId,
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
+    };
+    allUsers.set(chatId.toString(), newUser);
+    saveData();
+    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
+  }
+
+  // حظر المستخدمين المحظورين
+  if (bannedUsers.has(chatId.toString())) {
+    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
+    return;
+  }
+
+  // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
+});
 
 
 
