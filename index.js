@@ -614,7 +614,7 @@ function deductPointsFromUser(userId, points) {
   return false;
 }
 
-nction checkSubscriptionStatus(userId) {
+function checkSubscriptionStatus(userId) {
   const user = allUsers.get(userId);
   if (!user) return false;
   
