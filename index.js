@@ -733,7 +733,7 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
   }
-  showDefaultButtons(newUserId);
+  showButtons(newUserId);
 });
 
 async function checkSubscription(userId) {
@@ -763,10 +763,9 @@ async function checkSubscription(userId) {
 }
 
 
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
+bot.on('message', (msg) => {
+  const text = msg.text;
+  const senderId = msg.chat.id;
 
   if (text === '/start') {
     showDefaultButtons(senderId);
@@ -829,6 +828,11 @@ function showHackingButtons(userId) {
       inline_keyboard: hackingButtons
     }
   });
+}
+
+// هنا يمكنك تعريف دالة showButtons إذا كنت تحتاجها
+function showButtons(userId) {
+  showDefaultButtons(userId);
 }
 
 // ... (باقي الكود)
