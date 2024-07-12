@@ -764,13 +764,12 @@ async function checkSubscription(userId) {
 
 
 bot.on('message', async (msg) => {
-  cbobot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
   const senderId = msg.from.id;
 
   if (text === '/start') {
-    showdefaultButtons(senderId);
+    showDefaultButtons(senderId);
   } else if (text === '/login') {
     showLoginButtons(senderId);
   } else if (text === '/hacking') {
