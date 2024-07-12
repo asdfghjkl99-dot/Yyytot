@@ -708,33 +708,7 @@ function shortenUrl(url) {
   });
 }
 
-bot.onText(/\/start (.+)/, async (msg, match) => {
-  const startPayload = match[1];
-  const newUserId = msg.from.id.toString();
-  
-  try {
-    const referrerId = Buffer.from(startPayload, 'base64').toString();
-    if (referrerId !== newUserId) {
-      const usedLinks = usedReferralLinks.get(newUserId) || new Set();
-      if (!usedLinks.has(referrerId)) {
-        // تحقق من الاشتراك في القنوات أولاً
-        const isSubscribed = await checkSubscription(newUserId);
-        if (isSubscribed) {
-          usedLinks.add(referrerId);
-          usedReferralLinks.set(newUserId, usedLinks);
-          const referrerPoints = addPointsToUser(referrerId, 1);
-          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-          await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
-        }
-      } else {
-        await bot.sendMessage(newUserId, 'لقد استخدمت هذا الرابط من قبل.');
-      }
-    }
-  } catch (error) {
-    console.error('خطأ في معالجة رمز الإحالة:', error);
-  }
-  showButtons(newUserId);
-});
+
 
 async function checkSubscription(userId) {
   if (forcedChannelUsernames.length && !activatedUsers.has(userId)) {
@@ -779,6 +753,36 @@ bot.on('message', async (msg) => {
   } else if (text === '/hacking') {
     showHackingButtons(senderId);
   }
+});
+
+bot.onText(/\/start (.+)/, async (msg, match) => {
+  const startPayload = match[1];
+  const newUserId = msg.from.id.toString();
+
+  // تحقق من الاشتراك قبل متابعة معالجة رابط الدعوة
+  const isSubscribed = await checkSubscription(newUserId);
+  if (!isSubscribed) {
+    return;
+  }
+
+  try {
+    const referrerId = Buffer.from(startPayload, 'base64').toString();
+    if (referrerId !== newUserId) {
+      const usedLinks = usedReferralLinks.get(newUserId) || new Set();
+      if (!usedLinks.has(referrerId)) {
+        usedLinks.add(referrerId);
+        usedReferralLinks.set(newUserId, usedLinks);
+        const referrerPoints = addPointsToUser(referrerId, 1);
+        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+      } else {
+        await bot.sendMessage(newUserId, 'لقد استخدمت هذا الرابط من قبل.');
+      }
+    }
+  } catch (error) {
+    console.error('خطأ في معالجة رمز الإحالة:', error);
+  }
+  showButtons(newUserId);
 });
 
 function showDefaultButtons(userId) {
@@ -835,11 +839,11 @@ function showHackingButtons(userId) {
   });
 }
 
-
 // هنا يمكنك تعريف دالة showButtons إذا كنت تحتاجها
 function showButtons(userId) {
   showDefaultButtons(userId);
 }
+
 
 // ... (باقي الكود)
 
