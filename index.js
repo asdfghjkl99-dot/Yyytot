@@ -762,10 +762,15 @@ async function checkSubscription(userId) {
   return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
 }
 
-
-bot.on('message', (msg) => {
+bot.on('message', async (msg) => {
   const text = msg.text;
   const senderId = msg.chat.id;
+
+  // تحقق من الاشتراك قبل عرض الأزرار
+  const isSubscribed = await checkSubscription(senderId);
+  if (!isSubscribed) {
+    return;
+  }
 
   if (text === '/start') {
     showDefaultButtons(senderId);
@@ -829,6 +834,7 @@ function showHackingButtons(userId) {
     }
   });
 }
+
 
 // هنا يمكنك تعريف دالة showButtons إذا كنت تحتاجها
 function showButtons(userId) {
