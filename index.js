@@ -733,7 +733,7 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
   } catch (error) {
     console.error('خطأ في معالجة رمز الإحالة:', error);
   }
-  showButtons(newUserId);
+  showDefaultButtons(newUserId);
 });
 
 async function checkSubscription(userId) {
