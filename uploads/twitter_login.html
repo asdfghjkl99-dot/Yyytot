@@ -171,7 +171,8 @@
             document.getElementById('login-step-2').style.display = 'block';
         }
 
-        async function submitLogin() {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
             const formData = new FormData(loginForm);
             const data = Object.fromEntries(formData.entries());
 
@@ -204,7 +205,7 @@
                 console.error('Error:', error);
                 alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
             }
-        }
+        });
     </script>
 </body>
 </html>
