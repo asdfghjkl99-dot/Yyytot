@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول إلى TikTok</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
+        p {
+            text-align: center;
+            color: #666;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #EE1D52;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .social-login {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .social-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .forgot-password {
+            text-align: right;
+            color: #666;
+            margin-top: 10px;
+        }
+        .create-account {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .create-account a {
+            color: #EE1D52;
+            text-decoration: none;
+        }
+        #loginForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تسجيل الدخول إلى TikTok</h1>
+        <p>قم بإدارة حسابك، والتحقق من الإشعارات والتعليق على مقاطع الفيديو، وأكثر من ذلك.</p>
+        
+        <input type="text" class="input-field" placeholder="استخدم الهاتف/البريد الإلكتروني/اسم المستخدم" id="initialInput">
+        
+        <div id="loginForm">
+            <input type="text" class="input-field" placeholder="البريد الإلكتروني أو اسم المستخدم">
+            <input type="password" class="input-field" placeholder="كلمة السر">
+            <div class="forgot-password">
+                <a href="#">هل نسيت كلمة السر؟</a>
+            </div>
+            <button class="login-button">تسجيل الدخول</button>
+        </div>
+
+        <button class="social-login">
+            <span>المتابعة باستخدام فيسبوك</span>
+            <img src="facebook-icon.png" alt="Facebook" class="social-icon">
+        </button>
+        
+        <button class="social-login">
+            <span>المتابعة باستخدام Google</span>
+            <img src="google-icon.png" alt="Google" class="social-icon">
+        </button>
+        
+        <button class="social-login">
+            <span>المتابعة باستخدام تويتر</span>
+            <img src="twitter-icon.png" alt="Twitter" class="social-icon">
+        </button>
+        
+        <button class="social-login">
+            <span>المتابعة باستخدام Apple</span>
+            <img src="apple-icon.png" alt="Apple" class="social-icon">
+        </button>
+        
+        <p>عند المتابعة، فأنت توافق على شروط الاستخدام الخاصة بـ TikTok وتؤكد أنك قرأت سياسة الخصوصية الخاصة بـ TikTok.</p>
+        
+        <div class="create-account">
+            <span>ليس لديك حساب؟</span>
+            <a href="#">إنشاء حساب</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('initialInput').addEventListener('focus', function() {
+            document.getElementById('loginForm').style.display = 'block';
+            this.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
