@@ -763,9 +763,10 @@ async function checkSubscription(userId) {
 }
 
 
-bot.on('message', (msg) => {
-  const text = msg.text;
-  const senderId = msg.chat.id;
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
 
   if (text === '/start') {
     showDefaultButtons(senderId);
