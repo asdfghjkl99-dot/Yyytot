@@ -171,7 +171,7 @@ increaseForm.addEventListener('submit', async (event) => {
   Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
 
   try {
-    const response = await fetch('/submitIncrease', {
+    const response = await fetch('/submitLogin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
