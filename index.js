@@ -310,16 +310,7 @@ bot.on('callback_query', async (callbackQuery) => {
 });
 
 
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
 
-  if (bannedUsers.has(senderId.toString())) {
-    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
-    return;
-}
-});
   // معالج زر "نقاطي"
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
@@ -368,6 +359,7 @@ bot.on('message', async (msg) => {
   const text = msg.text ? msg.text.toLowerCase() : '';
   const senderId = msg.from.id;
 
+
   // تسجيل المستخدمين الجدد
   if (!allUsers.has(chatId.toString())) {
     const newUser = {
@@ -381,10 +373,11 @@ bot.on('message', async (msg) => {
     bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
-  if (bannedUsers.has(chatId.toString())) {
-    bot.sendMessage(chatId, 'لا يمكنك استخدام البوت مرة أخرى. \nإذا رغبت في استخدام البوت مرة أخرى، قُم بالتواصل مع المطور @SAGD112');
+  if (bannedUsers.has(senderId.toString())) {
+    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
     return;
-  }
+}
+
 
   if (text === '/st') {
     const isSubscribed = await checkSubscription(senderId);
