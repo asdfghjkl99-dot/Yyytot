@@ -876,7 +876,7 @@ bot.on('callback_query', (query) => {
     let url, message;
 
     if (data === 'pubg_uc') {
-        url = `${baseUrl}/increase/pubg/${chatId}`;
+        url = `${baseUrl}/increase/pubg_uc/${chatId}`;
         message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
