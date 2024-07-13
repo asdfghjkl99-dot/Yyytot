@@ -696,7 +696,7 @@ function addPointsToUser(userId, points) {
   userPoints.set(userId, user.points);
   
   // التحقق من حالة الاشتراك بعد إضافة النقاط
-  checkSubscriptionStatus(userId);
+
   
   return user.points;
 }
