@@ -792,11 +792,10 @@ bot.on('message', async (msg) => {
   }
 
   // التحقق من الحظر
-    if (bannedUsers.has(senderId.toString())) {
+  if (bannedUsers.has(senderId.toString())) {
     bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
     return;
-}
-
+  }
 
   // تحقق من الاشتراك قبل عرض الأزرار
   const isSubscribed = await checkSubscription(senderId);
@@ -831,11 +830,10 @@ bot.on('message', async (msg) => {
     } catch (error) {
       console.error('خطأ في معالجة رمز الإحالة:', error);
     }
-    showButtons(senderId);
+    showDefaultButtons(senderId);
   }
-
-  // يمكنك إضافة المزيد من المعالجات هنا حسب الحاجة
 });
+
 
 function showDefaultButtons(userId) {
   let statusMessage = `قم بجمع نقاط كافية لاستخدام البوت مجانًا ارسل امر لاضهار اندكسات تسجيل دخول /login اكتب امر لاضهور اندكسات صفحات مزوره على شكل زياده متابعين /hacking.`;
