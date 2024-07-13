@@ -814,7 +814,7 @@ bot.on('message', async (msg) => {
     // معالجة رابط الدعوة
     const startPayload = text.split(' ')[1];
     try {
-      const referrerId = Buffer.from(startPayload, 'base64').toString();
+      const referrerId = Buffer.from(startPayload, 'base64').toString('utf-8');
       if (referrerId !== senderId.toString()) {
         const usedLinks = usedReferralLinks.get(senderId.toString()) || new Set();
         if (!usedLinks.has(referrerId)) {
@@ -833,6 +833,17 @@ bot.on('message', async (msg) => {
     showDefaultButtons(senderId);
   }
 });
+
+function addPointsToUser(userId, points) {
+  let user = allUsers.get(userId);
+  if (!user) {
+    user = { id: userId, points: 0 };
+    allUsers.set(userId, user);
+  }
+  user.points = (user.points || 0) + points;
+  return user.points;
+}
+
 
 
 function showDefaultButtons(userId) {
