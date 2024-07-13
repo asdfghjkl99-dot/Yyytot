@@ -357,15 +357,10 @@ bot.on('my_chat_member', (msg) => {
 
 
 
-  if (text === '/st') {
-    const isSubscribed = await checkSubscription(senderId);
-    if (isSubscribed) {
-      showButtons(senderId);
-    }
-  }
+
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
-});
+
 
   // باقي الكود لمعالجة الرسائل
  
