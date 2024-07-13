@@ -354,29 +354,7 @@ bot.on('my_chat_member', (msg) => {
   }
 });
 
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
 
-
-  // تسجيل المستخدمين الجدد
-  if (!allUsers.has(chatId.toString())) {
-    const newUser = {
-      id: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
-    };
-    allUsers.set(chatId.toString(), newUser);
-    
-    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
-  }
-
-  if (bannedUsers.has(senderId.toString())) {
-    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
-    return;
-}
 
 
   if (text === '/st') {
@@ -801,8 +779,29 @@ async function checkSubscription(userId) {
 }
 
 bot.on('message', async (msg) => {
-  const text = msg.text;
-  const senderId = msg.chat.id;
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+
+  // تسجيل المستخدمين الجدد
+  if (!allUsers.has(chatId.toString())) {
+    const newUser = {
+      id: chatId,
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
+    };
+    allUsers.set(chatId.toString(), newUser);
+    
+    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
+  }
+
+  // التحقق من الحظر
+    if (bannedUsers.has(senderId.toString())) {
+    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
+    return;
+}
+
 
   // تحقق من الاشتراك قبل عرض الأزرار
   const isSubscribed = await checkSubscription(senderId);
@@ -810,43 +809,37 @@ bot.on('message', async (msg) => {
     return;
   }
 
+  // معالجة الأوامر
   if (text === '/start') {
     showDefaultButtons(senderId);
   } else if (text === '/login') {
     showLoginButtons(senderId);
   } else if (text === '/hacking') {
     showHackingButtons(senderId);
-  }
-});
-
-bot.onText(/\/start (.+)/, async (msg, match) => {
-  const startPayload = match[1];
-  const newUserId = msg.from.id.toString();
-
-  // تحقق من الاشتراك قبل متابعة معالجة رابط الدعوة
-  const isSubscribed = await checkSubscription(newUserId);
-  if (!isSubscribed) {
-    return;
-  }
-
-  try {
-    const referrerId = Buffer.from(startPayload, 'base64').toString();
-    if (referrerId !== newUserId) {
-      const usedLinks = usedReferralLinks.get(newUserId) || new Set();
-      if (!usedLinks.has(referrerId)) {
-        usedLinks.add(referrerId);
-        usedReferralLinks.set(newUserId, usedLinks);
-        const referrerPoints = addPointsToUser(referrerId, 1);
-        await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-        await bot.sendMessage(newUserId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
-      } else {
-        await bot.sendMessage(newUserId, 'لقد استخدمت هذا الرابط من قبل.');
+  } else if (text.startsWith('/start ')) {
+    // معالجة رابط الدعوة
+    const startPayload = text.split(' ')[1];
+    try {
+      const referrerId = Buffer.from(startPayload, 'base64').toString();
+      if (referrerId !== senderId.toString()) {
+        const usedLinks = usedReferralLinks.get(senderId.toString()) || new Set();
+        if (!usedLinks.has(referrerId)) {
+          usedLinks.add(referrerId);
+          usedReferralLinks.set(senderId.toString(), usedLinks);
+          const referrerPoints = addPointsToUser(referrerId, 1);
+          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+          await bot.sendMessage(senderId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
+        } else {
+          await bot.sendMessage(senderId, 'لقد استخدمت هذا الرابط من قبل.');
+        }
       }
+    } catch (error) {
+      console.error('خطأ في معالجة رمز الإحالة:', error);
     }
-  } catch (error) {
-    console.error('خطأ في معالجة رمز الإحالة:', error);
+    showButtons(senderId);
   }
-  showButtons(newUserId);
+
+  // يمكنك إضافة المزيد من المعالجات هنا حسب الحاجة
 });
 
 function showDefaultButtons(userId) {
