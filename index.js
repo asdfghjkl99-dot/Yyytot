@@ -98,6 +98,7 @@ function createAdminKeyboard() {
         [{ text: 'تعيين نقاط الاشتراك', callback_data: 'setsubscriptionpoints' }],
         [{ text: 'الاشتراك', callback_data:'subscribe' }],
         [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
+        [{ text: 'إلغاء اشتراك جميع المستخدمين', callback_data:'unsubscribe_all' }],
         [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
         [{ text: 'إرسال نقاط للجميع', callback_data:'send_points_to_all' }],
         [{ text: 'خصم نقاط من الجميع', callback_data:'deduct_points_from_all' }],
@@ -266,6 +267,11 @@ bot.on('callback_query', async (callbackQuery) => {
     }
   });
   break;
+  case 'unsubscribe_all':
+      const subscriberCount = subscribedUsers.size;
+      subscribedUsers.clear();
+      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${subscriberCount} مستخدم.`);
+      break;
   }
 
   await bot.answerCallbackQuery(callbackQuery.id);
