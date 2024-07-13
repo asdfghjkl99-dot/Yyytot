@@ -103,6 +103,8 @@ function createAdminKeyboard() {
         [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
         [{ text: 'إرسال نقاط للجميع', callback_data:'send_points_to_all' }],
         [{ text: 'خصم نقاط من الجميع', callback_data:'deduct_points_from_all' }],
+        [{ text: 'حظر جميع المستخدمين', callback_data: 'ban_all_users' }],
+        [{ text: 'إلغاء حظر جميع المستخدمين', callback_data:'unban_all_users' }],
       ]
     }
   };
@@ -289,11 +291,34 @@ bot.on('callback_query', async (callbackQuery) => {
       }
       await bot.sendMessage(chatId, `تم إضافة اشتراك لـ ${subscribedCount} مستخدم جديد.`);
       break;
+     case 'ban_all_users':
+      allUsers.forEach((user, userId) => {
+        bannedUsers.set(userId, true);
+      });
+      await bot.sendMessage(chatId, 'تم حظر جميع المستخدمين.');
+      broadcastMessage('تم إيقاف استخدام البوت من قبل المطور.');
+      break;
+
+    case 'unban_all_users':
+      bannedUsers.clear();
+      await bot.sendMessage(chatId, 'تم إلغاء حظر جميع المستخدمين.');
+      broadcastMessage('تم تشغيل البوت من قبل المطور.');
+      break;
   }
 
   await bot.answerCallbackQuery(callbackQuery.id);
 });
 
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id;
+
+  if (bannedUsers.has(senderId.toString())) {
+    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
+    return;
+  }
 // معالج زر "نقاطي"
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
