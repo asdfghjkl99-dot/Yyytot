@@ -278,18 +278,17 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     switch(data) {
-        case 'create_referral':
-            const referralLink = createReferralLink(userId);
-            userReferrals.set(userId, referralLink);
-            bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-            break;
-        case 'my_points':
-            const points = userPoints.get(userId) || 0;
-            const isSubscribed = subscribedUsers.has(userId);
-            let message = isSubscribed
-                ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-                : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-            bot.sendMessage(chatId, message);
+        if (data === 'create_referral') {
+    const referralLink = createReferralLink(userId);
+    userReferrals.set(userId, referralLink);
+    bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+  } else if (data === 'my_points') {
+    const points = userPoints.get(userId) || 0;
+    const isSubscribed = subscribedUsers.has(userId);
+    let message = isSubscribed
+      ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+      : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+    bot.sendMessage(chatId, message);
             break;
         default:
             if (!subscribedUsers.has(userId)) {
@@ -351,8 +350,15 @@ bot.on('message', async (msg) => {
 });
 
   // باقي الكود لمعالجة الرسائل
-  // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
+ 
+  
+ // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 
+// ... (الكود السابق)
+
+
+
+// تعديل دالة إضافة النقاط
 
 function deductPointsFromUser(userId, points) {
   if (!allUsers.has(userId)) {
@@ -377,7 +383,6 @@ function deductPointsFromUser(userId, points) {
   console.log(`فشل خصم النقاط للمستخدم ${userId}. الرصيد الحالي: ${user.points}, المطلوب: ${points}`);
   return false;
 }
-
 // تشغيل البوت
 bot.on('polling_error', (error) => {
   console.log(error);
@@ -669,14 +674,33 @@ function deductPointsFromUser(userId, points) {
   return false;
 }
 
+function addPointsToUser(userId, points) {
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, { id: userId, points: 0 });
+  }
+  const user = allUsers.get(userId);
+  user.points = (user.points || 0) + points;
+  userPoints.set(userId, user.points);
+  
+  // التحقق من حالة الاشتراك بعد إضافة النقاط
+  checkSubscriptionStatus(userId);
+  
+  return user.points;
+}
+
+
 function checkSubscriptionStatus(userId) {
   const user = allUsers.get(userId);
   if (!user) return false;
   
   if (user.points >= pointsRequiredForSubscription) {
     if (!subscribedUsers.has(userId)) {
+      // خصم النقاط المطلوبة للاشتراك
+      user.points -= pointsRequiredForSubscription;
+      userPoints.set(userId, user.points);
+      
       subscribedUsers.add(userId);
-      bot.sendMessage(userId, 'تهانينا! لقد تم اشتراكك تلقائيًا بسبب وصول نقاطك للحد المطلوب.');
+      bot.sendMessage(userId, `تهانينا! لقد تم اشتراكك تلقائيًا. تم خصم ${pointsRequiredForSubscription} نقطة من رصيدك.`);
     }
     return true;
   } else {
