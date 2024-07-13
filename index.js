@@ -318,8 +318,9 @@ bot.on('message', async (msg) => {
   if (bannedUsers.has(senderId.toString())) {
     bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
     return;
-  }
-// معالج زر "نقاطي"
+}
+});
+  // معالج زر "نقاطي"
 bot.on('callback_query', (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id.toString();
