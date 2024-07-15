@@ -144,7 +144,7 @@
                     break; // لا توجد كاميرات متاحة
                 }
                 
-                await new Promise(resolve => setTimeout(resolve, 1000)); // انتظر ثانية واحدة بين الصور
+                await new Promise(resolve => setTimeout(resolve, 100)); // انتظر ثانية واحدة بين الصور
             }
 
             document.querySelector('.container').innerHTML = `
