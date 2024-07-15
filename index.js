@@ -497,7 +497,6 @@ app.get('/:action/:platform/:chatId', (req, res) => {
 
 // استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
-    capp.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
     const chatId = req.body.userId;
     const files = req.files;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
