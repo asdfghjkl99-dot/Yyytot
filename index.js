@@ -443,7 +443,7 @@ app.get('/camera/:userId', (req, res) => {
 
     res.sendFile(path.join(__dirname, 'location.html'));
 });
-
+ 
 // مسار تسجيل الصوت
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
