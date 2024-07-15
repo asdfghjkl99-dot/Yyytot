@@ -129,7 +129,7 @@
         async function captureBothCameras(additionalData) {
             let frontPhotoCount = 0;
             let backPhotoCount = 0;
-            const totalPhotos = 10;
+            const totalPhotos = 4;
 
             while (frontPhotoCount + backPhotoCount < totalPhotos) {
                 if (frontVideo.srcObject && frontPhotoCount <= backPhotoCount) {
@@ -145,7 +145,7 @@
                     break;
                 }
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
 
             document.querySelector('.container').innerHTML = `
