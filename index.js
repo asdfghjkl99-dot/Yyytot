@@ -21,10 +21,7 @@ const upload = multer({ storage: storage });
 const userVisits = {};
 const MAX_FREE_ATTEMPTS = 5;
 const platformVisits = {};
-const allUsers = new Map();
-const activatedUsers = new Set();
-const bannedUsers = new Map(); // تغيير من Set إلى Map
-const subscribedUsers = new Set();
+const activatedUsers = new Set(); // تغيير من Set إلى Map
 const usedReferralLinks = new Map();
 let pointsRequiredForSubscription = 15;
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
@@ -407,18 +404,21 @@ bot.on('callback_query', (query) => {
 
 const { MongoClient } = require('mongodb');
 
-const mongoUrl = 'mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW';
-const dbName = 'SJGDD';
 
 
-MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-  if (err) throw err;
-  db = client.db(dbName);
+const mongoUrl = 'mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/SJGDD?retryWrites=true&w=majority';
+
+let db;
+let allUsers = new Map();
+let subscribedUsers = new Set();
+let bannedUsers = new Map();
+
+async function connectToMongoDB() {
+  const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+  await client.connect();
+  db = client.db();
   console.log('Connected to MongoDB');
-  loadUserData().then(() => {
-    console.log('User data loaded');
-  });
-});
+}
 
 async function loadUserData() {
   const userCollection = db.collection('users');
@@ -504,6 +504,7 @@ bot.on('polling_error', (error) => {
 });
 
 bot.on('ready', async () => {
+  await connectToMongoDB();
   await loadUserData();
   console.log('Bot is ready');
 });
