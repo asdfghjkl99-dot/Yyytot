@@ -404,37 +404,61 @@ bot.on('callback_query', (query) => {
 // مثال على كيفية إرسال أزرار قائمة الإحصائيات
 
 
+const { MongoClient } = require('mongodb');
+
+// إعداد اتصال MongoDB
+const uri = 'https://services.cloud.mongodb.com/groups/66990dfedc21b376b0c6f325/apps'; // استبدل هذا بال URI الخاص بقاعدة البيانات MongoDB الخاصة بك
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
 let userPoints = new Map();
 let userReferrals = new Map();
-const dataFilePath = 'data.json'; // مسار ملف البيانات
 
 // دالة تحميل البيانات
-function loadData() {
-  if (fs.existsSync(dataFilePath)) {
-    const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-    userPoints = new Map(data.userPoints);
-    userReferrals = new Map(data.userReferrals);
+async function loadData() {
+  try {
+    await client.connect();
+    console.log('Connected to MongoDB');
+    const db = client.db('botData');
+    const userPointsCollection = db.collection('userPoints');
+    const userReferralsCollection = db.collection('userReferrals');
+    
+    const userPointsArray = await userPointsCollection.find().toArray();
+    const userReferralsArray = await userReferralsCollection.find().toArray();
+
+    userPoints = new Map(userPointsArray.map(item => [item.userId, item.points]));
+    userReferrals = new Map(userReferralsArray.map(item => [item.userId, item.referrals]));
+  } catch (error) {
+    console.error('Error loading data from MongoDB:', error);
   }
 }
-loadData(); // استدعاء تحميل البيانات عند بدء تشغيل البوت
 
 // دالة حفظ البيانات
-function saveData() {
-  const data = {
-    userPoints: Array.from(userPoints.entries()),
-    userReferrals: Array.from(userReferrals.entries()),
-  };
-  fs.writeFileSync(dataFilePath, JSON.stringify(data));
+async function saveData() {
+  try {
+    const db = client.db('botData');
+    const userPointsCollection = db.collection('userPoints');
+    const userReferralsCollection = db.collection('userReferrals');
+
+    await userPointsCollection.deleteMany({});
+    await userReferralsCollection.deleteMany({});
+    
+    await userPointsCollection.insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
+    await userReferralsCollection.insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
+  } catch (error) {
+    console.error('Error saving data to MongoDB:', error);
+  }
 }
 
 // دالة تحديث نقاط المستخدم وحفظ البيانات
-function updateUserPoints(userId, points) {
+async function updateUserPoints(userId, points) {
   userPoints.set(userId, points);
-  saveData();
+  await saveData();
 }
 
-// استخدم دالة updateUserPoints كلما تم تحديث نقاط المستخدمين
+// تحميل البيانات عند بدء تشغيل البوت
+loadData().catch(console.error);
 
+// استخدم دالة updateUserPoints كلما تم تحديث نقاط المستخدمين
 // مثال على تحديث نقاط المستخدم
 updateUserPoints('user123', 50); // تحديث نقاط المستخدم "user123" إلى 50 نقطة
 
