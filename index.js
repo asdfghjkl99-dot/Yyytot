@@ -745,7 +745,7 @@ const crypto = require('crypto');
 // إنشاء رابط الدعوة
 function createReferralLink(userId) {
   const referralCode = Buffer.from(userId).toString('hex');
-  return `https://t.me/SJGDDW_BOT?start=${referralCode}`;
+  return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
 }
 
 // فك تشفير رمز الدعوة
