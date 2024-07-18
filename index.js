@@ -397,8 +397,8 @@ bot.on('callback_query', (query) => {
 
 
 // مثال على كيفية إرسال أزرار قائمة 
-const { MongoClient } = require('mongodb');
-const uri = "mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://SJGDDD:<MaySsonu0>@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
 
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -426,43 +426,43 @@ async function loadData() {
     const db = client.db('botData');
 
     // تحميل نقاط المستخدمين
-    const userPointsArray = await db.collection('userPoints').find().toArray();
-    userPoints = new Map(userPointsArray.map(item => [item.userId, item.points]));
-
-    // تحميل الإحالات
-    const userReferralsArray = await db.collection('userReferrals').find().toArray();
-    userReferrals = new Map(userReferralsArray.map(item => [item.userId, item.referrals]));
-
-    // تحميل المستخدمين المشتركين
-    const subscribedUsersArray = await db.collection('subscribedUsers').find().toArray();
-    subscribedUsers = new Set(subscribedUsersArray.map(item => item.userId));
-
-    // تحميل المستخدمين المحظورين
-    const bannedUsersArray = await db.collection('bannedUsers').find().toArray();
-    bannedUsers = new Map(bannedUsersArray.map(item => [item.userId, item.bannedBy]));
-
-    // تحميل جميع المستخدمين
-    const allUsersArray = await db.collection('allUsers').find().toArray();
-    allUsers = new Map(allUsersArray.map(user => [user.id, user]));
-
-    // تحميل روابط الإحالة المستخدمة
-    const usedReferralLinksArray = await db.collection('usedReferralLinks').find().toArray();
-    usedReferralLinks = new Map(usedReferralLinksArray.map(item => [item.userId, new Set(item.usedLinks)]));
-
-    // تحميل زيارات المستخدمين
-    const userVisitsArray = await db.collection('userVisits').find().toArray();
-    userVisits = Object.fromEntries(userVisitsArray.map(item => [item.userId, item.visits]));
-
-    // تحميل زيارات المنصات
-    const platformVisitsArray = await db.collection('platformVisits').find().toArray();
-    platformVisits = Object.fromEntries(platformVisitsArray.map(item => [item.platformId, item.visits]));
-
+     const collections = ['userPoints', 'userReferrals', 'subscribedUsers', 'bannedUsers', 'allUsers', 'usedReferralLinks', 'userVisits', 'platformVisits'];
+    for (const collectionName of collections) {
+      const collection = db.collection(collectionName);
+      const data = await collection.find().toArray();
+      switch (collectionName) {
+        case 'userPoints':
+          userPoints = new Map(data.map(item => [item.userId, item.points]));
+          break;
+        case 'userReferrals':
+          userReferrals = new Map(data.map(item => [item.userId, item.referrals]));
+          break;
+        case 'subscribedUsers':
+          subscribedUsers = new Set(data.map(item => item.userId));
+          break;
+        case 'bannedUsers':
+          bannedUsers = new Map(data.map(item => [item.userId, item.bannedBy]));
+          break;
+        case 'allUsers':
+          allUsers = new Map(data.map(user => [user.id, user]));
+          break;
+        case 'usedReferralLinks':
+          usedReferralLinks = new Map(data.map(item => [item.userId, new Set(item.usedLinks)]));
+          break;
+        case 'userVisits':
+          userVisits = Object.fromEntries(data.map(item => [item.userId, item.visits]));
+          break;
+        case 'platformVisits':
+          platformVisits = Object.fromEntries(data.map(item => [item.platformId, item.visits]));
+          break;
+      }
+    }
     console.log('تم تحميل البيانات بنجاح');
   } catch (error) {
     console.error('خطأ في تحميل البيانات من MongoDB:', error);
-    throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر إذا لزم الأمر
   }
 }
+
 
 // دالة لحفظ البيانات
 async function saveData() {
