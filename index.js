@@ -405,84 +405,108 @@ bot.on('callback_query', (query) => {
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
+const { MongoClient } = require('mongodb');
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+const mongoUrl = 'mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW';
+const dbName = 'SJGDD';
+
+
+MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
+  if (err) throw err;
+  db = client.db(dbName);
+  console.log('Connected to MongoDB');
+  loadUserData().then(() => {
+    console.log('User data loaded');
+  });
 });
 
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
-
-let userPoints = new Map();
-let userReferrals = new Map();
-
-// دالة تحميل البيانات
-async function loadData() {
-  try {
-    await client.connect();
-    console.log('Connected to MongoDB');
-    const db = client.db('botData');
-    const userPointsCollection = db.collection('userPoints');
-    const userReferralsCollection = db.collection('userReferrals');
-    
-    const userPointsArray = await userPointsCollection.find().toArray();
-    const userReferralsArray = await userReferralsCollection.find().toArray();
-
-    userPoints = new Map(userPointsArray.map(item => [item.userId, item.points]));
-    userReferrals = new Map(userReferralsArray.map(item => [item.userId, item.referrals]));
-  } catch (error) {
-    console.error('Error loading data from MongoDB:', error);
-  }
+async function loadUserData() {
+  const userCollection = db.collection('users');
+  const users = await userCollection.find().toArray();
+  users.forEach(user => {
+    allUsers.set(user.id, user);
+    if (user.subscribed) {
+      subscribedUsers.add(user.id);
+    }
+    if (user.banned) {
+      bannedUsers.set(user.id, true);
+    }
+  });
 }
 
-// دالة حفظ البيانات
-async function saveData() {
-  try {
-    const db = client.db('botData');
-    const userPointsCollection = db.collection('userPoints');
-    const userReferralsCollection = db.collection('userReferrals');
+async function addPointsToUser(userId, points) {
+  const userCollection = db.collection('users');
+  const user = await userCollection.findOneAndUpdate(
+    { id: userId },
+    { $inc: { points: points } },
+    { returnOriginal: false, upsert: true }
+  );
+  return user.value.points;
+}
 
-    await userPointsCollection.deleteMany({});
-    await userReferralsCollection.deleteMany({});
-    
-    await userPointsCollection.insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
-    await userReferralsCollection.insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
-  } catch (error) {
-    console.error('Error saving data to MongoDB:', error);
+async function deductPointsFromUser(userId, points) {
+  const userCollection = db.collection('users');
+  const user = await userCollection.findOne({ id: userId });
+  if (user && user.points >= points) {
+    const updatedUser = await userCollection.findOneAndUpdate(
+      { id: userId },
+      { $inc: { points: -points } },
+      { returnOriginal: false }
+    );
+    return updatedUser.value.points;
+  } else {
+    return false;
   }
 }
 
-// دالة تحديث نقاط المستخدم وحفظ البيانات
-async function updateUserPoints(userId, points) {
-  userPoints.set(userId, points);
-  await saveData();
+async function banUser(userId) {
+  const userCollection = db.collection('users');
+  await userCollection.findOneAndUpdate(
+    { id: userId },
+    { $set: { banned: true } },
+    { upsert: true }
+  );
+  bannedUsers.set(userId, true);
 }
 
-// تحميل البيانات عند بدء تشغيل البوت
-loadData().catch(console.error);
+async function unbanUser(userId) {
+  const userCollection = db.collection('users');
+  await userCollection.findOneAndUpdate(
+    { id: userId },
+    { $set: { banned: false } },
+    { upsert: true }
+  );
+  bannedUsers.delete(userId);
+}
 
-// استخدم دالة updateUserPoints كلما تم تحديث نقاط المستخدمين
-// مثال على تحديث نقاط المستخدم
-updateUserPoints('user123', 50); // تحديث نقاط المستخدم "user123" إلى 50 نقطة
+async function subscribeUser(userId) {
+  const userCollection = db.collection('users');
+  await userCollection.findOneAndUpdate(
+    { id: userId },
+    { $set: { subscribed: true } },
+    { upsert: true }
+  );
+  subscribedUsers.add(userId);
+}
 
+async function unsubscribeUser(userId) {
+  const userCollection = db.collection('users');
+  await userCollection.findOneAndUpdate(
+    { id: userId },
+    { $set: { subscribed: false } },
+    { upsert: true }
+  );
+  subscribedUsers.delete(userId);
+}
+
+bot.on('polling_error', (error) => {
+  console.error(error);
+});
+
+bot.on('ready', async () => {
+  await loadUserData();
+  console.log('Bot is ready');
+});
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 
