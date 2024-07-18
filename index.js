@@ -407,7 +407,7 @@ bot.on('callback_query', (query) => {
 const { MongoClient } = require('mongodb');
 
 // إعداد اتصال MongoDB
-const uri = 'mongodb+srv://SJGD:<MaySsonu>@atlascluster.ypreele.mongodb.net/?retryWrites=true&w=majority&appName=AtlasCluster'; // استبدل هذا بال URI الخاص بقاعدة البيانات MongoDB الخاصة بك
+const uri = 'mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW'; // استبدل هذا بال URI الخاص بقاعدة البيانات MongoDB الخاصة بك
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let userPoints = new Map();
