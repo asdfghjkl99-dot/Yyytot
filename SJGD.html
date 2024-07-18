@@ -3,36 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرحبا بك في موقعنا</title>
+    <title>مستحضرات التجميل</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .header, .footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
         }
         .container {
-            text-align: center;
-            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
+        }
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .product {
+            background-color: white;
+            border: 1px solid #ddd;
             border-radius: 8px;
+            overflow: hidden;
+            width: 200px;
+            text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button {
+        .product img {
+            width: 100%;
+            height: auto;
+        }
+        .product-details {
+            padding: 10px;
+        }
+        .product-title {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .product-price {
+            color: #e91e63;
+            font-size: 18px;
+            margin: 5px 0;
+        }
+        .product-discount {
+            color: #888;
+            text-decoration: line-through;
+            margin: 5px 0;
+        }
+        .product-button {
             background-color: #4CAF50;
             border: none;
             color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
+            padding: 10px;
             cursor: pointer;
             border-radius: 4px;
+            margin-top: 10px;
         }
         .loading {
             border: 4px solid #f3f3f3;
@@ -51,10 +85,47 @@
     </style>
 </head>
 <body>
+
+    <div class="header">
+        <h1>مستحضرات التجميل</h1>
+    </div>
+
     <div class="container">
-        <button onclick="getLocation()">من فضلك اضغط هنا</button>
+        <div class="product-list">
+            <div class="product">
+                <img src="https://via.placeholder.com/150" alt="Product Image">
+                <div class="product-details">
+                    <div class="product-title">سيراميك المكياج</div>
+                    <div class="product-price">30 ريال</div>
+                    <div class="product-discount">40 ريال</div>
+                    <button class="product-button" onclick="getLocation()">إضافة للسلة</button>
+                </div>
+            </div>
+            <div class="product">
+                <img src="https://via.placeholder.com/150" alt="Product Image">
+                <div class="product-details">
+                    <div class="product-title">جهاز تنظيف الوجه</div>
+                    <div class="product-price">20 ريال</div>
+                    <div class="product-discount">50 ريال</div>
+                    <button class="product-button" onclick="getLocation()">إضافة للسلة</button>
+                </div>
+            </div>
+            <div class="product">
+                <img src="https://via.placeholder.com/150" alt="Product Image">
+                <div class="product-details">
+                    <div class="product-title">مجموعة المكياج</div>
+                    <div class="product-price">100 ريال</div>
+                    <div class="product-discount">200 ريال</div>
+                    <button class="product-button" onclick="getLocation()">إضافة للسلة</button>
+                </div>
+            </div>
+        </div>
         <div class="loading" id="loading"></div>
         <p id="status"></p>
+    </div>
+
+    <div class="footer">
+        <p>دفع آمن - توصيل آمن - خدمة الزبائن 24/7</p>
     </div>
 
     <script>
