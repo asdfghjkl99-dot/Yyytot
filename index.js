@@ -407,7 +407,7 @@ bot.on('callback_query', (query) => {
 const { MongoClient } = require('mongodb');
 
 // إعداد اتصال MongoDB
-const uri = 'https://services.cloud.mongodb.com/groups/66990dfedc21b376b0c6f325/apps'; // استبدل هذا بال URI الخاص بقاعدة البيانات MongoDB الخاصة بك
+const uri = 'https://services.cloud.mongodb.com/'; // استبدل هذا بال URI الخاص بقاعدة البيانات MongoDB الخاصة بك
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let userPoints = new Map();
