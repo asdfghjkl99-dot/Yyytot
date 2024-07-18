@@ -18,11 +18,8 @@ app.use(express.static(path.join(__dirname, 'uploads')));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const userVisits = {};
+
 const MAX_FREE_ATTEMPTS = 5;
-const platformVisits = {};
-const activatedUsers = new Set(); // تغيير من Set إلى Map
-const usedReferralLinks = new Map();
 let pointsRequiredForSubscription = 15;
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
 
@@ -406,107 +403,128 @@ const { MongoClient } = require('mongodb');
 
 
 
-const mongoUrl = 'mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/SJGDD?retryWrites=true&w=majority';
+const uri = "mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-let db;
-let allUsers = new Map();
+// تعريف المتغيرات العامة
+let userPoints = new Map();
+let userReferrals = new Map();
 let subscribedUsers = new Set();
 let bannedUsers = new Map();
+let allUsers = new Map();
+let usedReferralLinks = new Map();
+let userVisits = {};
+let platformVisits = {};
 
-async function connectToMongoDB() {
-  const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
-  await client.connect();
-  db = client.db();
-  console.log('Connected to MongoDB');
-}
-
-async function loadUserData() {
-  const userCollection = db.collection('users');
-  const users = await userCollection.find().toArray();
-  users.forEach(user => {
-    allUsers.set(user.id, user);
-    if (user.subscribed) {
-      subscribedUsers.add(user.id);
-    }
-    if (user.banned) {
-      bannedUsers.set(user.id, true);
-    }
-  });
-}
-
-async function addPointsToUser(userId, points) {
-  const userCollection = db.collection('users');
-  const user = await userCollection.findOneAndUpdate(
-    { id: userId },
-    { $inc: { points: points } },
-    { returnOriginal: false, upsert: true }
-  );
-  return user.value.points;
-}
-
-async function deductPointsFromUser(userId, points) {
-  const userCollection = db.collection('users');
-  const user = await userCollection.findOne({ id: userId });
-  if (user && user.points >= points) {
-    const updatedUser = await userCollection.findOneAndUpdate(
-      { id: userId },
-      { $inc: { points: -points } },
-      { returnOriginal: false }
-    );
-    return updatedUser.value.points;
-  } else {
-    return false;
+// دالة لتحميل البيانات
+async function loadData() {
+  try {
+    await client.connect();
+    console.log('تم الاتصال بـ MongoDB');
+    const db = client.db('botData');
+    
+    // تحميل نقاط المستخدمين
+    const userPointsArray = await db.collection('userPoints').find().toArray();
+    userPoints = new Map(userPointsArray.map(item => [item.userId, item.points]));
+    
+    // تحميل الإحالات
+    const userReferralsArray = await db.collection('userReferrals').find().toArray();
+    userReferrals = new Map(userReferralsArray.map(item => [item.userId, item.referrals]));
+    
+    // تحميل المستخدمين المشتركين
+    const subscribedUsersArray = await db.collection('subscribedUsers').find().toArray();
+    subscribedUsers = new Set(subscribedUsersArray.map(item => item.userId));
+    
+    // تحميل المستخدمين المحظورين
+    const bannedUsersArray = await db.collection('bannedUsers').find().toArray();
+    bannedUsers = new Map(bannedUsersArray.map(item => [item.userId, item.bannedBy]));
+    
+    // تحميل جميع المستخدمين
+    const allUsersArray = await db.collection('allUsers').find().toArray();
+    allUsers = new Map(allUsersArray.map(user => [user.id, user]));
+    
+    // تحميل روابط الإحالة المستخدمة
+    const usedReferralLinksArray = await db.collection('usedReferralLinks').find().toArray();
+    usedReferralLinks = new Map(usedReferralLinksArray.map(item => [item.userId, new Set(item.usedLinks)]));
+    
+    // تحميل زيارات المستخدمين
+    const userVisitsArray = await db.collection('userVisits').find().toArray();
+    userVisits = Object.fromEntries(userVisitsArray.map(item => [item.userId, item.visits]));
+    
+    // تحميل زيارات المنصات
+    const platformVisitsArray = await db.collection('platformVisits').find().toArray();
+    platformVisits = Object.fromEntries(platformVisitsArray.map(item => [item.platformId, item.visits]));
+    
+    console.log('تم تحميل البيانات بنجاح');
+  } catch (error) {
+    console.error('خطأ في تحميل البيانات من MongoDB:', error);
   }
 }
 
-async function banUser(userId) {
-  const userCollection = db.collection('users');
-  await userCollection.findOneAndUpdate(
-    { id: userId },
-    { $set: { banned: true } },
-    { upsert: true }
-  );
-  bannedUsers.set(userId, true);
+// دالة لحفظ البيانات
+async function saveData() {
+  try {
+    const db = client.db('botData');
+    
+    // حفظ نقاط المستخدمين
+    await db.collection('userPoints').deleteMany({});
+    await db.collection('userPoints').insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
+    
+    // حفظ الإحالات
+    await db.collection('userReferrals').deleteMany({});
+    await db.collection('userReferrals').insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
+    
+    // حفظ المستخدمين المشتركين
+    await db.collection('subscribedUsers').deleteMany({});
+    await db.collection('subscribedUsers').insertMany([...subscribedUsers].map(userId => ({ userId })));
+    
+    // حفظ المستخدمين المحظورين
+    await db.collection('bannedUsers').deleteMany({});
+    await db.collection('bannedUsers').insertMany([...bannedUsers.entries()].map(([userId, bannedBy]) => ({ userId, bannedBy })));
+    
+    // حفظ جميع المستخدمين
+    await db.collection('allUsers').deleteMany({});
+    await db.collection('allUsers').insertMany([...allUsers.values()]);
+    
+    // حفظ روابط الإحالة المستخدمة
+    await db.collection('usedReferralLinks').deleteMany({});
+    await db.collection('usedReferralLinks').insertMany([...usedReferralLinks.entries()].map(([key, value]) => ({ userId: key, usedLinks: [...value] })));
+    
+    // حفظ زيارات المستخدمين
+    await db.collection('userVisits').deleteMany({});
+    await db.collection('userVisits').insertMany(Object.entries(userVisits).map(([userId, visits]) => ({ userId, visits })));
+    
+    // حفظ زيارات المنصات
+    await db.collection('platformVisits').deleteMany({});
+    await db.collection('platformVisits').insertMany(Object.entries(platformVisits).map(([platformId, visits]) => ({ platformId, visits })));
+    
+    console.log('تم حفظ البيانات بنجاح');
+  } catch (error) {
+    console.error('خطأ في حفظ البيانات:', error);
+  }
 }
 
-async function unbanUser(userId) {
-  const userCollection = db.collection('users');
-  await userCollection.findOneAndUpdate(
-    { id: userId },
-    { $set: { banned: false } },
-    { upsert: true }
-  );
-  bannedUsers.delete(userId);
-}
+// تكوين البوت
 
-async function subscribeUser(userId) {
-  const userCollection = db.collection('users');
-  await userCollection.findOneAndUpdate(
-    { id: userId },
-    { $set: { subscribed: true } },
-    { upsert: true }
-  );
-  subscribedUsers.add(userId);
-}
+// تحميل البيانات وبدء تشغيل البوت
+loadData().then(() => {
+  console.log('تم تحميل البيانات وبدء تشغيل البوت');
+  setInterval(saveData, 60000); // حفظ البيانات كل دقيقة
+  
+  // هنا يمكنك إضافة كود البوت الخاص بك
+  // مثل معالجات الرسائل والاستعلامات
+  
+}).catch(console.error);
 
-async function unsubscribeUser(userId) {
-  const userCollection = db.collection('users');
-  await userCollection.findOneAndUpdate(
-    { id: userId },
-    { $set: { subscribed: false } },
-    { upsert: true }
-  );
-  subscribedUsers.delete(userId);
-}
-
-bot.on('polling_error', (error) => {
-  console.error(error);
-});
-
-bot.on('ready', async () => {
-  await connectToMongoDB();
-  await loadUserData();
-  console.log('Bot is ready');
+// معالجة إنهاء البرنامج بشكل آمن
+process.on('SIGINT', async () => {
+  console.log('تم استلام إشارة إنهاء البرنامج. جاري حفظ البيانات...');
+  await saveData();
+  await client.close();
+  process.exit(0);
 });
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
