@@ -25,7 +25,6 @@ const allUsers = new Map();
 const activatedUsers = new Set();
 const bannedUsers = new Map(); // تغيير من Set إلى Map
 const subscribedUsers = new Set();
-const userPoints = new Map();
 const userReferrals = new Map();
 const usedReferralLinks = new Map();
 let pointsRequiredForSubscription = 15;
