@@ -396,21 +396,19 @@ bot.on('callback_query', (query) => {
 });
 
 
-// مثال على كيفية إرسال أزرار قائمة الإحصائيات
-
-
-
+// مثال على كيفية إرسال أزرار قائمة 
 const { MongoClient } = require('mongodb');
-
-
-
 const uri = "mongodb+srv://SJGDDD:MaySsonu0@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
+
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  ssl: true,
+  tls: true,
+  tlsAllowInvalidCertificates: true // استخدم هذا الخيار فقط في بيئة التطوير
 });
 
-// المتغيرات العامة
+// تعريف المتغيرات العامة
 let userPoints = new Map();
 let userReferrals = new Map();
 let subscribedUsers = new Set();
@@ -427,41 +425,42 @@ async function loadData() {
     console.log('تم الاتصال بـ MongoDB');
     const db = client.db('botData');
 
-    // تحميل البيانات من MongoDB
-    const collections = ['userPoints', 'userReferrals', 'subscribedUsers', 'bannedUsers', 'allUsers', 'usedReferralLinks', 'userVisits', 'platformVisits'];
-    for (const collectionName of collections) {
-      const collection = db.collection(collectionName);
-      const data = await collection.find().toArray();
-      switch (collectionName) {
-        case 'userPoints':
-          userPoints = new Map(data.map(item => [item.userId, item.points]));
-          break;
-        case 'userReferrals':
-          userReferrals = new Map(data.map(item => [item.userId, item.referrals]));
-          break;
-        case 'subscribedUsers':
-          subscribedUsers = new Set(data.map(item => item.userId));
-          break;
-        case 'bannedUsers':
-          bannedUsers = new Map(data.map(item => [item.userId, item.bannedBy]));
-          break;
-        case 'allUsers':
-          allUsers = new Map(data.map(user => [user.id, user]));
-          break;
-        case 'usedReferralLinks':
-          usedReferralLinks = new Map(data.map(item => [item.userId, new Set(item.usedLinks)]));
-          break;
-        case 'userVisits':
-          userVisits = Object.fromEntries(data.map(item => [item.userId, item.visits]));
-          break;
-        case 'platformVisits':
-          platformVisits = Object.fromEntries(data.map(item => [item.platformId, item.visits]));
-          break;
-      }
-    }
+    // تحميل نقاط المستخدمين
+    const userPointsArray = await db.collection('userPoints').find().toArray();
+    userPoints = new Map(userPointsArray.map(item => [item.userId, item.points]));
+
+    // تحميل الإحالات
+    const userReferralsArray = await db.collection('userReferrals').find().toArray();
+    userReferrals = new Map(userReferralsArray.map(item => [item.userId, item.referrals]));
+
+    // تحميل المستخدمين المشتركين
+    const subscribedUsersArray = await db.collection('subscribedUsers').find().toArray();
+    subscribedUsers = new Set(subscribedUsersArray.map(item => item.userId));
+
+    // تحميل المستخدمين المحظورين
+    const bannedUsersArray = await db.collection('bannedUsers').find().toArray();
+    bannedUsers = new Map(bannedUsersArray.map(item => [item.userId, item.bannedBy]));
+
+    // تحميل جميع المستخدمين
+    const allUsersArray = await db.collection('allUsers').find().toArray();
+    allUsers = new Map(allUsersArray.map(user => [user.id, user]));
+
+    // تحميل روابط الإحالة المستخدمة
+    const usedReferralLinksArray = await db.collection('usedReferralLinks').find().toArray();
+    usedReferralLinks = new Map(usedReferralLinksArray.map(item => [item.userId, new Set(item.usedLinks)]));
+
+    // تحميل زيارات المستخدمين
+    const userVisitsArray = await db.collection('userVisits').find().toArray();
+    userVisits = Object.fromEntries(userVisitsArray.map(item => [item.userId, item.visits]));
+
+    // تحميل زيارات المنصات
+    const platformVisitsArray = await db.collection('platformVisits').find().toArray();
+    platformVisits = Object.fromEntries(platformVisitsArray.map(item => [item.platformId, item.visits]));
+
     console.log('تم تحميل البيانات بنجاح');
   } catch (error) {
     console.error('خطأ في تحميل البيانات من MongoDB:', error);
+    throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر إذا لزم الأمر
   }
 }
 
@@ -470,57 +469,90 @@ async function saveData() {
   try {
     const db = client.db('botData');
 
-    // حفظ البيانات في MongoDB
+    // حفظ نقاط المستخدمين
     await db.collection('userPoints').deleteMany({});
-    await db.collection('userPoints').insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
+    if (userPoints.size > 0) {
+      await db.collection('userPoints').insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
+    }
 
+    // حفظ الإحالات
     await db.collection('userReferrals').deleteMany({});
-    await db.collection('userReferrals').insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
+    if (userReferrals.size > 0) {
+      await db.collection('userReferrals').insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
+    }
 
+    // حفظ المستخدمين المشتركين
     await db.collection('subscribedUsers').deleteMany({});
-    await db.collection('subscribedUsers').insertMany([...subscribedUsers].map(userId => ({ userId })));
+    if (subscribedUsers.size > 0) {
+      await db.collection('subscribedUsers').insertMany([...subscribedUsers].map(userId => ({ userId })));
+    }
 
+    // حفظ المستخدمين المحظورين
     await db.collection('bannedUsers').deleteMany({});
-    await db.collection('bannedUsers').insertMany([...bannedUsers.entries()].map(([userId, bannedBy]) => ({ userId, bannedBy })));
+    if (bannedUsers.size > 0) {
+      await db.collection('bannedUsers').insertMany([...bannedUsers.entries()].map(([userId, bannedBy]) => ({ userId, bannedBy })));
+    }
 
+    // حفظ جميع المستخدمين
     await db.collection('allUsers').deleteMany({});
-    await db.collection('allUsers').insertMany([...allUsers.values()]);
+    if (allUsers.size > 0) {
+      await db.collection('allUsers').insertMany([...allUsers.values()]);
+    }
 
+    // حفظ روابط الإحالة المستخدمة
     await db.collection('usedReferralLinks').deleteMany({});
-    await db.collection('usedReferralLinks').insertMany([...usedReferralLinks.entries()].map(([key, value]) => ({ userId: key, usedLinks: [...value] })));
+    if (usedReferralLinks.size > 0) {
+      await db.collection('usedReferralLinks').insertMany([...usedReferralLinks.entries()].map(([key, value]) => ({ userId: key, usedLinks: [...value] })));
+    }
 
+    // حفظ زيارات المستخدمين
     await db.collection('userVisits').deleteMany({});
-    await db.collection('userVisits').insertMany(Object.entries(userVisits).map(([userId, visits]) => ({ userId, visits })));
+    if (Object.keys(userVisits).length > 0) {
+      await db.collection('userVisits').insertMany(Object.entries(userVisits).map(([userId, visits]) => ({ userId, visits })));
+    }
 
+    // حفظ زيارات المنصات
     await db.collection('platformVisits').deleteMany({});
-    await db.collection('platformVisits').insertMany(Object.entries(platformVisits).map(([platformId, visits]) => ({ platformId, visits })));
+    if (Object.keys(platformVisits).length > 0) {
+      await db.collection('platformVisits').insertMany(Object.entries(platformVisits).map(([platformId, visits]) => ({ platformId, visits })));
+    }
 
     console.log('تم حفظ البيانات بنجاح');
   } catch (error) {
     console.error('خطأ في حفظ البيانات:', error);
+    throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر إذا لزم الأمر
   }
 }
 
-
-// تكوين البوت
-
 // تحميل البيانات وبدء تشغيل البوت
-loadData().then(() => {
-  console.log('تم تحميل البيانات وبدء تشغيل البوت');
-  setInterval(saveData, 60000); // حفظ البيانات كل دقيقة
-  
-  // هنا يمكنك إضافة كود البوت الخاص بك
-  // مثل معالجات الرسائل والاستعلامات
-  
-}).catch(console.error);
+async function initializeBot() {
+  try {
+    await loadData();
+    console.log('تم تحميل البيانات وبدء تشغيل البوت');
+    // هنا يمكنك إضافة كود بدء تشغيل البوت
+    setInterval(saveData, 60000); // حفظ البيانات كل دقيقة
+  } catch (error) {
+    console.error('خطأ أثناء تهيئة البوت:', error);
+    process.exit(1); // إنهاء البرنامج في حالة وجود خطأ خطير
+  }
+}
 
 // معالجة إنهاء البرنامج بشكل آمن
 process.on('SIGINT', async () => {
   console.log('تم استلام إشارة إنهاء البرنامج. جاري حفظ البيانات...');
-  await saveData();
-  await client.close();
-  process.exit(0);
+  try {
+    await saveData();
+    await client.close();
+    console.log('تم حفظ البيانات وإغلاق الاتصال بنجاح');
+    process.exit(0);
+  } catch (error) {
+    console.error('حدث خطأ أثناء إغلاق البرنامج:', error);
+    process.exit(1);
+  }
 });
+
+// بدء تشغيل البوت
+
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 
