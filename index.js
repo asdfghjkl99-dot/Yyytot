@@ -455,7 +455,7 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
-
+ 
 // بدء تشغيل البوت
 initializeBot();
     
