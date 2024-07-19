@@ -8,7 +8,8 @@ const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
-  tlsAllowInvalidCertificates: true // إضافة هذا الخيار لتجاوز مشاكل SSL
+  tls: true,
+  tlsInsecure: true, // تمكين هذا الخيار لتجاوز مشاكل SSL
 });
 
 let db;
@@ -17,7 +18,7 @@ async function connectToMongoDB() {
   try {
     await client.connect();
     console.log("تم الاتصال بنجاح بقاعدة البيانات MongoDB");
-    db = client.db("SJGGDD"); // استبدل "botData" باسم قاعدة البيانات الخاصة بك
+    db = client.db("ibosjgddw"); // استبدل "botData" باسم قاعدة البيانات الخاصة بك
     return db;
   } catch (error) {
     console.error("حدث خطأ أثناء الاتصال بقاعدة البيانات:", error);
