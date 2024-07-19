@@ -398,8 +398,9 @@ bot.on('callback_query', (query) => {
 
 // مثال على كيفية إرسال أزرار قائمة 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://SJGDDD:<MaySsonu0>@sjgddw.pc6cnnc.mongodb.net/?retryWrites=true&w=majority&appName=SJGDDW";
+// ... (باقي المتطلبات)
 
+const uri = process.env.MONGODB_URI || "mongodb+srv://SJGGDD:MaySsonu0@cluster0.gqfh8z3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -425,8 +426,7 @@ async function loadData() {
     console.log('تم الاتصال بـ MongoDB');
     const db = client.db('botData');
 
-    // تحميل نقاط المستخدمين
-     const collections = ['userPoints', 'userReferrals', 'subscribedUsers', 'bannedUsers', 'allUsers', 'usedReferralLinks', 'userVisits', 'platformVisits'];
+    const collections = ['userPoints', 'userReferrals', 'subscribedUsers', 'bannedUsers', 'allUsers', 'usedReferralLinks', 'userVisits', 'platformVisits'];
     for (const collectionName of collections) {
       const collection = db.collection(collectionName);
       const data = await collection.find().toArray();
@@ -462,7 +462,6 @@ async function loadData() {
     console.error('خطأ في تحميل البيانات من MongoDB:', error);
   }
 }
-
 
 // دالة لحفظ البيانات
 async function saveData() {
@@ -520,7 +519,7 @@ async function saveData() {
     console.log('تم حفظ البيانات بنجاح');
   } catch (error) {
     console.error('خطأ في حفظ البيانات:', error);
-    throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر إذا لزم الأمر
+    throw error;
   }
 }
 
@@ -533,7 +532,7 @@ async function initializeBot() {
     setInterval(saveData, 60000); // حفظ البيانات كل دقيقة
   } catch (error) {
     console.error('خطأ أثناء تهيئة البوت:', error);
-    process.exit(1); // إنهاء البرنامج في حالة وجود خطأ خطير
+    process.exit(1);
   }
 }
 
@@ -550,6 +549,31 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
+
+// بدء تشغيل البوت
+initializeBot();
+
+// ... (باقي الكود الخاص بالبوت)
+
+// مثال على استخدام الدوال الجديدة
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id.toString();
+
+  if (!allUsers.has(userId)) {
+    allUsers.set(userId, {
+      id: userId,
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
+    });
+    await saveData(); // حفظ البيانات بعد إضافة مستخدم جديد
+  }
+
+  // ... (باقي منطق معالجة الرسائل)
+});
+
+// ... (باقي الكود الخاص بالبوت)
 
 // بدء تشغيل البوت
 
