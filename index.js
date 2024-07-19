@@ -19,8 +19,16 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 
+const userVisits = {};
 const MAX_FREE_ATTEMPTS = 5;
+const platformVisits = {};
+const allUsers = new Map();
 const activatedUsers = new Set();
+const bannedUsers = new Map(); // تغيير من Set إلى Map
+const subscribedUsers = new Set();
+const userPoints = new Map();
+const userReferrals = new Map();
+const usedReferralLinks = new Map();
 let pointsRequiredForSubscription = 15;
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
 
