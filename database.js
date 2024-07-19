@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 // تحميل المتغيرات البيئية
 dotenv.config();
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://SJGGDD:MaySsonu0@cluster0.gqfh8z3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI || "mongodb+srv://SJGGDD:<MaySsonu0>@cluster0.gqfh8z3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
