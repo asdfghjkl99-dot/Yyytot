@@ -4,15 +4,12 @@ const dotenv = require('dotenv');
 // تحميل المتغيرات البيئية
 dotenv.config();
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://SJGGDD:<MaySsonu0>@cluster0.gqfh8z3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverApi: ServerApiVersion.v1,
-  ssl: true,
-  tls: true,
-  tlsAllowInvalidCertificates: true // استخدم هذا الخيار فقط في بيئة التطوير
+  serverApi: ServerApiVersion.v1
 });
 
 let db;
@@ -21,7 +18,7 @@ async function connectToMongoDB() {
   try {
     await client.connect();
     console.log("تم الاتصال بنجاح بقاعدة البيانات MongoDB");
-    db = client.db("SJGGDD"); // استبدل "botData" باسم قاعدة البيانات الخاصة بك
+    db = client.db("botData"); // استبدل "botData" باسم قاعدة البيانات الخاصة بك
     return db;
   } catch (error) {
     console.error("حدث خطأ أثناء الاتصال بقاعدة البيانات:", error);
