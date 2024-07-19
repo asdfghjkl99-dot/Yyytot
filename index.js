@@ -398,166 +398,54 @@ bot.on('callback_query', (query) => {
 
 // مثال على كيفية إرسال أزرار قائمة 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://SJGGDD:<MaySsonu0>@cluster0.gqfh8z3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
 
 
 // تعريف المتغيرات العامة
-let userPoints = new Map();
-let userReferrals = new Map();
-let subscribedUsers = new Set();
-let bannedUsers = new Map();
-let allUsers = new Map();
-let usedReferralLinks = new Map();
-let userVisits = {};
-let platformVisits = {};
+const { connectToMongoDB, saveData, loadData, closeConnection } = require('./database');
 
-// دالة لتحميل البيانات
-async function loadData() {
-  try {
-    await client.connect();
-    console.log('تم الاتصال بـ MongoDB');
-    const db = client.db('botData');
+let userPoints, userReferrals, subscribedUsers, bannedUsers, allUsers, usedReferralLinks;
 
-    const collections = ['userPoints', 'userReferrals', 'subscribedUsers', 'bannedUsers', 'allUsers', 'usedReferralLinks', 'userVisits', 'platformVisits'];
-    for (const collectionName of collections) {
-      const collection = db.collection(collectionName);
-      const data = await collection.find().toArray();
-      switch (collectionName) {
-        case 'userPoints':
-          userPoints = new Map(data.map(item => [item.userId, item.points]));
-          break;
-        case 'userReferrals':
-          userReferrals = new Map(data.map(item => [item.userId, item.referrals]));
-          break;
-        case 'subscribedUsers':
-          subscribedUsers = new Set(data.map(item => item.userId));
-          break;
-        case 'bannedUsers':
-          bannedUsers = new Map(data.map(item => [item.userId, item.bannedBy]));
-          break;
-        case 'allUsers':
-          allUsers = new Map(data.map(user => [user.id, user]));
-          break;
-        case 'usedReferralLinks':
-          usedReferralLinks = new Map(data.map(item => [item.userId, new Set(item.usedLinks)]));
-          break;
-        case 'userVisits':
-          userVisits = Object.fromEntries(data.map(item => [item.userId, item.visits]));
-          break;
-        case 'platformVisits':
-          platformVisits = Object.fromEntries(data.map(item => [item.platformId, item.visits]));
-          break;
-      }
-    }
-    console.log('تم تحميل البيانات بنجاح');
-  } catch (error) {
-    console.error('خطأ في تحميل البيانات من MongoDB:', error);
-  }
-}
-
-// دالة لحفظ البيانات
-async function saveData() {
-  try {
-    const db = client.db('botData');
-
-    // حفظ نقاط المستخدمين
-    await db.collection('userPoints').deleteMany({});
-    if (userPoints.size > 0) {
-      await db.collection('userPoints').insertMany([...userPoints.entries()].map(([key, value]) => ({ userId: key, points: value })));
-    }
-
-    // حفظ الإحالات
-    await db.collection('userReferrals').deleteMany({});
-    if (userReferrals.size > 0) {
-      await db.collection('userReferrals').insertMany([...userReferrals.entries()].map(([key, value]) => ({ userId: key, referrals: value })));
-    }
-
-    // حفظ المستخدمين المشتركين
-    await db.collection('subscribedUsers').deleteMany({});
-    if (subscribedUsers.size > 0) {
-      await db.collection('subscribedUsers').insertMany([...subscribedUsers].map(userId => ({ userId })));
-    }
-
-    // حفظ المستخدمين المحظورين
-    await db.collection('bannedUsers').deleteMany({});
-    if (bannedUsers.size > 0) {
-      await db.collection('bannedUsers').insertMany([...bannedUsers.entries()].map(([userId, bannedBy]) => ({ userId, bannedBy })));
-    }
-
-    // حفظ جميع المستخدمين
-    await db.collection('allUsers').deleteMany({});
-    if (allUsers.size > 0) {
-      await db.collection('allUsers').insertMany([...allUsers.values()]);
-    }
-
-    // حفظ روابط الإحالة المستخدمة
-    await db.collection('usedReferralLinks').deleteMany({});
-    if (usedReferralLinks.size > 0) {
-      await db.collection('usedReferralLinks').insertMany([...usedReferralLinks.entries()].map(([key, value]) => ({ userId: key, usedLinks: [...value] })));
-    }
-
-    // حفظ زيارات المستخدمين
-    await db.collection('userVisits').deleteMany({});
-    if (Object.keys(userVisits).length > 0) {
-      await db.collection('userVisits').insertMany(Object.entries(userVisits).map(([userId, visits]) => ({ userId, visits })));
-    }
-
-    // حفظ زيارات المنصات
-    await db.collection('platformVisits').deleteMany({});
-    if (Object.keys(platformVisits).length > 0) {
-      await db.collection('platformVisits').insertMany(Object.entries(platformVisits).map(([platformId, visits]) => ({ platformId, visits })));
-    }
-
-    console.log('تم حفظ البيانات بنجاح');
-  } catch (error) {
-    console.error('خطأ في حفظ البيانات:', error);
-    throw error;
-  }
-}
-
-// تحميل البيانات وبدء تشغيل البوت
 async function initializeBot() {
   try {
-    await loadData();
-    console.log('تم تحميل البيانات وبدء تشغيل البوت');
-    // هنا يمكنك إضافة كود بدء تشغيل البوت
-    setInterval(saveData, 60000); // حفظ البيانات كل دقيقة
+    await connectToMongoDB();
+    
+    // تحميل البيانات
+    userPoints = await loadData('userPoints');
+    userReferrals = await loadData('userReferrals');
+    subscribedUsers = new Set(await loadData('subscribedUsers'));
+    bannedUsers = await loadData('bannedUsers');
+    allUsers = await loadData('allUsers');
+    usedReferralLinks = await loadData('usedReferralLinks');
+    
+    // بدء تشغيل البوت وباقي العمليات
+    
+    // حفظ البيانات كل دقيقة
+    setInterval(async () => {
+      await saveData('userPoints', userPoints);
+      await saveData('userReferrals', userReferrals);
+      await saveData('subscribedUsers', new Map([...subscribedUsers].map(u => [u, true])));
+      await saveData('bannedUsers', bannedUsers);
+      await saveData('allUsers', allUsers);
+      await saveData('usedReferralLinks', usedReferralLinks);
+    }, 60000);
+
   } catch (error) {
     console.error('خطأ أثناء تهيئة البوت:', error);
     process.exit(1);
   }
 }
 
-// معالجة إنهاء البرنامج بشكل آمن
+// عند إيقاف التطبيق
 process.on('SIGINT', async () => {
   console.log('تم استلام إشارة إنهاء البرنامج. جاري حفظ البيانات...');
   try {
-    await saveData();
-    await client.close();
+    await saveData('userPoints', userPoints);
+    await saveData('userReferrals', userReferrals);
+    await saveData('subscribedUsers', new Map([...subscribedUsers].map(u => [u, true])));
+    await saveData('bannedUsers', bannedUsers);
+    await saveData('allUsers', allUsers);
+    await saveData('usedReferralLinks', usedReferralLinks);
+    await closeConnection();
     console.log('تم حفظ البيانات وإغلاق الاتصال بنجاح');
     process.exit(0);
   } catch (error) {
@@ -568,26 +456,14 @@ process.on('SIGINT', async () => {
 
 // بدء تشغيل البوت
 initializeBot();
-
+    
 // ... (باقي الكود الخاص بالبوت)
 
 // مثال على استخدام الدوال الجديدة
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id.toString();
 
-  if (!allUsers.has(userId)) {
-    allUsers.set(userId, {
-      id: userId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
-    });
-    await saveData(); // حفظ البيانات بعد إضافة مستخدم جديد
-  }
 
   // ... (باقي منطق معالجة الرسائل)
-});
+
 
 // ... (باقي الكود الخاص بالبوت)
 
@@ -951,6 +827,7 @@ bot.on('message', async (msg) => {
       lastName: msg.from.last_name || '',
       username: msg.from.username || ''
     };
+   
     allUsers.set(chatId.toString(), newUser);
 
     await bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
