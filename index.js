@@ -410,22 +410,25 @@ let userPoints, userReferrals, subscribedUsers, bannedUsers, allUsers, usedRefer
 async function initializeBot() {
   try {
     await connectToMongoDB();
-    
+
     // تحميل البيانات
-    userPoints = await loadData('userPoints');
-    userReferrals = await loadData('userReferrals');
-    subscribedUsers = new Set(await loadData('subscribedUsers'));
-    bannedUsers = await loadData('bannedUsers');
-    allUsers = await loadData('allUsers');
-    usedReferralLinks = await loadData('usedReferralLinks');
-    
+    userPoints = await loadData('userPoints') || new Map();
+    userReferrals = await loadData('userReferrals') || new Map();
+    subscribedUsers = new Set(await loadData('subscribedUsers') || []);
+    bannedUsers = await loadData('bannedUsers') || new Map();
+    allUsers = await loadData('allUsers') || new Map();
+    usedReferralLinks = await loadData('usedReferralLinks') || new Map();
+
+    console.log("تم تحميل البيانات بنجاح");
+
     // بدء تشغيل البوت وباقي العمليات
-    
+    // ... (الكود الخاص بتشغيل البوت)
+
     // حفظ البيانات كل دقيقة
     setInterval(async () => {
       await saveData('userPoints', userPoints);
       await saveData('userReferrals', userReferrals);
-      await saveData('subscribedUsers', new Map([...subscribedUsers].map(u => [u, true])));
+      await saveData('subscribedUsers', Array.from(subscribedUsers));
       await saveData('bannedUsers', bannedUsers);
       await saveData('allUsers', allUsers);
       await saveData('usedReferralLinks', usedReferralLinks);
@@ -443,7 +446,7 @@ process.on('SIGINT', async () => {
   try {
     await saveData('userPoints', userPoints);
     await saveData('userReferrals', userReferrals);
-    await saveData('subscribedUsers', new Map([...subscribedUsers].map(u => [u, true])));
+    await saveData('subscribedUsers', Array.from(subscribedUsers));
     await saveData('bannedUsers', bannedUsers);
     await saveData('allUsers', allUsers);
     await saveData('usedReferralLinks', usedReferralLinks);
@@ -455,9 +458,11 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
- 
+
 // بدء تشغيل البوت
 initializeBot();
+
+// ... (باقي الكود الخاص بالبوت)
     
 // ... (باقي الكود الخاص بالبوت)
 
