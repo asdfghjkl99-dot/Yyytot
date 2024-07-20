@@ -937,7 +937,7 @@ bot.on('callback_query', async (callbackQuery) => {
 
   saveData(); // حفظ البيانات بعد كل عملية
   await bot.answerCallbackQuery(callbackQuery.id);
-
+});
 
 function addPointsToUser(userId, points) {
   if (!allUsers.has(userId)) {
