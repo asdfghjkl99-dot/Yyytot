@@ -204,18 +204,6 @@ bot.on('callback_query', async (callbackQuery) => {
       });
       break;
 
-    case 'subscribe':
-      bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إضافته للمشتركين:');
-      bot.once('message', async (response) => {
-        const userIdToSubscribe = response.text;
-        if (subscribeUser(userIdToSubscribe)) {
-          bot.sendMessage(chatId, `تم اشتراك المستخدم ${userIdToSubscribe} بنجاح.`);
-        } else {
-          bot.sendMessage(chatId, `المستخدم ${userIdToSubscribe} مشترك بالفعل.`);
-        }
-      });
-      break;
-
     case 'unsubscribe':
       bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إلغاء اشتراكه:');
       bot.once('message', async (response) => {
@@ -227,8 +215,46 @@ bot.on('callback_query', async (callbackQuery) => {
         }
       });
       break;
+    case 'listsubscribers':
+      const subscribersList = Array.from(subscribedUsers).join('\n');
+      bot.sendMessage(chatId, `قائمة المشتركين:\n${subscribersList || 'لا يوجد مشتركين حالياً.'}`);
+      break;
+    case 'send_points_to_all':
+  bot.sendMessage(chatId, 'أدخل عدد النقاط التي تريد إرسالها لجميع المستخدمين:');
+  bot.once('message', async (msg) => {
+    const points = parseInt(msg.text);
+    if (!isNaN(points) && points > 0) {
+      for (const [userId, user] of allUsers) {
+        addPointsToUser(userId, points);
+      }
+      await bot.sendMessage(chatId, `تم إرسال ${points} نقطة لجميع المستخدمين.`);
+    } else {
+      await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
+    }
+  });
+  break;
+    case 'deduct_points_from_all':
+  bot.sendMessage(chatId, 'أدخل عدد النقاط التي تريد خصمها من جميع المستخدمين:');
+  bot.once('message', async (msg) => {
+    const points = parseInt(msg.text);
+    if (!isNaN(points) && points > 0) {
+      for (const [userId, user] of allUsers) {
+        deductPointsFromUser(userId, points);
+      }
+      await bot.sendMessage(chatId, `تم خصم ${points} نقطة من جميع المستخدمين.`);
+    } else {
+      await bot.sendMessage(chatId, 'الرجاء إدخال عدد صحيح موجب من النقاط.');
+    }
+  });
+  break;
+  case 'unsubscribe_all':
+      const unsubscribedCount = subscribedUsers.size;
+      subscribedUsers.clear();
+      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${unsubscribedCount} مستخدم.`);
+      saveData(); // حفظ البيانات بعد إلغاء اشتراك الجميع
+      break;
 
-    case 'subscribe_all':
+      case 'subscribe_all':
       let subscribedCount = 0;
       for (const [userId, user] of allUsers) {
         if (!subscribedUsers.has(userId)) {
@@ -243,13 +269,6 @@ bot.on('callback_query', async (callbackQuery) => {
       }
       await bot.sendMessage(chatId, `تم إضافة اشتراك لـ ${subscribedCount} مستخدم جديد.`);
       saveData(); // حفظ البيانات بعد اشتراك الجميع
-      break;
-
-    case 'unsubscribe_all':
-      const unsubscribedCount = subscribedUsers.size;
-      subscribedUsers.clear();
-      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${unsubscribedCount} مستخدم.`);
-      saveData(); // حفظ البيانات بعد إلغاء اشتراك الجميع
       break;
      case 'ban_all_users':
       allUsers.forEach((user, userId) => {
