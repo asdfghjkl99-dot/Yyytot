@@ -446,13 +446,12 @@ async function saveData() {
   };
   
   try {
-    // حفظ البيانات في الملف الرئيسي
-    await fs.writeFile('botData.json', JSON.stringify(data));
+    // حفظ البيانات الرئيسية
+    await fs.writeFile('botData.json', JSON.stringify(data, null, 2));
     console.log('تم حفظ البيانات بنجاح');
 
-    // إنشاء نسخة احتياطية
-    const backupPath = path.join('/tmp', 'botData_backup.json');
-    await fs.writeFile(backupPath, JSON.stringify(data));
+    // حفظ النسخة الاحتياطية
+    await fs.writeFile('botData_backup.json', JSON.stringify(data, null, 2));
     console.log('تم إنشاء نسخة احتياطية بنجاح');
   } catch (error) {
     console.error('خطأ في حفظ البيانات:', error);
@@ -461,6 +460,7 @@ async function saveData() {
 
 // استدعاء هذه الدالة بعد كل عملية تغيير للبيانات
 
+
 async function loadData() {
   try {
     // محاولة تحميل البيانات من الملف الرئيسي
@@ -468,16 +468,22 @@ async function loadData() {
     applyLoadedData(data);
     console.log('تم تحميل البيانات بنجاح من الملف الرئيسي');
   } catch (error) {
-    console.log('فشل في تحميل البيانات من الملف الرئيسي، محاولة استخدام النسخة الاحتياطية');
-    try {
-      // محاولة تحميل البيانات من النسخة الاحتياطية
-      const backupPath = path.join('/tmp', 'botData_backup.json');
-      const backupData = JSON.parse(await fs.readFile(backupPath, 'utf8'));
-      applyLoadedData(backupData);
-      console.log('تم تحميل البيانات بنجاح من النسخة الاحتياطية');
-    } catch (backupError) {
-      console.error('فشل في تحميل البيانات من النسخة الاحتياطية:', backupError);
+    if (error.code === 'ENOENT') {
+      console.log('الملف الرئيسي غير موجود، محاولة تحميل النسخة الاحتياطية');
+      try {
+        // محاولة تحميل البيانات من النسخة الاحتياطية
+        const backupData = JSON.parse(await fs.readFile('botData_backup.json', 'utf8'));
+        applyLoadedData(backupData);
+        console.log('تم تحميل البيانات بنجاح من النسخة الاحتياطية');
+      } catch (backupError) {
+        console.log('فشل في تحميل النسخة الاحتياطية، سيتم تهيئة البيانات الافتراضية');
+        initializeDefaultData();
+        await saveData(); // حفظ البيانات الافتراضية
+      }
+    } else {
+      console.error('خطأ في تحميل البيانات:', error);
       initializeDefaultData();
+      await saveData(); // حفظ البيانات الافتراضية
     }
   }
 }
