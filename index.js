@@ -518,8 +518,10 @@ function unsubscribeUser(userId) {
 
   // هنا يمكنك إضافة المزيد من المنطق لمعالجة الرسائل العادية
 // حفظ البيانات كل 5 دقائق
-setInterval(saveData, 5 * 60 * 1000);
-
+// حفظ البيانات كل 5 دقائق
+setInterval(() => {
+  saveData().catch(error => console.error('فشل في الحفظ الدوري للبيانات:', error));
+}, 5 * 60 * 1000);
   // باقي الكود لمعالجة الرسائل
  
   
