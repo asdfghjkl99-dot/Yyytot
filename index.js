@@ -2,13 +2,20 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const useragent = require('useragent');
 const TinyURL = require('tinyurl');
 
 // استدعاء دالة تحميل البيانات
-loadData();
+// في بداية البرنامج
+loadData().then(() => {
+  console.log('تم تحميل البيانات وبدء تشغيل البوت');
+  // هنا يمكنك بدء تشغيل البوت
+}).catch(error => {
+  console.error('حدث خطأ أثناء تحميل البيانات:', error);
+  process.exit(1);
+});
 
 const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
 const bot = new TelegramBot(botToken, { polling: true });
@@ -58,7 +65,7 @@ function addPointsToUser(userId, points) {
   user.points = (user.points || 0) + points;
   userPoints.set(userId, user.points);
   checkSubscriptionStatus(userId);
-  saveData(); // حفظ البيانات بعد إضافة النقاط
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إضافة النقاط
   return user.points;
 }
 
@@ -70,7 +77,7 @@ function deductPointsFromUser(userId, points) {
   if ((user.points || 0) >= points) {
     user.points -= points;
     userPoints.set(userId, user.points);
-    saveData(); // حفظ البيانات بعد خصم النقاط
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد خصم النقاط
     return true;
   }
   return false;
@@ -79,12 +86,12 @@ function deductPointsFromUser(userId, points) {
 // دالة لحظر مستخدم
 function banUser(userId) {
   bannedUsers.set(userId.toString(), true);
-  saveData();
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error));
 }
 // دالة لإلغاء حظر مستخدم
 function unbanUser(userId) {
   const result = bannedUsers.delete(userId.toString());
-  saveData();
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error));
   return result;
 }
 // دالة لإرسال رسالة لجميع المستخدمين
@@ -270,7 +277,7 @@ bot.on('callback_query', async (callbackQuery) => {
       const unsubscribedCount = subscribedUsers.size;
       subscribedUsers.clear();
       await bot.sendMessage(chatId, `تم إلغاء اشتراك جميع المستخدمين. تم إلغاء اشتراك ${unsubscribedCount} مستخدم.`);
-      saveData(); // حفظ البيانات بعد إلغاء اشتراك الجميع
+      saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إلغاء اشتراك الجميع
       break;
 
       case 'subscribe_all':
@@ -287,7 +294,7 @@ bot.on('callback_query', async (callbackQuery) => {
         }
       }
       await bot.sendMessage(chatId, `تم إضافة اشتراك لـ ${subscribedCount} مستخدم جديد.`);
-      saveData(); // حفظ البيانات بعد اشتراك الجميع
+      saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد اشتراك الجميع
       break;
      case 'ban_all_users':
       allUsers.forEach((user, userId) => {
@@ -418,38 +425,13 @@ bot.on('callback_query', (query) => {
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://sjadalymn:MaySsonu000@cluster0.een2yy0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
-
-
 // استخدم هذا النموذج لحفظ واسترجاع بيانات المستخدمين
 // مثال على كيفية إرسال أزرار قائمة الإحصائيات
 
 
-function saveData() {
+
+
+async function saveData() {
   const data = {
     userVisits,
     platformVisits,
@@ -462,40 +444,63 @@ function saveData() {
     usedReferralLinks: Array.from(usedReferralLinks),
     pointsRequiredForSubscription
   };
-  fs.writeFileSync('botData.json', JSON.stringify(data));
-  console.log('تم حفظ البيانات بنجاح');
+  
+  try {
+    // حفظ البيانات في الملف الرئيسي
+    await fs.writeFile('botData.json', JSON.stringify(data));
+    console.log('تم حفظ البيانات بنجاح');
+
+    // إنشاء نسخة احتياطية
+    const backupPath = path.join('/tmp', 'botData_backup.json');
+    await fs.writeFile(backupPath, JSON.stringify(data));
+    console.log('تم إنشاء نسخة احتياطية بنجاح');
+  } catch (error) {
+    console.error('خطأ في حفظ البيانات:', error);
+  }
 }
 
 // استدعاء هذه الدالة بعد كل عملية تغيير للبيانات
 
-function loadData() {
-  if (fs.existsSync('botData.json')) {
-    const data = JSON.parse(fs.readFileSync('botData.json'));
-    userVisits = data.userVisits || {};
-    platformVisits = data.platformVisits || {};
-    allUsers = new Map(data.allUsers || []);
-    activatedUsers = new Set(data.activatedUsers || []);
-    bannedUsers = new Map(data.bannedUsers || []);
-    subscribedUsers = new Set(data.subscribedUsers || []);
-    userPoints = new Map(data.userPoints || []);
-    userReferrals = new Map(data.userReferrals || []);
-    usedReferralLinks = new Map(data.usedReferralLinks || []);
-    pointsRequiredForSubscription = data.pointsRequiredForSubscription || 15;
-    console.log('تم تحميل البيانات بنجاح');
-  } else {
-    console.log('لم يتم العثور على ملف البيانات، سيتم البدء بقيم افتراضية');
-    initializeDefaultData();
+async function loadData() {
+  try {
+    // محاولة تحميل البيانات من الملف الرئيسي
+    const data = JSON.parse(await fs.readFile('botData.json', 'utf8'));
+    applyLoadedData(data);
+    console.log('تم تحميل البيانات بنجاح من الملف الرئيسي');
+  } catch (error) {
+    console.log('فشل في تحميل البيانات من الملف الرئيسي، محاولة استخدام النسخة الاحتياطية');
+    try {
+      // محاولة تحميل البيانات من النسخة الاحتياطية
+      const backupPath = path.join('/tmp', 'botData_backup.json');
+      const backupData = JSON.parse(await fs.readFile(backupPath, 'utf8'));
+      applyLoadedData(backupData);
+      console.log('تم تحميل البيانات بنجاح من النسخة الاحتياطية');
+    } catch (backupError) {
+      console.error('فشل في تحميل البيانات من النسخة الاحتياطية:', backupError);
+      initializeDefaultData();
+    }
   }
 }
 
-loadData();
+function applyLoadedData(data) {
+  userVisits = data.userVisits || {};
+  platformVisits = data.platformVisits || {};
+  allUsers = new Map(data.allUsers || []);
+  activatedUsers = new Set(data.activatedUsers || []);
+  bannedUsers = new Map(data.bannedUsers || []);
+  subscribedUsers = new Set(data.subscribedUsers || []);
+  userPoints = new Map(data.userPoints || []);
+  userReferrals = new Map(data.userReferrals || []);
+  usedReferralLinks = new Map(data.usedReferralLinks || []);
+  pointsRequiredForSubscription = data.pointsRequiredForSubscription || 15;
+}
 
 
 function subscribeUser(userId) {
   if (!subscribedUsers.has(userId)) {
     subscribedUsers.add(userId);
     bot.sendMessage(userId, 'تم اشتراكك بنجاح! يمكنك الآن استخدام جميع ميزات البوت.');
-    saveData(); // حفظ البيانات بعد الاشتراك
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد الاشتراك
     return true;
   }
   return false;
@@ -505,7 +510,7 @@ function unsubscribeUser(userId) {
   if (subscribedUsers.has(userId)) {
     subscribedUsers.delete(userId);
     bot.sendMessage(userId, 'تم إلغاء اشتراكك. قد تواجه بعض القيود على استخدام البوت.');
-    saveData(); // حفظ البيانات بعد إلغاء الاشتراك
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إلغاء الاشتراك
     return true;
   }
   return false;
@@ -870,7 +875,7 @@ bot.on('message', async (msg) => {
       username: msg.from.username || ''
     };
     allUsers.set(chatId.toString(), newUser);
-    saveData(); 
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); 
     await bot.sendMessage(adminId, `مستخدم جديد دخل البوت:\nالاسم: ${newUser.firstName} ${newUser.lastName}\nاسم المستخدم: @${newUser.username}\nمعرف الدردشة: ${chatId}`);
   }
 
@@ -950,7 +955,7 @@ bot.on('callback_query', async (callbackQuery) => {
     const referralLink = createReferralLink(userId);
     console.log('Created referral link:', referralLink);
     await bot.sendMessage(chatId, `رابط الدعوة الخاص بك هو:\n${referralLink}`);
-    saveData(); // حفظ البيانات بعد إنشاء رابط دعوة
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إنشاء رابط دعوة
   } else if (data === 'my_points') {
     const points = userPoints.get(userId) || 0;
     const isSubscribed = subscribedUsers.has(userId);
@@ -977,7 +982,7 @@ bot.on('callback_query', async (callbackQuery) => {
     await bot.sendMessage(chatId, 'حدث خطأ أثناء تنفيذ العملية. الرجاء المحاولة مرة أخرى لاحقًا.');
   }
 
-  saveData(); // حفظ البيانات بعد كل عملية
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد كل عملية
   await bot.answerCallbackQuery(callbackQuery.id);
 });
 
@@ -989,7 +994,7 @@ function addPointsToUser(userId, points) {
   user.points = (user.points || 0) + points;
   userPoints.set(userId, user.points);
   checkSubscriptionStatus(userId);
-  saveData(); // حفظ البيانات بعد إضافة النقاط
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إضافة النقاط
   return user.points;
 }
 
@@ -998,7 +1003,7 @@ function deductPointsFromUser(userId, points) {
   if (currentPoints >= points) {
     const newPoints = currentPoints - points;
     userPoints.set(userId, newPoints);
-    saveData(); // حفظ البيانات بعد خصم النقاط
+    saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد خصم النقاط
     return true;
   }
   return false;
@@ -1019,7 +1024,7 @@ function addPointsToUser(userId, points) {
 }
 
 
-function checkSubscriptionStatus(userId) {
+   function checkSubscriptionStatus(userId) {
   const user = allUsers.get(userId);
   if (!user) return false;
 
@@ -1031,14 +1036,14 @@ function checkSubscriptionStatus(userId) {
       
       subscribedUsers.add(userId);
       bot.sendMessage(userId, `تهانينا! لقد تم اشتراكك تلقائيًا. تم خصم ${pointsRequiredForSubscription} نقطة من رصيدك.`);
-      saveData(); // حفظ البيانات بعد الاشتراك
+      saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد الاشتراك
     }
     return true;
   } else {
     if (subscribedUsers.has(userId)) {
       subscribedUsers.delete(userId);
       bot.sendMessage(userId, 'تم إلغاء اشتراكك بسبب نقص النقاط. يرجى جمع المزيد من النقاط للاشتراك مرة أخرى.');
-      saveData(); // حفظ البيانات بعد إلغاء الاشتراك
+      saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إلغاء الاشتراك
     }
     return false;
   }
