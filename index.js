@@ -417,8 +417,9 @@ bot.on('callback_query', (query) => {
 });
 
 
+
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://ibosjgddw:MaySsonu00@cluster0.shddfbu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://sjadalymn:MaySsonu000@cluster0.een2yy0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -442,6 +443,7 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
 
 // استخدم هذا النموذج لحفظ واسترجاع بيانات المستخدمين
 // مثال على كيفية إرسال أزرار قائمة الإحصائيات
