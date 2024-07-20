@@ -416,7 +416,19 @@ bot.on('callback_query', (query) => {
   }
 });
 
+const mongoose = require('mongoose');
 
+mongoose.connect('mongodb+srv://ibosjgddw:MaySsonu00@cluster0.shddfbu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const UserSchema = new mongoose.Schema({
+  userId: String,
+  points: Number,
+  isSubscribed: Boolean
+});
+
+const User = mongoose.model('User', UserSchema);
+
+// استخدم هذا النموذج لحفظ واسترجاع بيانات المستخدمين
 // مثال على كيفية إرسال أزرار قائمة الإحصائيات
 
 
@@ -436,6 +448,8 @@ function saveData() {
   fs.writeFileSync('botData.json', JSON.stringify(data));
   console.log('تم حفظ البيانات بنجاح');
 }
+
+// استدعاء هذه الدالة بعد كل عملية تغيير للبيانات
 
 function loadData() {
   if (fs.existsSync('botData.json')) {
