@@ -9,12 +9,16 @@ const TinyURL = require('tinyurl');
 
 // استدعاء دالة تحميل البيانات
 // في بداية البرنامج
-loadData().then(() => {
-  console.log('تم تحميل البيانات وبدء تشغيل البوت');
-  // هنا يمكنك بدء تشغيل البوت
-}).catch(error => {
-  console.error('حدث خطأ أثناء تحميل البيانات:', error);
-  process.exit(1);
+process.on('SIGINT', async () => {
+  console.log('تم استلام إشارة إيقاف، جاري حفظ البيانات...');
+  try {
+    await saveData();
+    console.log('تم حفظ البيانات بنجاح. إيقاف البوت...');
+    process.exit(0);
+  } catch (error) {
+    console.error('فشل في حفظ البيانات قبل الإيقاف:', error);
+    process.exit(1);
+  }
 });
 
 const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
@@ -65,7 +69,7 @@ function addPointsToUser(userId, points) {
   user.points = (user.points || 0) + points;
   userPoints.set(userId, user.points);
   checkSubscriptionStatus(userId);
-  saveData().catch(error => console.error('فشل في حفظ البيانات:', error)); // حفظ البيانات بعد إضافة النقاط
+  saveData().catch(error => console.error('فشل في حفظ البيانات:', error));
   return user.points;
 }
 
@@ -430,7 +434,6 @@ bot.on('callback_query', (query) => {
 
 
 
-
 async function saveData() {
   const data = {
     userVisits,
@@ -446,15 +449,15 @@ async function saveData() {
   };
   
   try {
-    // حفظ البيانات الرئيسية
     await fs.writeFile('botData.json', JSON.stringify(data, null, 2));
     console.log('تم حفظ البيانات بنجاح');
-
-    // حفظ النسخة الاحتياطية
+    
+    // حفظ نسخة احتياطية
     await fs.writeFile('botData_backup.json', JSON.stringify(data, null, 2));
     console.log('تم إنشاء نسخة احتياطية بنجاح');
   } catch (error) {
     console.error('خطأ في حفظ البيانات:', error);
+    throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر إذا لزم الأمر
   }
 }
 
@@ -478,16 +481,16 @@ async function loadData() {
       } catch (backupError) {
         console.log('فشل في تحميل النسخة الاحتياطية، سيتم تهيئة البيانات الافتراضية');
         initializeDefaultData();
-        await saveData(); // حفظ البيانات الافتراضية
       }
     } else {
       console.error('خطأ في تحميل البيانات:', error);
       initializeDefaultData();
-      await saveData(); // حفظ البيانات الافتراضية
     }
   }
+  
+  // حفظ البيانات بعد التحميل لضمان وجود ملف حديث
+  await saveData();
 }
-
 function applyLoadedData(data) {
   userVisits = data.userVisits || {};
   platformVisits = data.platformVisits || {};
