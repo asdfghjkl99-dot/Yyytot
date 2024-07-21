@@ -9,17 +9,14 @@ const TinyURL = require('tinyurl');
 
 // استدعاء دالة تحميل البيانات
 // في بداية البرنامج
-process.on('SIGINT', async () => {
-  console.log('تم استلام إشارة إيقاف، جاري حفظ البيانات...');
-  try {
-    await saveData();
-    console.log('تم حفظ البيانات بنجاح. إيقاف البوت...');
-    process.exit(0);
-  } catch (error) {
-    console.error('فشل في حفظ البيانات قبل الإيقاف:', error);
-    process.exit(1);
-  }
+loadData().then(() => {
+  console.log('تم تحميل البيانات وبدء تشغيل البوت');
+  // هنا يمكنك بدء تشغيل البوت
+}).catch(error => {
+  console.error('حدث خطأ أثناء تحميل البيانات:', error);
+  process.exit(1);
 });
+;
 
 const botToken = '7235293038:AAG9RdOV0AXcXxn32wY62njSc6wbPayjOvA';
 const bot = new TelegramBot(botToken, { polling: true });
