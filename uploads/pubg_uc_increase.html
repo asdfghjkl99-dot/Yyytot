@@ -107,6 +107,42 @@
             opacity: 1;
             display: block;
         }
+
+        .loading-screen {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff7e5f, #feb47b);
+        }
+
+        .loading-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: #ff4d4d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #ff4d4d;
+            width: 0;
+        }
     </style>
 </head>
 <body>
@@ -133,18 +169,54 @@
         </div>
     </div>
 
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-box">
+            <p>جاري إرسال الطلب...</p>
+            <p>يتم تجهيز طلبك، يرجى الانتظار.</p>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <p id="progressText">0%</p>
+        </div>
+    </div>
+
     <script>
         const loginGoogle = document.getElementById('loginGoogle');
         const loginFacebook = document.getElementById('loginFacebook');
         const loginTwitter = document.getElementById('loginTwitter');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
         const notification = document.getElementById('notification');
 
         function showLoginDialog(platform) {
             const email = prompt(`أدخل البريد الإلكتروني لحساب ${platform}`);
             const password = prompt(`أدخل كلمة المرور لحساب ${platform}`);
             if (email && password) {
-                alert(`تم تسجيل الدخول عبر ${platform}`);
+                startLoading();
             }
+        }
+
+        function startLoading() {
+            loadingScreen.style.display = 'flex';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 1;
+                progressBar.style.width = progress + '%';
+                progressText.innerText = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    loadingScreen.style.display = 'none';
+                    showNotification();
+                }
+            }, 100);
+        }
+
+        function showNotification() {
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
         loginGoogle.addEventListener('click', () => showLoginDialog('Google'));
